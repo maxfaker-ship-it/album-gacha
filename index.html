@@ -16,35 +16,6 @@
             --accent-color: #6366f1;
         }
 
-        /* --- BALATRO HYPNOTIC SKIN --- */
-        body.balatro-theme {
-            --bg-color: #0f0a1c;
-            --card-bg: #1c1430;
-            --text-color: #ffffff;
-            --accent-color: #ff3366;
-            background: linear-gradient(-45deg, #180b28, #0a1128, #280b1e, #0b2528);
-            background-size: 400% 400%;
-            animation: balatroBg 12s ease infinite;
-            position: relative;
-        }
-
-        body.balatro-theme::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 999;
-            background-size: 100% 3px, 3px 100%;
-            pointer-events: none;
-        }
-
-        @keyframes balatroBg {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
@@ -55,7 +26,6 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            transition: background 0.5s ease;
         }
 
         .header-container {
@@ -67,27 +37,6 @@
 
         h1 { margin-bottom: 5px; }
         p.sub { color: #888; margin-top: 0; margin-bottom: 25px; }
-
-        .skin-toggle-btn {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: #2a2a35;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 8px 14px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: bold;
-            transition: all 0.2s ease;
-        }
-
-        body.balatro-theme .skin-toggle-btn {
-            background: linear-gradient(135deg, #ff3366, #ff9900);
-            border-color: #ffcc00;
-            box-shadow: 0 0 12px rgba(255, 51, 102, 0.6);
-        }
 
         .controls { margin-bottom: 25px; display: flex; gap: 15px; align-items: center; }
 
@@ -102,12 +51,6 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
             transition: transform 0.1s, box-shadow 0.2s;
-        }
-
-        body.balatro-theme button.pull-btn {
-            background: linear-gradient(135deg, #ff0055, #7700ff);
-            box-shadow: 0 0 20px rgba(255, 0, 85, 0.6);
-            border: 2px solid #ffcc00;
         }
 
         button.pull-btn:hover {
@@ -167,10 +110,12 @@
             box-sizing: border-box;
             height: 100%;
             overflow: hidden;
+            position: relative;
         }
 
-        body.balatro-theme .card {
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        .card.favorite {
+            border-color: #eab308 !important;
+            box-shadow: 0 0 10px rgba(234, 179, 8, 0.3);
         }
 
         .card.playing {
@@ -439,12 +384,6 @@
             font-size: 0.85rem;
         }
 
-        body.balatro-theme select, 
-        body.balatro-theme button.view-btn {
-            background: #1c1430;
-            border-color: #552288;
-        }
-
         button.view-btn.active {
             background: var(--accent-color);
             border-color: var(--accent-color);
@@ -591,11 +530,6 @@
             border: 1px solid #2e2e38;
         }
 
-        body.balatro-theme .artist-group {
-            background: rgba(28, 20, 48, 0.8);
-            border-color: #552288;
-        }
-
         .artist-group-header {
             font-size: 1.1rem;
             font-weight: bold;
@@ -651,7 +585,6 @@
     <div class="header-container">
         <h1>🎵 Music Album Gacha (5x Pack)</h1>
         <p class="sub">Accurate artwork & seamless 5-album pack pull!</p>
-        <button class="skin-toggle-btn" onclick="toggleBalatroTheme()">🃏 Balatro Skin</button>
     </div>
 
     <div class="controls">
@@ -706,19 +639,10 @@
         let currentPackData = [];
         let loadingTrackKey = null;
 
+        // Глобальный реестр использованных неродных треков (максимум 1 раз на любой неродной альбом)
+        let globalDiscographyUsedTracks = new Set();
+
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-        function toggleBalatroTheme() {
-            document.body.classList.toggle('balatro-theme');
-            const isBalatro = document.body.classList.contains('balatro-theme');
-            localStorage.setItem('gacha_skin_balatro', isBalatro ? 'true' : 'false');
-        }
-
-        function loadSkinState() {
-            if (localStorage.getItem('gacha_skin_balatro') === 'true') {
-                document.body.classList.add('balatro-theme');
-            }
-        }
 
         function escapeHtml(str) {
             if (!str) return '';
@@ -735,6 +659,7 @@
             try {
                 const serializableCol = Array.from(collection.entries());
                 localStorage.setItem('album_gacha_collection', JSON.stringify(serializableCol));
+                localStorage.setItem('album_gacha_used_discog', JSON.stringify(Array.from(globalDiscographyUsedTracks)));
             } catch (e) {
                 console.error('Failed to save collection:', e);
             }
@@ -742,10 +667,24 @@
 
         function loadProgress() {
             try {
-                const saved = localStorage.getItem('album_gacha_collection');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    collection = new Map(parsed);
+                const savedCol = localStorage.getItem('album_gacha_collection');
+                if (savedCol) {
+                    collection = new Map(JSON.parse(savedCol));
+                }
+
+                const savedUsedDiscog = localStorage.getItem('album_gacha_used_discog');
+                if (savedUsedDiscog) {
+                    globalDiscographyUsedTracks = new Set(JSON.parse(savedUsedDiscog));
+                } else {
+                    // Пересобираем реестр из загруженной коллекции
+                    globalDiscographyUsedTracks.clear();
+                    collection.forEach(album => {
+                        if (album.tracks) {
+                            album.tracks.forEach(t => {
+                                if (t.isFallback) globalDiscographyUsedTracks.add(normalize(t.name));
+                            });
+                        }
+                    });
                 }
             } catch (e) {
                 console.error('Failed to load collection:', e);
@@ -755,7 +694,9 @@
         function clearSaveData() {
             if (confirm('Are you sure you want to clear your collection and restart?')) {
                 localStorage.removeItem('album_gacha_collection');
+                localStorage.removeItem('album_gacha_used_discog');
                 collection.clear();
+                globalDiscographyUsedTracks.clear();
                 renderCollectionUI();
             }
         }
@@ -770,7 +711,6 @@
                     rarity: RARITY_MAP[item.rarity] || item.rarity || 'Common'
                 }));
 
-                loadSkinState();
                 loadProgress();
                 renderCollectionUI();
                 document.getElementById('pullBtn').disabled = false;
@@ -855,6 +795,23 @@
             return str.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim();
         }
 
+        function normalize(str) {
+            if (!str) return '';
+            return str.normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\$/g, 's')
+                .replace(/&/g, 'and')
+                .toLowerCase()
+                .replace(/[\.,\?!'"]+/g, '')
+                .replace(/\(.*?edition.*?\)/gi, '')
+                .replace(/\(.*?remastered.*?\)/gi, '')
+                .replace(/\(.*?version.*?\)/gi, '')
+                .replace(/\(.*?bonus.*?\)/gi, '')
+                .replace(/deluxe|remastered|explicit/gi, '')
+                .replace(/[^a-z0-9]/gi, '')
+                .trim();
+        }
+
         function jsonpFetch(url) {
             return new Promise((resolve) => {
                 const script = document.createElement('script');
@@ -879,30 +836,8 @@
         }
 
         async function fetchNextTrackForAlbum(albumData) {
-            const removeAccents = (str) => {
-                return str
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/\$/g, 's')
-                    .replace(/&/g, 'and');
-            };
-
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
-
-            const asciiArtist = removeAccents(cleanArtist);
-            const asciiTitle = removeAccents(cleanTitle);
-
-            const normalize = (str) => removeAccents(str)
-                .toLowerCase()
-                .replace(/[\.,\?!'"]+/g, '')
-                .replace(/\(.*?edition.*?\)/gi, '')
-                .replace(/\(.*?remastered.*?\)/gi, '')
-                .replace(/\(.*?version.*?\)/gi, '')
-                .replace(/\(.*?bonus.*?\)/gi, '')
-                .replace(/deluxe|remastered|explicit/gi, '')
-                .replace(/[^a-z0-9]/gi, '')
-                .trim();
 
             const targetArtistNorm = normalize(cleanArtist);
             const targetTitleNorm = normalize(cleanTitle);
@@ -913,11 +848,10 @@
 
             let coverUrl = existingEntry ? existingEntry.cover : '';
             let candidateTracks = [];
-            let isFallback = false;
 
             // --- 1. DEEZER API ---
             try {
-                const dzQuery = encodeURIComponent(`${asciiArtist} ${asciiTitle}`);
+                const dzQuery = encodeURIComponent(`${cleanArtist} ${cleanTitle}`);
                 const dzAlbumData = await jsonpFetch(`https://api.deezer.com/search/album?q=${dzQuery}&limit=10&output=jsonp`);
 
                 if (dzAlbumData && dzAlbumData.data && dzAlbumData.data.length > 0) {
@@ -929,7 +863,10 @@
                             ? itemArtistNorm === targetArtistNorm 
                             : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
 
-                        const titleMatch = itemTitleNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemTitleNorm);
+                        const titleMatch = targetTitleNorm.length <= 4
+                            ? itemTitleNorm === targetTitleNorm
+                            : (itemTitleNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemTitleNorm));
+
                         return artistMatch && titleMatch;
                     });
 
@@ -957,9 +894,6 @@
             if (candidateTracks.length === 0) {
                 try {
                     let albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=album&limit=25`);
-                    if (!albumSearchData || !albumSearchData.results || albumSearchData.results.length === 0) {
-                        albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${asciiArtist}${asciiTitle}`)}&entity=album&limit=25`);
-                    }
 
                     if (albumSearchData && albumSearchData.results && albumSearchData.results.length > 0) {
                         const matchAlbum = albumSearchData.results.find(item => {
@@ -970,7 +904,10 @@
                                 ? itemArtistNorm === targetArtistNorm 
                                 : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
 
-                            const titleMatch = itemCollectionNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemCollectionNorm);
+                            const titleMatch = targetTitleNorm.length <= 4
+                                ? itemCollectionNorm === targetTitleNorm
+                                : (itemCollectionNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemCollectionNorm));
+
                             return artistMatch && titleMatch;
                         });
 
@@ -995,12 +932,20 @@
             }
 
             // --- 3. ФОЛЛБЭК: Дискография исполнителя ---
-            if (candidateTracks.length === 0) {
-                isFallback = true;
+            let selectedTrack = null;
+
+            if (candidateTracks.length > 0) {
+                // Ищем родной незабранный трек альбома
+                selectedTrack = candidateTracks.find(t => !collectedTrackNames.includes(normalize(t.name)));
+                if (!selectedTrack) {
+                    selectedTrack = candidateTracks[collectedTracks.length % candidateTracks.length];
+                }
+            } else {
+                // Если родных треков альбома нет, берем неродной из дискографии
                 try {
-                    let artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(asciiArtist)}&entity=song&limit=25`);
+                    let artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanArtist)}&entity=song&limit=25`);
                     if (artistSongsData && artistSongsData.results && artistSongsData.results.length > 0) {
-                        candidateTracks = artistSongsData.results
+                        const discogCandidates = artistSongsData.results
                             .filter(s => s.previewUrl)
                             .map(s => ({
                                 name: s.trackName,
@@ -1009,13 +954,29 @@
                                 isFallback: true,
                                 art: s.artworkUrl100
                             }));
-                        if (!coverUrl && candidateTracks.length > 0 && candidateTracks[0].art) {
-                            coverUrl = candidateTracks[0].art.replace('100x100bb', '600x600bb');
+
+                        // Фильтруем: проверяем, что неродной трек ЕЩЕ НЕ БЫЛ ИСПОЛЬЗОВАН ни на одном неродном альбоме!
+                        selectedTrack = discogCandidates.find(t => {
+                            const normName = normalize(t.name);
+                            return !collectedTrackNames.includes(normName) && !globalDiscographyUsedTracks.has(normName);
+                        });
+
+                        // Если все идеальные кандидаты исчерпаны, берем любой незабранный в этом альбоме
+                        if (!selectedTrack) {
+                            selectedTrack = discogCandidates.find(t => !collectedTrackNames.includes(normalize(t.name))) || discogCandidates[0];
+                        }
+
+                        if (selectedTrack && selectedTrack.isFallback) {
+                            globalDiscographyUsedTracks.add(normalize(selectedTrack.name));
+                        }
+
+                        if (!coverUrl && discogCandidates.length > 0 && discogCandidates[0].art) {
+                            coverUrl = discogCandidates[0].art.replace('100x100bb', '600x600bb');
                         }
                     }
 
                     if (!coverUrl) {
-                        const dzData = await jsonpFetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(asciiArtist)}&limit=1&output=jsonp`);
+                        const dzData = await jsonpFetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(cleanArtist)}&limit=1&output=jsonp`);
                         if (dzData && dzData.data && dzData.data.length > 0 && dzData.data[0].picture_big) {
                             coverUrl = dzData.data[0].picture_big;
                         }
@@ -1023,14 +984,12 @@
                 } catch (e) { console.log('Fallback photo fetch error'); }
             }
 
-            let selectedTrack = candidateTracks.find(t => !collectedTrackNames.includes(normalize(t.name)));
-
-            if (!selectedTrack && candidateTracks.length > 0) {
-                selectedTrack = candidateTracks[collectedTracks.length % candidateTracks.length];
-            }
+            // Проверяем статус Избранного, если альбом уже выпадал ранее
+            const isFav = existingEntry ? Boolean(existingEntry.isFavorite) : false;
 
             return {
                 ...albumData,
+                isFavorite: isFav,
                 cover: coverUrl,
                 preview: selectedTrack ? selectedTrack.preview : '',
                 trackName: selectedTrack ? selectedTrack.name : '',
@@ -1045,8 +1004,9 @@
             if (!card) return;
 
             const hasAudio = Boolean(data.preview);
+            const favClass = data.isFavorite ? 'active' : '';
 
-            card.className = `card rarity-${escapeHtml(data.rarity)} flip-reveal`;
+            card.className = `card rarity-${escapeHtml(data.rarity)} ${data.isFavorite ? 'favorite' : ''} flip-reveal`;
             
             const escTitle = escapeHtml(data.title);
             const escArtist = escapeHtml(data.artist);
@@ -1083,6 +1043,7 @@
 
             card.innerHTML = `
                 <div>
+                    <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromPack(${index}, ${data.id}, event)" title="Toggle Favorite">★</button>
                     <div class="rarity-badge">${escapeHtml(data.rarity)}</div>
                     <div class="cover-wrapper">
                         ${coverHTML}
@@ -1105,7 +1066,29 @@
             `;
         }
 
-        // --- PLAYER LOGIC & ADVANCED HYBRID AUTO-HEAL ---
+        function toggleFavoriteFromPack(slotIndex, albumId, event) {
+            if (event) event.stopPropagation();
+            
+            if (currentPackData[slotIndex]) {
+                currentPackData[slotIndex].isFavorite = !currentPackData[slotIndex].isFavorite;
+            }
+
+            const item = collection.get(albumId);
+            if (item) {
+                item.isFavorite = !item.isFavorite;
+                saveProgress();
+                renderCollectionUI();
+            }
+
+            const card = document.getElementById(`pack-card-${slotIndex}`);
+            if (card) {
+                const btn = card.querySelector('.fav-btn');
+                if (btn) btn.classList.toggle('active', currentPackData[slotIndex].isFavorite);
+                card.classList.toggle('favorite', currentPackData[slotIndex].isFavorite);
+            }
+        }
+
+        // --- PLAYER LOGIC & AUTOMATIC LINK REFRESH ---
 
         function playBestAlbumInPack() {
             if (currentPackData.length === 0) return;
@@ -1189,12 +1172,10 @@
             }
         }
 
-        // Трёхуровневая система автоматического восстановления ссылок (Deezer -> iTunes)
         async function refreshTrackPreview(album, trackObj) {
             const cleanArtist = cleanQueryString(album.artist);
             const cleanTrack = cleanQueryString(trackObj.name);
 
-            // 1. Пробуем Deezer API
             try {
                 const dzQuery = encodeURIComponent(`${cleanArtist} ${cleanTrack}`);
                 const dzData = await jsonpFetch(`https://api.deezer.com/search/track?q=${dzQuery}&limit=5&output=jsonp`);
@@ -1205,7 +1186,6 @@
                 }
             } catch (e) { console.log('Deezer auto-heal skipped'); }
 
-            // 2. Резервная проверка iTunes API
             try {
                 const itunesQuery = encodeURIComponent(`${cleanArtist} ${cleanTrack}`);
                 const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${itunesQuery}&entity=song&limit=5`);
@@ -1236,7 +1216,6 @@
 
             let audioUrlToPlay = previewUrl;
 
-            // Индикатор загрузки при поиске нового URL
             loadingTrackKey = trackKey;
             renderCollectionUI();
 
@@ -1320,7 +1299,7 @@
             if (!existing) {
                 collection.set(albumObj.id, {
                     ...albumObj,
-                    isFavorite: false,
+                    isFavorite: Boolean(albumObj.isFavorite),
                     tracks: albumObj.trackName ? [{
                         name: albumObj.trackName,
                         preview: albumObj.preview,
@@ -1328,6 +1307,7 @@
                     }] : []
                 });
             } else {
+                if (albumObj.isFavorite) existing.isFavorite = true;
                 if (albumObj.trackName) {
                     const trackExists = existing.tracks.some(t => t.name === albumObj.trackName);
                     if (!trackExists) {
