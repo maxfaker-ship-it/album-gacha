@@ -125,7 +125,7 @@
         .rarity-Эпическая .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Легендарная .rarity-badge { background: var(--rarity-legend); color: #000; }
 
-        /* Контейнер обложки и плеера */
+        /* Обложка и плей-оверлей */
         .cover-wrapper {
             position: relative;
             width: 100%;
@@ -143,7 +143,6 @@
             display: block;
         }
 
-        /* Кнопка Play / Pause - ТОЛЬКО ПРИ НАВЕДЕНИИ */
         .play-overlay {
             position: absolute;
             top: 0;
@@ -181,7 +180,6 @@
             transform: scale(1.1);
         }
 
-        /* Полоска прогресса внизу обложки */
         .progress-bar-container {
             position: absolute;
             bottom: 0;
@@ -198,7 +196,6 @@
             transition: width 0.1s linear;
         }
 
-        /* Цвет полоски совпадает с редкостью карты */
         .rarity-Обычная .progress-bar-fill { background: var(--rarity-common); }
         .rarity-Редкая .progress-bar-fill { background: var(--rarity-rare); }
         .rarity-Эпическая .progress-bar-fill { background: var(--rarity-epic); }
@@ -449,8 +446,8 @@
             playBestAlbumInPack();
         }
 
-        // Очистка строки поиска для iTunes от скобок и мусора
         function cleanQueryString(str) {
+            if (!str) return '';
             return str.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim();
         }
 
@@ -469,13 +466,38 @@
                     delete window[callbackName];
                     if (script.parentNode) script.parentNode.removeChild(script);
 
-                    let match = data?.results?.[0];
+                    let match = null;
+
+                    if (data && data.results && data.results.length > 0) {
+                        const targetArtist = cleanArtist.toLowerCase();
+                        const targetTitle = cleanTitle.toLowerCase();
+
+                        // 1. Попытка найти точное совпадение по альбому и артисту
+                        match = data.results.find(item => {
+                            const itemArtist = (item.artistName || '').toLowerCase();
+                            const itemCollection = (item.collectionName || '').toLowerCase();
+                            return (itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist)) &&
+                                   (itemCollection.includes(targetTitle) || targetTitle.includes(itemCollection));
+                        });
+
+                        // 2. Если точного релиза нет, сверяем хотя бы имя исполнителя
+                        if (!match) {
+                            match = data.results.find(item => {
+                                const itemArtist = (item.artistName || '').toLowerCase();
+                                return itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist);
+                            });
+                        }
+
+                        // 3. Крайний фоллбэк на первенца
+                        if (!match) match = data.results[0];
+                    }
+
                     const coverUrl = (match && match.artworkUrl100) 
                         ? match.artworkUrl100.replace('100x100bb', '600x600bb')
                         : fallbackCover;
 
                     resolve({
-                        ...albumData, // Сохраняем год, жанры и данные ИЗ albums.json
+                        ...albumData,
                         cover: coverUrl,
                         preview: match ? (match.previewUrl || '') : '',
                         pulledAt: Date.now() + Math.random()
@@ -494,7 +516,8 @@
                     });
                 };
 
-                script.src = `https://itunes.apple.com/search?term=${query}&entity=song&limit=1&callback=${callbackName}`;
+                // Ищем по альбомам (entity=album) для предотвращения подмены треков
+                script.src = `https://itunes.apple.com/search?term=${query}&entity=album&limit=5&callback=${callbackName}`;
                 document.body.appendChild(script);
             });
         }
@@ -529,7 +552,7 @@
             `;
         }
 
-        // --- ЛОГИКА ВОСПРОИЗВЕДЕНИЯ И КАРУСЕЛИ ---
+        // --- ЛОГИКА ПЛЕЕРА И КАРУСЕЛИ ---
 
         function playBestAlbumInPack() {
             if (currentPackData.length === 0) return;
