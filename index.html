@@ -572,7 +572,7 @@
         function jsonpFetch(url) {
             return new Promise((resolve) => {
                 const script = document.createElement('script');
-                const callbackName = `itunesCb_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+                const callbackName = `jsonpCb_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
                 window[callbackName] = function(data) {
                     delete window[callbackName];
@@ -607,7 +607,6 @@
             const asciiArtist = removeAccents(cleanArtist);
             const asciiTitle = removeAccents(cleanTitle);
 
-            // Мягкая нормализация: удаление точек, кавычек, скобок и спецсимволов
             const normalize = (str) => removeAccents(str)
                 .toLowerCase()
                 .replace(/[\.,\?!'"]+/g, '')
@@ -628,76 +627,92 @@
             let sourceAlbumName = '';
             let isFallbackTrack = false;
 
+            // --- ШАГ 1: Deezer API (Основной источник) ---
             try {
-                // 1. Поиск точного альбома
-                let albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=album&limit=25`);
-                
-                if (!albumSearchData || !albumSearchData.results || albumSearchData.results.length === 0) {
-                    albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${asciiArtist}${asciiTitle}`)}&entity=album&limit=25`);
-                }
+                const dzQuery = encodeURIComponent(`${asciiArtist} ${asciiTitle}`);
+                const dzAlbumData = await jsonpFetch(`https://api.deezer.com/search/album?q=${dzQuery}&limit=10&output=jsonp`);
 
-                let matchAlbum = null;
-
-                if (albumSearchData && albumSearchData.results && albumSearchData.results.length > 0) {
-                    matchAlbum = albumSearchData.results.find(item => {
-                        const itemArtistNorm = normalize(item.artistName || '');
-                        const itemCollectionNorm = normalize(item.collectionName || '');
+                if (dzAlbumData && dzAlbumData.data && dzAlbumData.data.length > 0) {
+                    const matchAlbum = dzAlbumData.data.find(item => {
+                        const itemArtistNorm = normalize(item.artist ? item.artist.name : '');
+                        const itemTitleNorm = normalize(item.title || '');
                         
                         const artistMatch = targetArtistNorm.length <= 4 
                             ? itemArtistNorm === targetArtistNorm 
                             : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
 
-                        const titleMatch = itemCollectionNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemCollectionNorm);
-                        
+                        const titleMatch = itemTitleNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemTitleNorm);
                         return artistMatch && titleMatch;
                     });
-                }
 
-                if (matchAlbum) {
-                    coverUrl = matchAlbum.artworkUrl100 ? matchAlbum.artworkUrl100.replace('100x100bb', '600x600bb') : '';
-                    
-                    if (matchAlbum.collectionId) {
-                        const lookupData = await jsonpFetch(`https://itunes.apple.com/lookup?id=${matchAlbum.collectionId}&entity=song&limit=25`);
-                        if (lookupData && lookupData.results) {
-                            const allSongs = lookupData.results.filter(r => r.wrapperType === 'track' && r.previewUrl);
-                            
-                            const validSongs = allSongs.filter(s => 
-                                (s.trackTimeMillis || 0) > 90000 && 
-                                !/(intro|skit|outro|interlude|prelude|speech|introductory)/i.test(s.trackName || '')
-                            );
-
-                            let bestHitTrack = null;
-                            try {
-                                const topSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(asciiArtist)}&entity=song&limit=15`);
-                                if (topSongsData && topSongsData.results) {
-                                    bestHitTrack = topSongsData.results.find(s => 
-                                        s.collectionId === matchAlbum.collectionId && s.previewUrl
-                                    );
+                    if (matchAlbum) {
+                        coverUrl = matchAlbum.cover_xl || matchAlbum.cover_big || matchAlbum.cover_medium || '';
+                        
+                        if (matchAlbum.id) {
+                            const dzTracksData = await jsonpFetch(`https://api.deezer.com/album/${matchAlbum.id}/tracks?output=jsonp`);
+                            if (dzTracksData && dzTracksData.data && dzTracksData.data.length > 0) {
+                                const validSongs = dzTracksData.data.filter(s => (s.duration || 0) > 60 && s.preview);
+                                const chosenTrack = validSongs.find(s => s.track_position >= 2 && s.track_position <= 5) || validSongs[0] || dzTracksData.data[0];
+                                if (chosenTrack) {
+                                    previewUrl = chosenTrack.preview;
+                                    trackName = chosenTrack.title;
                                 }
-                            } catch (e) {
-                                console.log('Hit lookup skipped');
-                            }
-
-                            const chosenTrack = bestHitTrack 
-                                || validSongs.find(s => s.trackNumber >= 2 && s.trackNumber <= 5) 
-                                || validSongs[0] 
-                                || allSongs[0];
-
-                            if (chosenTrack) {
-                                previewUrl = chosenTrack.previewUrl;
-                                trackName = chosenTrack.trackName || '';
                             }
                         }
                     }
                 }
+            } catch (e) {
+                console.log('Deezer search skipped');
+            }
 
-                // 2. ФОЛЛБЭК: Если альбома нет в iTunes, берем трек + обложку трека напрямую!
-                if (!previewUrl) {
-                    let artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanArtist)}&entity=song&limit=10`);
-                    if (!artistSongsData || !artistSongsData.results || artistSongsData.results.length === 0) {
-                        artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(asciiArtist)}&entity=song&limit=10`);
+            // --- ШАГ 2: iTunes API (Резервный источник) ---
+            if (!coverUrl || !previewUrl) {
+                try {
+                    let albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=album&limit=25`);
+                    if (!albumSearchData || !albumSearchData.results || albumSearchData.results.length === 0) {
+                        albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${asciiArtist}${asciiTitle}`)}&entity=album&limit=25`);
                     }
 
+                    if (albumSearchData && albumSearchData.results && albumSearchData.results.length > 0) {
+                        const matchAlbum = albumSearchData.results.find(item => {
+                            const itemArtistNorm = normalize(item.artistName || '');
+                            const itemCollectionNorm = normalize(item.collectionName || '');
+                            
+                            const artistMatch = targetArtistNorm.length <= 4 
+                                ? itemArtistNorm === targetArtistNorm 
+                                : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
+
+                            const titleMatch = itemCollectionNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemCollectionNorm);
+                            return artistMatch && titleMatch;
+                        });
+
+                        if (matchAlbum) {
+                            if (!coverUrl) {
+                                coverUrl = matchAlbum.artworkUrl100 ? matchAlbum.artworkUrl100.replace('100x100bb', '600x600bb') : '';
+                            }
+                            if (!previewUrl && matchAlbum.collectionId) {
+                                const lookupData = await jsonpFetch(`https://itunes.apple.com/lookup?id=${matchAlbum.collectionId}&entity=song&limit=25`);
+                                if (lookupData && lookupData.results) {
+                                    const allSongs = lookupData.results.filter(r => r.wrapperType === 'track' && r.previewUrl);
+                                    const validSongs = allSongs.filter(s => (s.trackTimeMillis || 0) > 90000);
+                                    const chosenTrack = validSongs.find(s => s.trackNumber >= 2 && s.trackNumber <= 5) || validSongs[0] || allSongs[0];
+                                    if (chosenTrack) {
+                                        previewUrl = chosenTrack.previewUrl;
+                                        trackName = chosenTrack.trackName || '';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error in iTunes search:', err);
+                }
+            }
+
+            // --- ШАГ 3: Фоллбэк на трек и фото артиста ---
+            if (!previewUrl || !coverUrl) {
+                try {
+                    let artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(asciiArtist)}&entity=song&limit=10`);
                     if (artistSongsData && artistSongsData.results && artistSongsData.results.length > 0) {
                         const artistMatch = artistSongsData.results.find(s => {
                             const itemArtistNorm = normalize(s.artistName || '');
@@ -707,32 +722,27 @@
                         }) || artistSongsData.results[0];
 
                         if (artistMatch) {
-                            previewUrl = artistMatch.previewUrl || '';
-                            trackName = artistMatch.trackName || '';
-                            sourceAlbumName = artistMatch.collectionName || '';
-                            isFallbackTrack = true;
-
-                            // Забираем обложку трека напрямую, если у нас нет обложки альбома
+                            if (!previewUrl) {
+                                previewUrl = artistMatch.previewUrl || '';
+                                trackName = artistMatch.trackName || '';
+                                sourceAlbumName = artistMatch.collectionName || '';
+                                isFallbackTrack = true;
+                            }
                             if (!coverUrl && artistMatch.artworkUrl100) {
                                 coverUrl = artistMatch.artworkUrl100.replace('100x100bb', '600x600bb');
                             }
                         }
                     }
 
-                    // Если обложки всё еще нет, подтягиваем портрет исполнителя через Deezer API (JSONP)
                     if (!coverUrl) {
-                        try {
-                            const dzData = await jsonpFetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(asciiArtist)}&limit=1&output=jsonp`);
-                            if (dzData && dzData.data && dzData.data.length > 0 && dzData.data[0].picture_big) {
-                                coverUrl = dzData.data[0].picture_big;
-                            }
-                        } catch (e) {
-                            coverUrl = '';
+                        const dzData = await jsonpFetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(asciiArtist)}&limit=1&output=jsonp`);
+                        if (dzData && dzData.data && dzData.data.length > 0 && dzData.data[0].picture_big) {
+                            coverUrl = dzData.data[0].picture_big;
                         }
                     }
+                } catch (e) {
+                    console.log('Fallback photo fetch error');
                 }
-            } catch (err) {
-                console.error('Error fetching media:', err);
             }
 
             return {
