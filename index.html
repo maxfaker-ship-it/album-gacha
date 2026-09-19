@@ -84,6 +84,7 @@
             justify-content: space-between;
             box-sizing: border-box;
             height: 100%;
+            overflow: hidden;
         }
 
         .card.playing {
@@ -206,18 +207,26 @@
             opacity: 1;
         }
 
+        /* Выравнивание кнопки Play ровно по центру */
         .play-btn-icon {
-            width: 42px;
-            height: 42px;
-            background: rgba(255, 255, 255, 0.9);
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.95);
             color: #000;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             transition: transform 0.15s ease;
+            padding-left: 3px; /* Оптическое выравнивание символа ▶ */
+            box-sizing: border-box;
+        }
+
+        .play-btn-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: #000;
         }
 
         .play-overlay:hover .play-btn-icon {
@@ -477,6 +486,17 @@
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+        // Экранирование HTML-символов против поломки верстки
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         async function loadDatabase() {
             try {
                 const res = await fetch('albums.json');
@@ -627,7 +647,7 @@
             let sourceAlbumName = '';
             let isFallbackTrack = false;
 
-            // --- ШАГ 1: Deezer API (Основной источник) ---
+            // --- ШАГ 1: Deezer API ---
             try {
                 const dzQuery = encodeURIComponent(`${asciiArtist} ${asciiTitle}`);
                 const dzAlbumData = await jsonpFetch(`https://api.deezer.com/search/album?q=${dzQuery}&limit=10&output=jsonp`);
@@ -665,7 +685,7 @@
                 console.log('Deezer search skipped');
             }
 
-            // --- ШАГ 2: iTunes API (Резервный источник) ---
+            // --- ШАГ 2: iTunes API (Резервный) ---
             if (!coverUrl || !previewUrl) {
                 try {
                     let albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=album&limit=25`);
@@ -709,7 +729,7 @@
                 }
             }
 
-            // --- ШАГ 3: Фоллбэк на трек и фото артиста ---
+            // --- ШАГ 3: Фоллбэк на синглы ---
             if (!previewUrl || !coverUrl) {
                 try {
                     let artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(asciiArtist)}&entity=song&limit=10`);
@@ -762,29 +782,37 @@
 
             const hasAudio = Boolean(data.preview);
 
-            card.className = `card rarity-${data.rarity} flip-reveal`;
+            card.className = `card rarity-${escapeHtml(data.rarity)} flip-reveal`;
             
+            const escTitle = escapeHtml(data.title);
+            const escArtist = escapeHtml(data.artist);
+            const escTrack = escapeHtml(data.trackName);
+            const escSourceAlbum = escapeHtml(data.sourceAlbumName);
+
             const coverHTML = data.cover ? `
-                <img src="${data.cover}" alt="${data.title}" class="cover-art" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'vinyl-placeholder\\'><div class=\\'ph-title\\'>${data.title}</div><div class=\\'ph-artist\\'>${data.artist}</div></div>';">
+                <img src="${escapeHtml(data.cover)}" alt="${escTitle}" class="cover-art" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'vinyl-placeholder\\'><div class=\\'ph-title\\'>${escTitle}</div><div class=\\'ph-artist\\'>${escArtist}</div></div>';">
             ` : `
                 <div class="vinyl-placeholder">
-                    <div class="ph-title">${data.title}</div>
-                    <div class="ph-artist">${data.artist}</div>
+                    <div class="ph-title">${escTitle}</div>
+                    <div class="ph-artist">${escArtist}</div>
                 </div>
             `;
 
+            // Выравнивание кнопки Play с помощью векторной иконки
             const overlayHTML = hasAudio ? `
                 <div class="play-overlay" onclick="togglePlaySlot(${index})">
-                    <div class="play-btn-icon" id="play-icon-${index}">▶</div>
+                    <div class="play-btn-icon" id="play-icon-${index}">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
                 </div>
             ` : '';
 
             let trackDisplay = '';
             if (data.trackName) {
                 if (data.isFallbackTrack) {
-                    trackDisplay = `<div class="track-preview-name fallback" title="${data.trackName} (from album '${data.sourceAlbumName}')">⚠️ 🎵 ${data.trackName} (from "${data.sourceAlbumName}")</div>`;
+                    trackDisplay = `<div class="track-preview-name fallback" title="${escTrack} (from album '${escSourceAlbum}')">⚠️ 🎵 ${escTrack} (from "${escSourceAlbum}")</div>`;
                 } else {
-                    trackDisplay = `<div class="track-preview-name" title="${data.trackName}">🎵 ${data.trackName}</div>`;
+                    trackDisplay = `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`;
                 }
             } else {
                 trackDisplay = `<div class="track-preview-name" style="color: #666;">🔇 No Audio Preview</div>`;
@@ -792,7 +820,7 @@
 
             card.innerHTML = `
                 <div>
-                    <div class="rarity-badge">${data.rarity}</div>
+                    <div class="rarity-badge">${escapeHtml(data.rarity)}</div>
                     <div class="cover-wrapper">
                         ${coverHTML}
                         ${overlayHTML}
@@ -801,15 +829,15 @@
                         </div>
                     </div>
                     <div class="album-info-top">
-                        <div class="album-title" title="${data.title}">${data.title}</div>
-                        <div class="artist-name" title="${data.artist}">${data.artist}</div>
+                        <div class="album-title" title="${escTitle}">${escTitle}</div>
+                        <div class="artist-name" title="${escArtist}">${escArtist}</div>
                         ${trackDisplay}
                     </div>
                 </div>
                 <div class="album-info-bottom">
-                    <div class="type-badge">${data.type}</div>
-                    <div class="score-badge">★ ${data.score}</div>
-                    <div class="genre-badge">🏷️ ${data.genre} | 📅 ${data.year}</div>
+                    <div class="type-badge">${escapeHtml(data.type)}</div>
+                    <div class="score-badge">★ ${escapeHtml(data.score)}</div>
+                    <div class="genre-badge">🏷️ ${escapeHtml(data.genre)} | 📅 ${escapeHtml(data.year)}</div>
                 </div>
             `;
         }
@@ -866,7 +894,9 @@
             const progressBar = document.getElementById(`progress-${slotIndex}`);
 
             if (card) card.classList.add('playing');
-            if (icon) icon.innerText = '❚❚';
+            if (icon) {
+                icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:3px;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            }
 
             currentAudio.ontimeupdate = () => {
                 if (currentAudio.duration) {
@@ -924,7 +954,9 @@
                 currentAudio.pause();
                 if (currentPlayingSlot !== null) {
                     const icon = document.getElementById(`play-icon-${currentPlayingSlot}`);
-                    if (icon) icon.innerText = '▶';
+                    if (icon) {
+                        icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                    }
                 }
             }
         }
@@ -947,7 +979,9 @@
             const progressBar = document.getElementById(`progress-${slotIndex}`);
 
             if (card) card.classList.remove('playing');
-            if (icon) icon.innerText = '▶';
+            if (icon) {
+                icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            }
             if (progressBar) progressBar.style.width = '0%';
         }
 
@@ -997,39 +1031,44 @@
                 else if (item.rarity === 'Rare') borderVar = 'rare';
                 
                 const isPlayingThis = (currentPlayingId === item.id) && currentAudio && !currentAudio.paused;
-                const playIconText = isPlayingThis ? '❚❚' : '▶';
+                const playIconSVG = isPlayingThis 
+                    ? '<svg viewBox="0 0 24 24" style="padding-right:3px;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>' 
+                    : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
 
                 const miniOverlay = item.preview ? `
                     <div class="play-overlay" onclick="playCollectionTrack(${item.id})">
-                        <div class="play-btn-icon">${playIconText}</div>
+                        <div class="play-btn-icon">${playIconSVG}</div>
                     </div>
                 ` : '';
 
+                const escTitle = escapeHtml(item.title);
+                const escArtist = escapeHtml(item.artist);
+
                 const coverImg = item.cover 
-                    ? `<img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
-                    : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${item.title}</div>`;
+                    ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
+                    : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${escTitle}</div>`;
 
                 if (currentViewMode === 'grid') {
                     const mini = document.createElement('div');
-                    mini.className = `mini-card rarity-${item.rarity} ${isPlayingThis ? 'playing' : ''}`;
+                    mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${isPlayingThis ? 'playing' : ''}`;
                     mini.style.borderColor = `var(--rarity-${borderVar})`;
                     mini.innerHTML = `
                         <div class="mini-cover-wrapper">
                             ${coverImg}
                             ${miniOverlay}
                         </div>
-                        <div class="title" title="${item.title}">${item.title}</div>
-                        <div class="mini-artist" title="${item.artist}">${item.artist}</div>
-                        <div class="mini-score">★ ${item.score}</div>
+                        <div class="title" title="${escTitle}">${escTitle}</div>
+                        <div class="mini-artist" title="${escArtist}">${escArtist}</div>
+                        <div class="mini-score">★ ${escapeHtml(item.score)}</div>
                         <div class="mini-info">
-                            <span>🏷️ ${item.genre}</span>
-                            <span>[${item.type}]</span>
+                            <span>🏷️ ${escapeHtml(item.genre)}</span>
+                            <span>[${escapeHtml(item.type)}]</span>
                         </div>
                     `;
                     container.appendChild(mini);
                 } else {
                     const listItem = document.createElement('div');
-                    listItem.className = `list-card rarity-${item.rarity} ${isPlayingThis ? 'playing' : ''}`;
+                    listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${isPlayingThis ? 'playing' : ''}`;
                     listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                     listItem.innerHTML = `
                         <div class="list-cover-wrapper">
@@ -1037,12 +1076,12 @@
                             ${miniOverlay}
                         </div>
                         <div class="list-main">
-                            <div class="list-title">${item.title}</div>
-                            <div class="list-artist">${item.artist}</div>
+                            <div class="list-title">${escTitle}</div>
+                            <div class="list-artist">${escArtist}</div>
                         </div>
                         <div class="list-meta">
-                            <div style="color: #eab308; font-weight: bold;">★ ${item.score}</div>
-                            <div>[${item.type}] | 🏷️ ${item.genre} | 📅 ${item.year} | <b>${item.rarity}</b></div>
+                            <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
+                            <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)} | <b>${escapeHtml(item.rarity)}</b></div>
                         </div>
                     `;
                     container.appendChild(listItem);
