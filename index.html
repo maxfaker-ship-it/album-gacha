@@ -56,19 +56,21 @@
             transform: none;
         }
 
+        /* Контейнер пака с фиксированной высотой карточек */
         .pack-container {
             display: flex;
             flex-direction: row;
             gap: 12px;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: stretch;
             margin-bottom: 40px;
             width: 100%;
             max-width: 1300px;
             box-sizing: border-box;
+            min-height: 420px;
         }
 
-        /* Компактная карточка без растянутого низа */
+        /* Карточка строго фиксированной формы */
         .card {
             flex: 1;
             min-width: 0;
@@ -81,7 +83,9 @@
             transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             box-sizing: border-box;
+            height: 100%;
         }
 
         .card.playing {
@@ -125,7 +129,7 @@
             border-radius: 10px;
             font-weight: bold;
             font-size: 0.65rem;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             text-transform: uppercase;
         }
 
@@ -138,10 +142,13 @@
             position: relative;
             width: 100%;
             aspect-ratio: 1/1;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             border-radius: 6px;
             overflow: hidden;
             background: #18181c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .cover-art {
@@ -151,24 +158,34 @@
             display: block;
         }
 
-        .fallback-track-badge {
-            position: absolute;
-            top: 6px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(220, 38, 38, 0.9);
-            color: #fff;
-            font-size: 0.6rem;
+        /* Заглушка, если обложка не найдена */
+        .vinyl-placeholder {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #2a2a35 0%, #111115 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #333;
+        }
+
+        .vinyl-placeholder .ph-title {
+            font-size: 0.85rem;
             font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-            z-index: 3;
-            pointer-events: none;
-            max-width: 90%;
+            color: #fff;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
-            text-overflow: ellipsis;
+        }
+
+        .vinyl-placeholder .ph-artist {
+            font-size: 0.7rem;
+            color: #888;
         }
 
         .play-overlay {
@@ -229,10 +246,11 @@
         .rarity-Epic .progress-bar-fill { background: var(--rarity-epic); }
         .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
 
-        .album-info-block {
+        .album-info-top {
             display: flex;
             flex-direction: column;
             gap: 2px;
+            margin-bottom: 6px;
         }
 
         .album-title {
@@ -257,10 +275,21 @@
             color: #6366f1;
             font-size: 0.7rem;
             font-weight: bold;
-            margin: 1px 0 3px 0;
+            margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .track-preview-name.fallback {
+            color: #eab308;
+        }
+
+        .album-info-bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: auto;
         }
 
         .type-badge {
@@ -272,14 +301,13 @@
             border-radius: 4px;
             font-size: 0.65rem;
             font-weight: bold;
-            margin: 2px 0 1px 0;
         }
 
         .score-badge {
             color: #eab308;
             font-weight: bold;
             font-size: 0.8rem;
-            margin: 0;
+            margin: 1px 0;
         }
 
         .genre-badge {
@@ -400,7 +428,6 @@
     </div>
 
     <script>
-        // Маппинг русских названий редкостей из albums.json в английские
         const RARITY_MAP = {
             'Легендарная': 'Legendary',
             'Эпическая': 'Epic',
@@ -426,7 +453,6 @@
                 const res = await fetch('albums.json');
                 const rawData = await res.json();
                 
-                // Переводим редкости в английские термины
                 allAlbums = rawData.map(item => ({
                     ...item,
                     rarity: RARITY_MAP[item.rarity] || item.rarity || 'Common'
@@ -469,10 +495,12 @@
                     <div>
                         <div class="rarity-badge">???</div>
                         <div class="cover-wrapper"></div>
-                        <div class="album-title">Opening...</div>
-                        <div class="artist-name">...</div>
+                        <div class="album-info-top">
+                            <div class="album-title">Opening...</div>
+                            <div class="artist-name">...</div>
+                        </div>
                     </div>
-                    <div>
+                    <div class="album-info-bottom">
                         <div class="type-badge">...</div>
                         <div class="score-badge">★ -.-</div>
                         <div class="genre-badge">🏷️ ...</div>
@@ -538,9 +566,20 @@
         async function fetchiTunesMedia(albumData) {
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
-            const fallbackCover = `https://placehold.co/600x600/1e1e24/f0f0f5?text=${encodeURIComponent(albumData.title)}`;
 
-            let coverUrl = fallbackCover;
+            // Функция нормализации текста (удаляет служебные подписи iTunes)
+            const normalize = (str) => str.toLowerCase()
+                .replace(/\(.*?edition.*?\)/gi, '')
+                .replace(/\(.*?remastered.*?\)/gi, '')
+                .replace(/\(.*?version.*?\)/gi, '')
+                .replace(/\(.*?bonus.*?\)/gi, '')
+                .replace(/deluxe|remastered|explicit/gi, '')
+                .trim();
+
+            const targetArtistNorm = normalize(cleanArtist);
+            const targetTitleNorm = normalize(cleanTitle);
+
+            let coverUrl = '';
             let previewUrl = '';
             let trackName = '';
             let sourceAlbumName = '';
@@ -553,25 +592,22 @@
                 let matchAlbum = null;
 
                 if (albumSearchData && albumSearchData.results && albumSearchData.results.length > 0) {
-                    const targetArtist = cleanArtist.toLowerCase();
-                    const targetTitle = cleanTitle.toLowerCase();
-
                     matchAlbum = albumSearchData.results.find(item => {
-                        const itemArtist = (item.artistName || '').toLowerCase();
-                        const itemCollection = (item.collectionName || '').toLowerCase();
+                        const itemArtistNorm = normalize(item.artistName || '');
+                        const itemCollectionNorm = normalize(item.collectionName || '');
                         
-                        const artistMatch = itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist);
-                        const titleMatch = itemCollection.includes(targetTitle) || targetTitle.includes(itemCollection);
+                        const artistMatch = itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm);
+                        const titleMatch = itemCollectionNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemCollectionNorm);
                         
                         return artistMatch && titleMatch;
                     });
                 }
 
                 if (matchAlbum) {
-                    coverUrl = matchAlbum.artworkUrl100 ? matchAlbum.artworkUrl100.replace('100x100bb', '600x600bb') : fallbackCover;
+                    coverUrl = matchAlbum.artworkUrl100 ? matchAlbum.artworkUrl100.replace('100x100bb', '600x600bb') : '';
                     
                     if (matchAlbum.collectionId) {
-                        const lookupData = await jsonpFetch(`https://itunes.apple.com/lookup?id=${matchAlbum.collectionId}&entity=song&limit=2`);
+                        const lookupData = await jsonpFetch(`https://itunes.apple.com/lookup?id=${matchAlbum.collectionId}&entity=song&limit=5`);
                         if (lookupData && lookupData.results) {
                             const songMatch = lookupData.results.find(r => r.wrapperType === 'track');
                             if (songMatch && songMatch.previewUrl) {
@@ -582,20 +618,19 @@
                     }
                 }
 
-                // ФОЛЛБЭК: Если родного альбома/трека нет, берем популярный трек этого же исполнителя
+                // ФОЛЛБЭК: Если родной альбом не найден, ищем популярный трек артиста
                 if (!previewUrl) {
                     const artistQuery = encodeURIComponent(cleanArtist);
                     const artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${artistQuery}&entity=song&limit=5`);
 
                     if (artistSongsData && artistSongsData.results && artistSongsData.results.length > 0) {
-                        const targetArtist = cleanArtist.toLowerCase();
                         const artistMatch = artistSongsData.results.find(s => {
-                            const itemArtist = (s.artistName || '').toLowerCase();
-                            return itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist);
+                            const itemArtistNorm = normalize(s.artistName || '');
+                            return itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm);
                         }) || artistSongsData.results[0];
 
                         if (artistMatch) {
-                            if (coverUrl === fallbackCover && artistMatch.artworkUrl100) {
+                            if (!coverUrl && artistMatch.artworkUrl100) {
                                 coverUrl = artistMatch.artworkUrl100.replace('100x100bb', '600x600bb');
                             }
                             previewUrl = artistMatch.previewUrl || '';
@@ -624,15 +659,19 @@
             const card = document.getElementById(`pack-card-${index}`);
             if (!card) return;
 
-            const fallbackImg = `https://placehold.co/600x600/1e1e24/f0f0f5?text=${encodeURIComponent(data.title)}`;
             const hasAudio = Boolean(data.preview);
 
             card.className = `card rarity-${data.rarity} flip-reveal`;
             
-            // Если трек от другого альбома — выводим бедбж с названием источника
-            const fallbackBadge = data.isFallbackTrack 
-                ? `<div class="fallback-track-badge" title="From album: ${data.sourceAlbumName}">⚠️ ${data.sourceAlbumName || 'Other Album'}</div>` 
-                : '';
+            // Заглушка обложки
+            const coverHTML = data.cover ? `
+                <img src="${data.cover}" alt="${data.title}" class="cover-art" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'vinyl-placeholder\\'><div class=\\'ph-title\\'>${data.title}</div><div class=\\'ph-artist\\'>${data.artist}</div></div>';">
+            ` : `
+                <div class="vinyl-placeholder">
+                    <div class="ph-title">${data.title}</div>
+                    <div class="ph-artist">${data.artist}</div>
+                </div>
+            `;
 
             const overlayHTML = hasAudio ? `
                 <div class="play-overlay" onclick="togglePlaySlot(${index})">
@@ -640,32 +679,35 @@
                 </div>
             ` : '';
 
-            // Отображение наименования трека
+            // Отображение трека
             let trackDisplay = '';
             if (data.trackName) {
-                trackDisplay = data.isFallbackTrack 
-                    ? `<div class="track-preview-name" title="${data.trackName} (from ${data.sourceAlbumName})">⚠️ 🎵 ${data.trackName}</div>`
-                    : `<div class="track-preview-name" title="${data.trackName}">🎵 ${data.trackName}</div>`;
+                if (data.isFallbackTrack) {
+                    trackDisplay = `<div class="track-preview-name fallback" title="${data.trackName} (from album '${data.sourceAlbumName}')">⚠️ 🎵 ${data.trackName} (from "${data.sourceAlbumName}")</div>`;
+                } else {
+                    trackDisplay = `<div class="track-preview-name" title="${data.trackName}">🎵 ${data.trackName}</div>`;
+                }
+            } else {
+                trackDisplay = `<div class="track-preview-name" style="color: #666;">🔇 No Audio Preview</div>`;
             }
 
             card.innerHTML = `
                 <div>
                     <div class="rarity-badge">${data.rarity}</div>
                     <div class="cover-wrapper">
-                        <img src="${data.cover}" alt="${data.title}" class="cover-art" onerror="this.onerror=null;this.src='${fallbackImg}';">
-                        ${fallbackBadge}
+                        ${coverHTML}
                         ${overlayHTML}
                         <div class="progress-bar-container">
                             <div class="progress-bar-fill" id="progress-${index}"></div>
                         </div>
                     </div>
-                    <div class="album-info-block">
+                    <div class="album-info-top">
                         <div class="album-title" title="${data.title}">${data.title}</div>
                         <div class="artist-name" title="${data.artist}">${data.artist}</div>
                         ${trackDisplay}
                     </div>
                 </div>
-                <div class="album-info-block">
+                <div class="album-info-bottom">
                     <div class="type-badge">${data.type}</div>
                     <div class="score-badge">★ ${data.score}</div>
                     <div class="genre-badge">🏷️ ${data.genre} | 📅 ${data.year}</div>
@@ -816,12 +858,16 @@
                 else if (item.rarity === 'Epic') borderVar = 'epic';
                 else if (item.rarity === 'Rare') borderVar = 'rare';
                 
+                const coverImg = item.cover 
+                    ? `<img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
+                    : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${item.title}</div>`;
+
                 if (currentViewMode === 'grid') {
                     const mini = document.createElement('div');
                     mini.className = `mini-card rarity-${item.rarity}`;
                     mini.style.borderColor = `var(--rarity-${borderVar})`;
                     mini.innerHTML = `
-                        <img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">
+                        ${coverImg}
                         <div class="title" title="${item.title}">${item.title}</div>
                         <div class="mini-artist" title="${item.artist}">${item.artist}</div>
                         <div class="mini-score">★ ${item.score}</div>
@@ -836,7 +882,7 @@
                     listItem.className = `list-card rarity-${item.rarity}`;
                     listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                     listItem.innerHTML = `
-                        <img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=No+Cover';">
+                        ${coverImg}
                         <div class="list-main">
                             <div class="list-title">${item.title}</div>
                             <div class="list-artist">${item.artist}</div>
