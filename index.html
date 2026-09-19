@@ -149,7 +149,7 @@
         .card.rarity-Epic { border-color: var(--rarity-epic); }
         .card.rarity-Legendary { border-color: var(--rarity-legend); }
 
-        /* ВЕРХНЯЯ СТРОКА КАРТОЧКИ (LVL, RARITY, FAV) ВРОВЕНЬ */
+        /* ВЕРХНЯЯ СТРОКА КАРТОЧКИ (LVL, RARITY, FAV) */
         .card-top-bar {
             display: flex;
             align-items: center;
@@ -195,7 +195,7 @@
             height: 22px;
             border-radius: 50%;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             transition: color 0.2s, transform 0.1s;
@@ -357,10 +357,6 @@
             text-overflow: ellipsis;
         }
 
-        .track-preview-name.fallback {
-            color: #eab308;
-        }
-
         .album-info-bottom {
             display: flex;
             flex-direction: column;
@@ -471,7 +467,7 @@
         .mini-card .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; font-weight: bold; }
         .mini-card .mini-artist { color: #bbb; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
-        .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: 6px; display: flex; justify-content: space-between; }
+        .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: 6px; display: flex; flex-direction: column; gap: 2px; align-items: center; }
 
         .artist-group {
             background: #18181c;
@@ -498,9 +494,10 @@
         .list-card {
             background: var(--card-bg);
             border-radius: 8px;
-            padding: 8px 12px;
+            padding: 10px 14px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 15px;
             border-left: 4px solid var(--rarity-common);
             transition: background 0.2s;
@@ -526,10 +523,11 @@
         }
 
         .list-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-        .list-card .list-main { flex-grow: 1; overflow: hidden; }
+        .list-card .list-main { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
         .list-card .list-title { font-weight: bold; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .list-card .list-artist { color: #aaa; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .list-card .list-meta { color: #777; font-size: 0.75rem; text-align: right; }
+        .list-card .list-right-group { display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
+        .list-card .list-meta { color: #777; font-size: 0.75rem; text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
     </style>
 </head>
 <body>
@@ -588,9 +586,8 @@
         let currentAudio = null;
         let currentPlayingSlot = null;
         let currentPlayingId = null; 
+        let loadingCollectionId = null;
         let currentPackData = [];
-
-        let globalDiscographyUsedTracks = new Set();
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -604,12 +601,16 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // --- LOCAL STORAGE ---
         function saveProgress() {
             try {
-                const serializableCol = Array.from(collection.entries());
+                // Сохраняем только чистые данные альбома без затухающих временных URL!
+                const serializableCol = Array.from(collection.entries()).map(([id, item]) => {
+                    const cleanItem = { ...item };
+                    delete cleanItem.preview;
+                    delete cleanItem.trackName;
+                    return [id, cleanItem];
+                });
                 localStorage.setItem('album_gacha_collection', JSON.stringify(serializableCol));
-                localStorage.setItem('album_gacha_used_discog', JSON.stringify(Array.from(globalDiscographyUsedTracks)));
             } catch (e) {
                 console.error('Failed to save collection:', e);
             }
@@ -621,11 +622,6 @@
                 if (savedCol) {
                     collection = new Map(JSON.parse(savedCol));
                 }
-
-                const savedUsedDiscog = localStorage.getItem('album_gacha_used_discog');
-                if (savedUsedDiscog) {
-                    globalDiscographyUsedTracks = new Set(JSON.parse(savedUsedDiscog));
-                }
             } catch (e) {
                 console.error('Failed to load collection:', e);
             }
@@ -634,9 +630,7 @@
         function clearSaveData() {
             if (confirm('Are you sure you want to clear your collection and restart?')) {
                 localStorage.removeItem('album_gacha_collection');
-                localStorage.removeItem('album_gacha_used_discog');
                 collection.clear();
-                globalDiscographyUsedTracks.clear();
                 renderCollectionUI();
             }
         }
@@ -721,7 +715,7 @@
                 const targetRarity = rollRarity();
                 const rawAlbum = getRandomAlbumByRarity(targetRarity);
 
-                const albumObj = await fetchNextTrackForAlbum(rawAlbum);
+                const albumObj = await fetchHitTrackForAlbum(rawAlbum);
                 currentPackData.push(albumObj);
                 
                 revealCardInPack(albumObj, i);
@@ -737,23 +731,6 @@
         function cleanQueryString(str) {
             if (!str) return '';
             return str.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim();
-        }
-
-        function normalize(str) {
-            if (!str) return '';
-            return str.normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/\$/g, 's')
-                .replace(/&/g, 'and')
-                .toLowerCase()
-                .replace(/[\.,\?!'"]+/g, '')
-                .replace(/\(.*?edition.*?\)/gi, '')
-                .replace(/\(.*?remastered.*?\)/gi, '')
-                .replace(/\(.*?version.*?\)/gi, '')
-                .replace(/\(.*?bonus.*?\)/gi, '')
-                .replace(/deluxe|remastered|explicit/gi, '')
-                .replace(/[^a-z0-9]/gi, '')
-                .trim();
         }
 
         function jsonpFetch(url) {
@@ -779,127 +756,61 @@
             });
         }
 
-        async function fetchNextTrackForAlbum(albumData) {
+        // ДИНАМИЧЕСКИЙ ПОИСК САМОГО ПОПУЛЯРНОГО / ХИТОВОГО ТРЕКА С АЛЬБОМА
+        async function fetchHitTrackForAlbum(albumData) {
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
 
-            const targetArtistNorm = normalize(cleanArtist);
-            const targetTitleNorm = normalize(cleanTitle);
-
             const existingEntry = collection.get(albumData.id);
             const pullCount = existingEntry ? (existingEntry.pulls || 1) + 1 : 1;
-
             let coverUrl = existingEntry ? existingEntry.cover : '';
-            let candidateTracks = [];
 
-            // --- 1. DEEZER API ---
+            let hitTrack = null;
+
+            // 1. Поиск релиза через Deezer API
             try {
-                const dzQuery = encodeURIComponent(`${cleanArtist} ${cleanTitle}`);
-                const dzAlbumData = await jsonpFetch(`https://api.deezer.com/search/album?q=${dzQuery}&limit=10&output=jsonp`);
-
-                if (dzAlbumData && dzAlbumData.data && dzAlbumData.data.length > 0) {
-                    const matchAlbum = dzAlbumData.data.find(item => {
-                        const itemArtistNorm = normalize(item.artist ? item.artist.name : '');
-                        const itemTitleNorm = normalize(item.title || '');
-                        
-                        const artistMatch = targetArtistNorm.length <= 4 
-                            ? itemArtistNorm === targetArtistNorm 
-                            : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
-
-                        const titleMatch = targetTitleNorm.length <= 4
-                            ? itemTitleNorm === targetTitleNorm
-                            : (itemTitleNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemTitleNorm));
-
-                        return artistMatch && titleMatch;
-                    });
-
-                    if (matchAlbum) {
-                        if (!coverUrl) coverUrl = matchAlbum.cover_xl || matchAlbum.cover_big || matchAlbum.cover_medium || '';
-                        
-                        if (matchAlbum.id) {
-                            const dzTracksData = await jsonpFetch(`https://api.deezer.com/album/${matchAlbum.id}/tracks?output=jsonp`);
-                            if (dzTracksData && dzTracksData.data && dzTracksData.data.length > 0) {
-                                candidateTracks = dzTracksData.data
-                                    .filter(s => (s.duration || 0) > 40 && s.preview)
-                                    .map(s => ({
-                                        name: s.title,
-                                        preview: s.preview,
-                                        source: matchAlbum.title,
-                                        isFallback: false
-                                    }));
+                const dzData = await jsonpFetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&limit=5&output=jsonp`);
+                if (dzData && dzData.data && dzData.data.length > 0) {
+                    const match = dzData.data[0];
+                    if (!coverUrl) coverUrl = match.cover_xl || match.cover_big || '';
+                    if (match.id) {
+                        const tracksData = await jsonpFetch(`https://api.deezer.com/album/${match.id}/tracks?output=jsonp`);
+                        if (tracksData && tracksData.data && tracksData.data.length > 0) {
+                            const topHit = tracksData.data.find(s => s.preview);
+                            if (topHit) {
+                                hitTrack = { name: topHit.title, preview: topHit.preview };
                             }
                         }
                     }
                 }
-            } catch (e) { console.log('Deezer search skipped'); }
+            } catch (e) { console.log('Deezer hit fetch skipped'); }
 
-            // --- 2. iTUNES API ---
-            if (candidateTracks.length === 0) {
+            // 2. Поиск релиза через iTunes API
+            if (!hitTrack) {
                 try {
-                    let albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=album&limit=25`);
-
-                    if (albumSearchData && albumSearchData.results && albumSearchData.results.length > 0) {
-                        const matchAlbum = albumSearchData.results.find(item => {
-                            const itemArtistNorm = normalize(item.artistName || '');
-                            const itemCollectionNorm = normalize(item.collectionName || '');
-                            
-                            const artistMatch = targetArtistNorm.length <= 4 
-                                ? itemArtistNorm === targetArtistNorm 
-                                : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
-
-                            const titleMatch = targetTitleNorm.length <= 4
-                                ? itemCollectionNorm === targetTitleNorm
-                                : (itemCollectionNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemCollectionNorm));
-
-                            return artistMatch && titleMatch;
-                        });
-
-                        if (matchAlbum) {
-                            if (!coverUrl) coverUrl = matchAlbum.artworkUrl100 ? matchAlbum.artworkUrl100.replace('100x100bb', '600x600bb') : '';
-                            if (matchAlbum.collectionId) {
-                                const lookupData = await jsonpFetch(`https://itunes.apple.com/lookup?id=${matchAlbum.collectionId}&entity=song&limit=30`);
-                                if (lookupData && lookupData.results) {
-                                    candidateTracks = lookupData.results
-                                        .filter(r => r.wrapperType === 'track' && r.previewUrl)
-                                        .map(s => ({
-                                            name: s.trackName,
-                                            preview: s.previewUrl,
-                                            source: matchAlbum.collectionName,
-                                            isFallback: false
-                                        }));
-                                }
-                            }
+                    const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=song&limit=15`);
+                    if (itunesData && itunesData.results && itunesData.results.length > 0) {
+                        const matchSong = itunesData.results.find(s => s.previewUrl);
+                        if (matchSong) {
+                            if (!coverUrl && matchSong.artworkUrl100) coverUrl = matchSong.artworkUrl100.replace('100x100bb', '600x600bb');
+                            hitTrack = { name: matchSong.trackName, preview: matchSong.previewUrl };
                         }
                     }
-                } catch (err) { console.error('Error in iTunes search:', err); }
+                } catch (e) { console.log('iTunes hit fetch skipped'); }
             }
 
-            // --- 3. ФОЛЛБЭК: Дискография исполнителя ---
-            let selectedTrack = null;
-
-            if (candidateTracks.length > 0) {
-                selectedTrack = candidateTracks[Math.floor(Math.random() * candidateTracks.length)];
-            } else {
+            // 3. Фоллбэк: Главный топ-трек исполнителя
+            if (!hitTrack) {
                 try {
-                    let artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanArtist)}&entity=song&limit=25`);
-                    if (artistSongsData && artistSongsData.results && artistSongsData.results.length > 0) {
-                        const discogCandidates = artistSongsData.results
-                            .filter(s => s.previewUrl)
-                            .map(s => ({
-                                name: s.trackName,
-                                preview: s.previewUrl,
-                                source: s.collectionName || 'Single/Top Track',
-                                isFallback: true,
-                                art: s.artworkUrl100
-                            }));
-
-                        selectedTrack = discogCandidates[Math.floor(Math.random() * discogCandidates.length)];
-
-                        if (!coverUrl && discogCandidates.length > 0 && discogCandidates[0].art) {
-                            coverUrl = discogCandidates[0].art.replace('100x100bb', '600x600bb');
+                    const artistData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanArtist)}&entity=song&limit=5`);
+                    if (artistData && artistData.results && artistData.results.length > 0) {
+                        const topArtistTrack = artistData.results.find(s => s.previewUrl);
+                        if (topArtistTrack) {
+                            if (!coverUrl && topArtistTrack.artworkUrl100) coverUrl = topArtistTrack.artworkUrl100.replace('100x100bb', '600x600bb');
+                            hitTrack = { name: topArtistTrack.trackName, preview: topArtistTrack.previewUrl };
                         }
                     }
-                } catch (e) { console.log('Fallback photo fetch error'); }
+                } catch (e) { console.log('Artist fallback skipped'); }
             }
 
             const isFav = existingEntry ? Boolean(existingEntry.isFavorite) : false;
@@ -909,10 +820,8 @@
                 pulls: pullCount,
                 isFavorite: isFav,
                 cover: coverUrl,
-                preview: selectedTrack ? selectedTrack.preview : '',
-                trackName: selectedTrack ? selectedTrack.name : '',
-                sourceAlbumName: selectedTrack ? selectedTrack.source : '',
-                isFallbackTrack: selectedTrack ? selectedTrack.isFallback : false,
+                preview: hitTrack ? hitTrack.preview : '',
+                trackName: hitTrack ? hitTrack.name : 'Popular Track',
                 pulledAt: Date.now() + Math.random()
             };
         }
@@ -929,7 +838,6 @@
             const escTitle = escapeHtml(data.title);
             const escArtist = escapeHtml(data.artist);
             const escTrack = escapeHtml(data.trackName);
-            const escSourceAlbum = escapeHtml(data.sourceAlbumName);
 
             const coverHTML = data.cover ? `
                 <img src="${escapeHtml(data.cover)}" alt="${escTitle}" class="cover-art" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'vinyl-placeholder\\'><div class=\\'ph-title\\'>${escTitle}</div><div class=\\'ph-artist\\'>${escArtist}</div></div>';">
@@ -948,16 +856,9 @@
                 </div>
             ` : '';
 
-            let trackDisplay = '';
-            if (data.trackName) {
-                if (data.isFallbackTrack) {
-                    trackDisplay = `<div class="track-preview-name fallback" title="${escTrack} (from '${escSourceAlbum}')">⚠️ 🎵 ${escTrack}</div>`;
-                } else {
-                    trackDisplay = `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`;
-                }
-            } else {
-                trackDisplay = `<div class="track-preview-name" style="color: #666;">🔇 No Audio Preview</div>`;
-            }
+            let trackDisplay = data.trackName 
+                ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
+                : `<div class="track-preview-name" style="color: #666;">🔇 No Audio Preview</div>`;
 
             card.innerHTML = `
                 <div>
@@ -1054,7 +955,6 @@
 
             currentPlayingSlot = slotIndex;
             currentPlayingId = `pack_${albumData.id}`;
-            currentAudio = new Audio(albumData.preview);
 
             const card = document.getElementById(`pack-card-${slotIndex}`);
             const icon = document.getElementById(`play-icon-${slotIndex}`);
@@ -1065,6 +965,7 @@
                 icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
             }
 
+            currentAudio = new Audio(albumData.preview);
             currentAudio.ontimeupdate = () => {
                 if (currentAudio.duration) {
                     const pct = (currentAudio.currentTime / currentAudio.duration) * 100;
@@ -1077,7 +978,7 @@
                 playNextSlotInCarousel(slotIndex);
             };
 
-            currentAudio.play().catch(e => console.log('Autoplay blocked or link expired:', e));
+            currentAudio.play().catch(e => console.log('Autoplay blocked:', e));
             renderCollectionUI();
         }
 
@@ -1093,6 +994,7 @@
             }
         }
 
+        // ВОСПРОИЗВЕДЕНИЕ ИЗ КОЛЛЕКЦИИ (НОВЫЙ ЖИВОЙ ЗАПРОС ХИТА)
         async function playCollectionAlbum(albumId) {
             const trackKey = `col_${albumId}`;
 
@@ -1103,32 +1005,42 @@
             }
 
             stopCurrentAudio();
-            
+
             const album = collection.get(albumId);
-            if (!album || !album.preview) return;
+            if (!album) return;
 
-            currentPlayingId = trackKey;
-            currentAudio = new Audio(album.preview);
+            loadingCollectionId = albumId;
+            renderCollectionUI();
 
-            currentAudio.onended = () => {
-                currentPlayingId = null;
-                renderCollectionUI();
-            };
+            const refreshedData = await fetchHitTrackForAlbum(album);
+            loadingCollectionId = null;
 
-            currentAudio.play().catch(e => console.log('Playback error:', e));
+            if (refreshedData && refreshedData.preview) {
+                currentPlayingId = trackKey;
+                currentAudio = new Audio(refreshedData.preview);
+                currentAudio.onended = () => {
+                    currentPlayingId = null;
+                    renderCollectionUI();
+                };
+                currentAudio.play().catch(e => console.log('Playback blocked:', e));
+            } else {
+                alert('Audio preview not available for this album right now.');
+            }
+
             renderCollectionUI();
         }
 
         function pauseCurrentAudio() {
             if (currentAudio) {
                 currentAudio.pause();
-                if (currentPlayingSlot !== null) {
-                    const icon = document.getElementById(`play-icon-${currentPlayingSlot}`);
-                    if (icon) {
-                        icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-                    }
+            }
+            if (currentPlayingSlot !== null) {
+                const icon = document.getElementById(`play-icon-${currentPlayingSlot}`);
+                if (icon) {
+                    icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
                 }
             }
+            currentPlayingId = null;
         }
 
         function stopCurrentAudio() {
@@ -1141,6 +1053,7 @@
                 currentPlayingSlot = null;
             }
             currentPlayingId = null;
+            loadingCollectionId = null;
         }
 
         function resetSlotUI(slotIndex) {
@@ -1245,12 +1158,17 @@
             const escTitle = escapeHtml(item.title);
             const escArtist = escapeHtml(item.artist);
             const isPlaying = (currentPlayingId === `col_${item.id}`) && currentAudio && !currentAudio.paused;
+            const isLoading = (loadingCollectionId === item.id);
 
             const coverImg = item.cover 
                 ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
                 : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${escTitle}</div>`;
 
             const favStarClass = item.isFavorite ? 'active' : '';
+
+            let playIconSVG = '<path d="M8 5v14l11-7z"/>';
+            if (isLoading) playIconSVG = ''; // Показываем текст ⏳
+            else if (isPlaying) playIconSVG = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
 
             if (mode === 'grid') {
                 const mini = document.createElement('div');
@@ -1268,7 +1186,7 @@
                             ${coverImg}
                             <div class="play-overlay">
                                 <div class="play-btn-icon">
-                                    <svg viewBox="0 0 24 24">${isPlaying ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>'}</svg>
+                                    ${isLoading ? '⏳' : `<svg viewBox="0 0 24 24">${playIconSVG}</svg>`}
                                 </div>
                             </div>
                         </div>
@@ -1278,7 +1196,7 @@
                     </div>
                     <div>
                         <div class="mini-info">
-                            <span>🏷️ ${escapeHtml(item.genre)}</span>
+                            <span>📅 ${escapeHtml(item.year)} | 🏷️ ${escapeHtml(item.genre)}</span>
                             <span>[${escapeHtml(item.type)}]</span>
                         </div>
                     </div>
@@ -1290,17 +1208,21 @@
                 listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                 listItem.onclick = () => playCollectionAlbum(item.id);
                 listItem.innerHTML = `
-                    <div class="list-cover-wrapper">
-                        ${coverImg}
+                    <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
+                        <div class="list-cover-wrapper">
+                            ${coverImg}
+                        </div>
+                        <div class="list-main">
+                            <div class="list-title">${escTitle} <span style="font-size:0.75rem; color:#f59e0b;">(LVL ${item.pulls || 1})</span></div>
+                            <div class="list-artist">${escArtist}</div>
+                        </div>
                     </div>
-                    <div class="list-main">
-                        <div class="list-title">${escTitle} <span style="font-size:0.75rem; color:#f59e0b;">(LVL ${item.pulls || 1})</span></div>
-                        <div class="list-artist">${escArtist}</div>
-                    </div>
-                    <div class="list-meta">
-                        <button class="fav-btn ${favStarClass}" style="position:static; margin-bottom:4px;" onclick="toggleFavorite(${item.id}, event)">★</button>
-                        <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
-                        <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)} | <b>${escapeHtml(item.rarity)}</b></div>
+                    <div class="list-right-group">
+                        <div class="list-meta">
+                            <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
+                            <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)} | <b>${escapeHtml(item.rarity)}</b></div>
+                        </div>
+                        <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
                     </div>
                 `;
                 return listItem;
