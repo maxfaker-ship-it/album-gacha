@@ -201,7 +201,8 @@
         }
 
         .cover-wrapper:hover .play-overlay,
-        .mini-cover-wrapper:hover .play-overlay {
+        .mini-cover-wrapper:hover .play-overlay,
+        .list-cover-wrapper:hover .play-overlay {
             opacity: 1;
         }
 
@@ -470,6 +471,7 @@
         let currentViewMode = 'grid';
 
         let currentAudio = null;
+        let currentPlayingSlot = null;
         let currentPlayingId = null;
         let currentPackData = [];
 
@@ -622,7 +624,6 @@
                         const itemArtistNorm = normalize(item.artistName || '');
                         const itemCollectionNorm = normalize(item.collectionName || '');
                         
-                        // Строгое равенство артиста для коротких имен вроде Yes, Gas, Can
                         const artistMatch = targetArtistNorm.length <= 4 
                             ? itemArtistNorm === targetArtistNorm 
                             : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
@@ -648,7 +649,6 @@
                     }
                 }
 
-                // ФОЛЛБЭК: Если родной альбом не найден, ищем популярный трек артиста
                 if (!previewUrl) {
                     const artistQuery = encodeURIComponent(cleanArtist);
                     const artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${artistQuery}&entity=song&limit=5`);
