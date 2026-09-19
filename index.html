@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Gacha 5x Pack Pro</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --card-bg: #1e1e24;
+            --text-color: #f0f0f5;
+            --rarity-common: #a0a0a0;   /* Серый */
+            --rarity-rare: #3b82f6;     /* Синий */
+            --rarity-epic: #a855f7;     /* Сиреневый */
+            --rarity-legend: #eab308;   /* Золотой */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 { margin-bottom: 5px; }
+        p.sub { color: #888; margin-top: 0; margin-bottom: 25px; }
+
+        .controls { margin-bottom: 25px; }
+
+        button.pull-btn {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            border: none;
+            padding: 16px 36px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        button.pull-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+        }
+
+        button.pull-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .pack-container {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            justify-content: space-between;
+            align-items: stretch;
+            margin-bottom: 40px;
+            min-height: 440px;
+            width: 100%;
+            max-width: 1300px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 2px solid var(--rarity-common);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .card.skeleton {
+            border-color: #333;
+            background: #18181c;
+            opacity: 0.6;
+        }
+
+        .card.skeleton .cover-art {
+            background: #25252c;
+        }
+
+        .card.flip-reveal {
+            animation: flip 0.6s ease-in-out forwards;
+        }
+
+        @keyframes flip {
+            0% { transform: rotateY(0deg) scale(0.95); }
+            50% { transform: rotateY(90deg) scale(1.05); }
+            100% { transform: rotateY(0deg) scale(1); }
+        }
+
+        .card.rarity-Обычная { border-color: var(--rarity-common); box-shadow: 0 0 12px rgba(160, 160, 160, 0.2); }
+        .card.rarity-Редкая { border-color: var(--rarity-rare); box-shadow: 0 0 18px rgba(59, 130, 246, 0.4); }
+        .card.rarity-Эпическая { border-color: var(--rarity-epic); box-shadow: 0 0 25px rgba(168, 85, 247, 0.6); }
+        .card.rarity-Легендарная { border-color: var(--rarity-legend); box-shadow: 0 0 30px rgba(234, 179, 8, 0.8); }
+
+        .rarity-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.7rem;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .rarity-Обычная .rarity-badge { background: var(--rarity-common); color: #000; }
+        .rarity-Редкая .rarity-badge { background: var(--rarity-rare); color: #fff; }
+        .rarity-Эпическая .rarity-badge { background: var(--rarity-epic); color: #fff; }
+        .rarity-Легендарная .rarity-badge { background: var(--rarity-legend); color: #000; }
+
+        .cover-art {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+
+        .album-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin: 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .artist-name {
+            color: #aaa;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .type-badge {
+            display: inline-block;
+            background: #2a2a32;
+            color: #6366f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .score-badge {
+            color: #eab308;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin: 2px 0 4px 0;
+        }
+
+        .genre-badge {
+            color: #888;
+            font-size: 0.7rem;
+            margin-bottom: 6px;
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        audio { width: 100%; height: 28px; border-radius: 4px; }
+
+        .collection-section { width: 100%; max-width: 1300px; }
+
+        .collection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select, button.view-btn {
+            background: #1e1e24;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        button.view-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
+        }
+
+        .mini-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            border: 2px solid var(--rarity-common);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .mini-card:hover { transform: translateY(-4px); }
+        .mini-card img { width: 100%; border-radius: 6px; aspect-ratio: 1/1; object-fit: cover; }
+        .mini-card .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 6px; font-weight: bold; }
+        .mini-card .mini-artist { color: #bbb; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
+        .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: 4px; display: flex; justify-content: space-between; }
+
+        .list { display: flex; flex-direction: column; gap: 8px; }
+
+        .list-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-left: 4px solid var(--rarity-common);
+            cursor: pointer;
+        }
+
+        .list-card img { width: 45px; height: 45px; border-radius: 4px; object-fit: cover; }
+        .list-card .list-main { flex-grow: 1; overflow: hidden; }
+        .list-card .list-title { font-weight: bold; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-card .list-artist { color: #aaa; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-card .list-meta { color: #777; font-size: 0.75rem; text-align: right; }
+    </style>
+</head>
+<body>
+
+    <h1>🎵 Music Album Gacha (5x Pack)</h1>
+    <p class="sub">Точные обложки и стабильная загрузка пака из 5 релизов!</p>
+
+    <div class="controls">
+        <button class="pull-btn" id="pullBtn" onclick="pull5Pack()">OPEN PACK (5x)</button>
+    </div>
+
+    <div class="pack-container" id="packContainer"></div>
+
+    <div class="collection-section">
+        <div class="collection-header">
+            <h2>Коллекция (<span id="colCount">0</span>)</h2>
+            <div class="filter-controls">
+                <select id="sortSelect" onchange="renderCollectionUI()">
+                    <option value="default">Сначала новые</option>
+                    <option value="rarity">По редкости (Легендарная → Обычная)</option>
+                    <option value="score">По популярности (★10 → ★1)</option>
+                    <option value="genre">По стилю (Жанру)</option>
+                    <option value="year">По году (Новые → Старые)</option>
+                </select>
+
+                <button class="view-btn active" id="btnGridView" onclick="setViewMode('grid')">📷 Сетка</button>
+                <button class="view-btn" id="btnListView" onclick="setViewMode('list')">📄 Список</button>
+            </div>
+        </div>
+
+        <div class="grid" id="collectionContainer"></div>
+    </div>
+
+    <script>
+    const RARITY_ORDER = { 'Легендарная': 4, 'Эпическая': 3, 'Редкая': 2, 'Обычная': 1 };
+    
+    // Проценты выпадения (Gacha Drop Rates)
+    const DROP_RATES = {
+        'Легендарная': 3,  // 3%
+        'Эпическая': 12,   // 12%
+        'Редкая': 30,      // 30%
+        'Обычная': 55      // 55%
+    };
+
+    let allAlbums = [];
+    const collection = new Map();
+    let currentViewMode = 'grid';
+
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+    // 1. Загрузка базы альбомов из сгенерированного JSON
+    async function loadDatabase() {
+        try {
+            const res = await fetch('albums.json');
+            allAlbums = await res.json();
+            document.getElementById('pullBtn').disabled = false;
+        } catch (err) {
+            alert('Ошибка загрузки albums.json! Убедитесь, что файл лежит в той же папке.');
+            console.error(err);
+        }
+    }
+
+    // 2. Бросок кубика на редкость (Gacha Roll)
+    function rollRarity() {
+        const rand = Math.random() * 100;
+        if (rand < DROP_RATES['Легендарная']) return 'Легендарная';
+        if (rand < DROP_RATES['Легендарная'] + DROP_RATES['Эпическая']) return 'Эпическая';
+        if (rand < DROP_RATES['Легендарная'] + DROP_RATES['Эпическая'] + DROP_RATES['Редкая']) return 'Редкая';
+        return 'Обычная';
+    }
+
+    // 3. Выборка случайного альбома нужной редкости
+    function getRandomAlbumByRarity(targetRarity) {
+        const pool = allAlbums.filter(a => a.rarity === targetRarity);
+        if (pool.length === 0) {
+            // Если вдруг пул пустой, берём случайный из всей базы
+            return allAlbums[Math.floor(Math.random() * allAlbums.length)];
+        }
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function createInitialPackSkeletons() {
+        const packContainer = document.getElementById('packContainer');
+        packContainer.innerHTML = '';
+
+        for (let i = 0; i < 5; i++) {
+            const card = document.createElement('div');
+            card.id = `pack-card-${i}`;
+            card.className = 'card skeleton';
+            card.innerHTML = `
+                <div>
+                    <div class="rarity-badge">???</div>
+                    <div class="cover-art"></div>
+                    <div class="album-title">Открытие...</div>
+                    <div class="artist-name">...</div>
+                </div>
+                <div>
+                    <div class="type-badge">...</div>
+                    <div class="score-badge">★ -.-</div>
+                    <div class="genre-badge">🏷️ ...</div>
+                </div>
+            `;
+            packContainer.appendChild(card);
+        }
+    }
+
+    async function pull5Pack() {
+        if (allAlbums.length === 0) return;
+        
+        const btn = document.getElementById('pullBtn');
+        btn.disabled = true;
+
+        createInitialPackSkeletons();
+
+        for (let i = 0; i < 5; i++) {
+            const targetRarity = rollRarity();
+            const rawAlbum = getRandomAlbumByRarity(targetRarity);
+
+            // Подгружаем обложку и превью из iTunes на лету
+            const albumObj = await fetchiTunesMedia(rawAlbum);
+            
+            revealCardInPack(albumObj, i);
+            addToCollection(albumObj);
+            
+            await sleep(150);
+        }
+
+        btn.disabled = false;
+    }
+
+    // Запрос в iTunes для получения рабочей обложки и превью 30 сек
+    function fetchiTunesMedia(albumData) {
+        return new Promise((resolve) => {
+            const query = encodeURIComponent(`${albumData.artist} ${albumData.title}`);
+            const script = document.createElement('script');
+            const callbackName = `itunesCb_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                if (script.parentNode) script.parentNode.removeChild(script);
+
+                let match = data?.results?.[0];
+                const coverUrl = (match && match.artworkUrl100) 
+                    ? match.artworkUrl100.replace('100x100bb', '600x600bb')
+                    : 'https://via.placeholder.com/600?text=No+Cover';
+
+                resolve({
+                    ...albumData,
+                    cover: coverUrl,
+                    preview: match ? (match.previewUrl || '') : '',
+                    pulledAt: Date.now() + Math.random()
+                });
+            };
+
+            script.onerror = function() {
+                delete window[callbackName];
+                if (script.parentNode) script.parentNode.removeChild(script);
+                
+                resolve({
+                    ...albumData,
+                    cover: 'https://via.placeholder.com/600?text=No+Cover',
+                    preview: '',
+                    pulledAt: Date.now() + Math.random()
+                });
+            };
+
+            script.src = `https://itunes.apple.com/search?term=${query}&entity=song&limit=1&callback=${callbackName}`;
+            document.body.appendChild(script);
+        });
+    }
+
+    function revealCardInPack(data, index) {
+        const card = document.getElementById(`pack-card-${index}`);
+        if (!card) return;
+
+        card.className = `card rarity-${data.rarity} flip-reveal`;
+        card.innerHTML = `
+            <div>
+                <div class="rarity-badge">${data.rarity}</div>
+                <img src="${data.cover}" alt="Cover" class="cover-art" onerror="this.onerror=null;this.src='https://via.placeholder.com/600?text=No+Cover';">
+                <div class="album-title" title="${data.title}">${data.title}</div>
+                <div class="artist-name" title="${data.artist}">${data.artist}</div>
+            </div>
+            <div>
+                <div class="type-badge">${data.type}</div>
+                <div class="score-badge">★ ${data.score}</div>
+                <div class="genre-badge">🏷️ ${data.genre} | 📅 ${data.year}</div>
+                <audio src="${data.preview}" controls></audio>
+            </div>
+        `;
+    }
+
+    function addToCollection(albumObj) {
+        if (!collection.has(albumObj.id)) {
+            collection.set(albumObj.id, albumObj);
+            renderCollectionUI();
+        }
+    }
+
+    function setViewMode(mode) {
+        currentViewMode = mode;
+        document.getElementById('btnGridView').classList.toggle('active', mode === 'grid');
+        document.getElementById('btnListView').classList.toggle('active', mode === 'list');
+        
+        const container = document.getElementById('collectionContainer');
+        container.className = mode;
+        renderCollectionUI();
+    }
+
+    function renderCollectionUI() {
+        const container = document.getElementById('collectionContainer');
+        document.getElementById('colCount').innerText = collection.size;
+        container.innerHTML = '';
+
+        let albumsArray = Array.from(collection.values());
+        const sortMode = document.getElementById('sortSelect').value;
+
+        if (sortMode === 'rarity') {
+            albumsArray.sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
+        } else if (sortMode === 'score') {
+            albumsArray.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+        } else if (sortMode === 'genre') {
+            albumsArray.sort((a, b) => a.genre.localeCompare(b.genre));
+        } else if (sortMode === 'year') {
+            albumsArray.sort((a, b) => (b.year === 'N/A' ? 0 : b.year) - (a.year === 'N/A' ? 0 : a.year));
+        } else {
+            albumsArray.sort((a, b) => b.pulledAt - a.pulledAt);
+        }
+
+        albumsArray.forEach(item => {
+            let borderVar = 'common';
+            if (item.rarity === 'Легендарная') borderVar = 'legend';
+            else if (item.rarity === 'Эпическая') borderVar = 'epic';
+            else if (item.rarity === 'Редкая') borderVar = 'rare';
+            
+            if (currentViewMode === 'grid') {
+                const mini = document.createElement('div');
+                mini.className = `mini-card rarity-${item.rarity}`;
+                mini.style.borderColor = `var(--rarity-${borderVar})`;
+                mini.innerHTML = `
+                    <img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">
+                    <div class="title" title="${item.title}">${item.title}</div>
+                    <div class="mini-artist" title="${item.artist}">${item.artist}</div>
+                    <div class="mini-score">★ ${item.score}</div>
+                    <div class="mini-info">
+                        <span>🏷️ ${item.genre}</span>
+                        <span>[${item.type}]</span>
+                    </div>
+                `;
+                container.appendChild(mini);
+            } else {
+                const listItem = document.createElement('div');
+                listItem.className = `list-card rarity-${item.rarity}`;
+                listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
+                listItem.innerHTML = `
+                    <img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=No+Cover';">
+                    <div class="list-main">
+                        <div class="list-title">${item.title}</div>
+                        <div class="list-artist">${item.artist}</div>
+                    </div>
+                    <div class="list-meta">
+                        <div style="color: #eab308; font-weight: bold;">★ ${item.score}</div>
+                        <div>[${item.type}] | 🏷️ ${item.genre} | 📅 ${item.year} | <b>${item.rarity}</b></div>
+                    </div>
+                `;
+                container.appendChild(listItem);
+            }
+        });
+    }
+
+    // Старт при загрузке страницы
+    window.onload = loadDatabase;
+</script>
+</body>
+</html>
