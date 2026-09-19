@@ -451,75 +451,94 @@
             return str.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim();
         }
 
-        function fetchiTunesMedia(albumData) {
+        // Загрузка через JSONP скрипт-тег
+        function jsonpFetch(url) {
             return new Promise((resolve) => {
-                const cleanArtist = cleanQueryString(albumData.artist);
-                const cleanTitle = cleanQueryString(albumData.title);
-                const query = encodeURIComponent(`${cleanArtist} ${cleanTitle}`);
-                
                 const script = document.createElement('script');
-                const callbackName = `itunesCb_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-
-                const fallbackCover = `https://placehold.co/600x600/1e1e24/f0f0f5?text=${encodeURIComponent(albumData.title)}`;
+                const callbackName = `itunesCb_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
                 window[callbackName] = function(data) {
                     delete window[callbackName];
                     if (script.parentNode) script.parentNode.removeChild(script);
-
-                    let match = null;
-
-                    if (data && data.results && data.results.length > 0) {
-                        const targetArtist = cleanArtist.toLowerCase();
-                        const targetTitle = cleanTitle.toLowerCase();
-
-                        // 1. Попытка найти точное совпадение по альбому и артисту
-                        match = data.results.find(item => {
-                            const itemArtist = (item.artistName || '').toLowerCase();
-                            const itemCollection = (item.collectionName || '').toLowerCase();
-                            return (itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist)) &&
-                                   (itemCollection.includes(targetTitle) || targetTitle.includes(itemCollection));
-                        });
-
-                        // 2. Если точного релиза нет, сверяем хотя бы имя исполнителя
-                        if (!match) {
-                            match = data.results.find(item => {
-                                const itemArtist = (item.artistName || '').toLowerCase();
-                                return itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist);
-                            });
-                        }
-
-                        // 3. Крайний фоллбэк на первенца
-                        if (!match) match = data.results[0];
-                    }
-
-                    const coverUrl = (match && match.artworkUrl100) 
-                        ? match.artworkUrl100.replace('100x100bb', '600x600bb')
-                        : fallbackCover;
-
-                    resolve({
-                        ...albumData,
-                        cover: coverUrl,
-                        preview: match ? (match.previewUrl || '') : '',
-                        pulledAt: Date.now() + Math.random()
-                    });
+                    resolve(data);
                 };
 
                 script.onerror = function() {
                     delete window[callbackName];
                     if (script.parentNode) script.parentNode.removeChild(script);
-                    
-                    resolve({
-                        ...albumData,
-                        cover: fallbackCover,
-                        preview: '',
-                        pulledAt: Date.now() + Math.random()
-                    });
+                    resolve(null);
                 };
 
-                // Ищем по альбомам (entity=album) для предотвращения подмены треков
-                script.src = `https://itunes.apple.com/search?term=${query}&entity=album&limit=5&callback=${callbackName}`;
+                const joinChar = url.includes('?') ? '&' : '?';
+                script.src = `${url}${joinChar}callback=${callbackName}`;
                 document.body.appendChild(script);
             });
+        }
+
+        async function fetchiTunesMedia(albumData) {
+            const cleanArtist = cleanQueryString(albumData.artist);
+            const cleanTitle = cleanQueryString(albumData.title);
+            const fallbackCover = `https://placehold.co/600x600/1e1e24/f0f0f5?text=${encodeURIComponent(albumData.title)}`;
+
+            let coverUrl = fallbackCover;
+            let previewUrl = '';
+
+            try {
+                // 1. Поиск точного альбома по entity=album
+                const query = encodeURIComponent(`${cleanArtist} ${cleanTitle}`);
+                const albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=album&limit=5`);
+
+                let matchAlbum = null;
+
+                if (albumSearchData && albumSearchData.results && albumSearchData.results.length > 0) {
+                    const targetArtist = cleanArtist.toLowerCase();
+                    const targetTitle = cleanTitle.toLowerCase();
+
+                    // Ищем точное совпадение альбома и исполнителя
+                    matchAlbum = albumSearchData.results.find(item => {
+                        const itemArtist = (item.artistName || '').toLowerCase();
+                        const itemCollection = (item.collectionName || '').toLowerCase();
+                        return (itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist)) &&
+                               (itemCollection.includes(targetTitle) || targetTitle.includes(itemCollection));
+                    }) || albumSearchData.results[0];
+                }
+
+                if (matchAlbum) {
+                    coverUrl = matchAlbum.artworkUrl100 ? matchAlbum.artworkUrl100.replace('100x100bb', '600x600bb') : fallbackCover;
+                    
+                    // Достаем аудиопревью 1-го трека альбома по его collectionId
+                    if (matchAlbum.collectionId) {
+                        const lookupData = await jsonpFetch(`https://itunes.apple.com/lookup?id=${matchAlbum.collectionId}&entity=song&limit=2`);
+                        if (lookupData && lookupData.results) {
+                            const songMatch = lookupData.results.find(r => r.wrapperType === 'track');
+                            if (songMatch && songMatch.previewUrl) {
+                                previewUrl = songMatch.previewUrl;
+                            }
+                        }
+                    }
+                }
+
+                // 2. Фоллбэк: если аудиопревью не нашлось, делаем прямой поиск по трекам
+                if (!previewUrl) {
+                    const songSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=3`);
+                    if (songSearchData && songSearchData.results && songSearchData.results.length > 0) {
+                        const song = songSearchData.results[0];
+                        if (!matchAlbum && song.artworkUrl100) {
+                            coverUrl = song.artworkUrl100.replace('100x100bb', '600x600bb');
+                        }
+                        previewUrl = song.previewUrl || '';
+                    }
+                }
+            } catch (err) {
+                console.error('Ошибка получения медиа:', err);
+            }
+
+            return {
+                ...albumData,
+                cover: coverUrl,
+                preview: previewUrl,
+                pulledAt: Date.now() + Math.random()
+            };
         }
 
         function revealCardInPack(data, index) {
