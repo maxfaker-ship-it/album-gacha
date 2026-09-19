@@ -13,6 +13,36 @@
             --rarity-rare: #3b82f6;     /* Rare */
             --rarity-epic: #a855f7;     /* Epic */
             --rarity-legend: #eab308;   /* Legendary */
+            --accent-color: #6366f1;
+        }
+
+        /* --- BALATRO HYPNOTIC SKIN --- */
+        body.balatro-theme {
+            --bg-color: #0f0a1c;
+            --card-bg: #1c1430;
+            --text-color: #ffffff;
+            --accent-color: #ff3366;
+            background: linear-gradient(-45deg, #180b28, #0a1128, #280b1e, #0b2528);
+            background-size: 400% 400%;
+            animation: balatroBg 12s ease infinite;
+            position: relative;
+        }
+
+        body.balatro-theme::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 999;
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+        }
+
+        @keyframes balatroBg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         body {
@@ -25,10 +55,39 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            transition: background 0.5s ease;
+        }
+
+        .header-container {
+            text-align: center;
+            position: relative;
+            width: 100%;
+            max-width: 1300px;
         }
 
         h1 { margin-bottom: 5px; }
         p.sub { color: #888; margin-top: 0; margin-bottom: 25px; }
+
+        .skin-toggle-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #2a2a35;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        body.balatro-theme .skin-toggle-btn {
+            background: linear-gradient(135deg, #ff3366, #ff9900);
+            border-color: #ffcc00;
+            box-shadow: 0 0 12px rgba(255, 51, 102, 0.6);
+        }
 
         .controls { margin-bottom: 25px; display: flex; gap: 15px; align-items: center; }
 
@@ -43,6 +102,12 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
             transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        body.balatro-theme button.pull-btn {
+            background: linear-gradient(135deg, #ff0055, #7700ff);
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.6);
+            border: 2px solid #ffcc00;
         }
 
         button.pull-btn:hover {
@@ -102,6 +167,10 @@
             box-sizing: border-box;
             height: 100%;
             overflow: hidden;
+        }
+
+        body.balatro-theme .card {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
 
         .card.playing {
@@ -295,7 +364,7 @@
         }
 
         .track-preview-name {
-            color: #6366f1;
+            color: var(--accent-color);
             font-size: 0.7rem;
             font-weight: bold;
             margin-top: 2px;
@@ -319,7 +388,7 @@
             display: inline-block;
             align-self: center;
             background: #2a2a32;
-            color: #6366f1;
+            color: var(--accent-color);
             padding: 1px 6px;
             border-radius: 4px;
             font-size: 0.65rem;
@@ -370,9 +439,15 @@
             font-size: 0.85rem;
         }
 
+        body.balatro-theme select, 
+        body.balatro-theme button.view-btn {
+            background: #1c1430;
+            border-color: #552288;
+        }
+
         button.view-btn.active {
-            background: #6366f1;
-            border-color: #6366f1;
+            background: var(--accent-color);
+            border-color: var(--accent-color);
         }
 
         .grid {
@@ -478,9 +553,14 @@
         }
 
         .track-item.active-track {
-            color: #6366f1;
+            color: var(--accent-color);
             font-weight: bold;
             background: #222230;
+        }
+
+        .track-item.loading-track {
+            opacity: 0.6;
+            font-style: italic;
         }
 
         .badge-tag {
@@ -509,6 +589,11 @@
             padding: 15px;
             margin-bottom: 20px;
             border: 1px solid #2e2e38;
+        }
+
+        body.balatro-theme .artist-group {
+            background: rgba(28, 20, 48, 0.8);
+            border-color: #552288;
         }
 
         .artist-group-header {
@@ -563,8 +648,11 @@
 </head>
 <body>
 
-    <h1>🎵 Music Album Gacha (5x Pack)</h1>
-    <p class="sub">Accurate artwork & seamless 5-album pack pull!</p>
+    <div class="header-container">
+        <h1>🎵 Music Album Gacha (5x Pack)</h1>
+        <p class="sub">Accurate artwork & seamless 5-album pack pull!</p>
+        <button class="skin-toggle-btn" onclick="toggleBalatroTheme()">🃏 Balatro Skin</button>
+    </div>
 
     <div class="controls">
         <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
@@ -616,8 +704,21 @@
         let currentPlayingSlot = null;
         let currentPlayingId = null; 
         let currentPackData = [];
+        let loadingTrackKey = null;
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        function toggleBalatroTheme() {
+            document.body.classList.toggle('balatro-theme');
+            const isBalatro = document.body.classList.contains('balatro-theme');
+            localStorage.setItem('gacha_skin_balatro', isBalatro ? 'true' : 'false');
+        }
+
+        function loadSkinState() {
+            if (localStorage.getItem('gacha_skin_balatro') === 'true') {
+                document.body.classList.add('balatro-theme');
+            }
+        }
 
         function escapeHtml(str) {
             if (!str) return '';
@@ -669,6 +770,7 @@
                     rarity: RARITY_MAP[item.rarity] || item.rarity || 'Common'
                 }));
 
+                loadSkinState();
                 loadProgress();
                 renderCollectionUI();
                 document.getElementById('pullBtn').disabled = false;
@@ -1003,7 +1105,7 @@
             `;
         }
 
-        // --- PLAYER LOGIC & AUTOMATIC LINK REFRESH ---
+        // --- PLAYER LOGIC & ADVANCED HYBRID AUTO-HEAL ---
 
         function playBestAlbumInPack() {
             if (currentPackData.length === 0) return;
@@ -1087,17 +1189,33 @@
             }
         }
 
-        // Авто-обновление протухшей аудио-ссылки из API
+        // Трёхуровневая система автоматического восстановления ссылок (Deezer -> iTunes)
         async function refreshTrackPreview(album, trackObj) {
+            const cleanArtist = cleanQueryString(album.artist);
+            const cleanTrack = cleanQueryString(trackObj.name);
+
+            // 1. Пробуем Deezer API
             try {
-                const query = encodeURIComponent(`${album.artist} ${trackObj.name}`);
-                const data = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=5`);
-                if (data && data.results && data.results.length > 0 && data.results[0].previewUrl) {
-                    trackObj.preview = data.results[0].previewUrl;
+                const dzQuery = encodeURIComponent(`${cleanArtist} ${cleanTrack}`);
+                const dzData = await jsonpFetch(`https://api.deezer.com/search/track?q=${dzQuery}&limit=5&output=jsonp`);
+                if (dzData && dzData.data && dzData.data.length > 0 && dzData.data[0].preview) {
+                    trackObj.preview = dzData.data[0].preview;
                     saveProgress();
-                    return data.results[0].previewUrl;
+                    return dzData.data[0].preview;
                 }
-            } catch (e) { console.log('Failed to refresh preview URL'); }
+            } catch (e) { console.log('Deezer auto-heal skipped'); }
+
+            // 2. Резервная проверка iTunes API
+            try {
+                const itunesQuery = encodeURIComponent(`${cleanArtist} ${cleanTrack}`);
+                const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${itunesQuery}&entity=song&limit=5`);
+                if (itunesData && itunesData.results && itunesData.results.length > 0 && itunesData.results[0].previewUrl) {
+                    trackObj.preview = itunesData.results[0].previewUrl;
+                    saveProgress();
+                    return itunesData.results[0].previewUrl;
+                }
+            } catch (e) { console.log('iTunes auto-heal skipped'); }
+
             return null;
         }
 
@@ -1113,46 +1231,49 @@
             stopCurrentAudio();
             currentPlayingId = trackKey;
             
+            const album = collection.get(albumId);
+            const trackObj = album ? album.tracks.find(t => t.name === trackName) : null;
+
             let audioUrlToPlay = previewUrl;
-            currentAudio = new Audio(audioUrlToPlay);
 
-            // Резервная обработка истекшего токена (403/404)
-            currentAudio.onerror = async () => {
-                console.log('Preview link expired. Refreshing preview URL...');
-                const album = collection.get(albumId);
-                if (album) {
-                    const trackObj = album.tracks.find(t => t.name === trackName);
-                    if (trackObj) {
-                        const newUrl = await refreshTrackPreview(album, trackObj);
-                        if (newUrl) {
-                            currentAudio = new Audio(newUrl);
-                            currentAudio.play().catch(err => console.log('Playback error:', err));
-                        }
-                    }
-                }
-            };
-
-            currentAudio.onended = () => {
-                currentPlayingId = null;
-                renderCollectionUI();
-            };
-
-            currentAudio.play().catch(async (e) => {
-                console.log('Initial playback failed, trying link refresh...');
-                const album = collection.get(albumId);
-                if (album) {
-                    const trackObj = album.tracks.find(t => t.name === trackName);
-                    if (trackObj) {
-                        const newUrl = await refreshTrackPreview(album, trackObj);
-                        if (newUrl) {
-                            currentAudio = new Audio(newUrl);
-                            currentAudio.play().catch(err => console.log('Playback error:', err));
-                        }
-                    }
-                }
-            });
-
+            // Индикатор загрузки при поиске нового URL
+            loadingTrackKey = trackKey;
             renderCollectionUI();
+
+            const testAudio = new Audio(audioUrlToPlay);
+
+            const tryPlayOrRefresh = async () => {
+                try {
+                    await testAudio.play();
+                    currentAudio = testAudio;
+                    loadingTrackKey = null;
+                    
+                    currentAudio.onended = () => {
+                        currentPlayingId = null;
+                        renderCollectionUI();
+                    };
+                    renderCollectionUI();
+                } catch (err) {
+                    console.log('Link expired, auto-healing preview URL...');
+                    if (album && trackObj) {
+                        const newUrl = await refreshTrackPreview(album, trackObj);
+                        loadingTrackKey = null;
+                        if (newUrl) {
+                            currentAudio = new Audio(newUrl);
+                            currentAudio.onended = () => {
+                                currentPlayingId = null;
+                                renderCollectionUI();
+                            };
+                            currentAudio.play().catch(e => console.log('Final playback error:', e));
+                        }
+                    } else {
+                        loadingTrackKey = null;
+                    }
+                    renderCollectionUI();
+                }
+            };
+
+            tryPlayOrRefresh();
         }
 
         function pauseCurrentAudio() {
@@ -1303,12 +1424,17 @@
                 item.tracks.forEach((t, idx) => {
                     const trackKey = `${item.id}_${t.name}`;
                     const isPlaying = (currentPlayingId === trackKey) && currentAudio && !currentAudio.paused;
-                    const iconText = isPlaying ? '❚❚' : '▶';
+                    const isLoading = (loadingTrackKey === trackKey);
+                    
+                    let iconText = '▶';
+                    if (isLoading) iconText = '⏳';
+                    else if (isPlaying) iconText = '❚❚';
+
                     const badgeClass = t.isFallback ? 'badge-discog' : 'badge-native';
                     const badgeText = t.isFallback ? '⚠️ Discography' : '💿 Native';
 
                     tracksHtml += `
-                        <div class="track-item ${isPlaying ? 'active-track' : ''}" onclick="playCollectionTrack('${item.id}', '${escapeHtml(t.name)}', '${escapeHtml(t.preview)}')">
+                        <div class="track-item ${isPlaying ? 'active-track' : ''} ${isLoading ? 'loading-track' : ''}" onclick="playCollectionTrack('${item.id}', '${escapeHtml(t.name)}', '${escapeHtml(t.preview)}')">
                             <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${iconText} ${idx + 1}. ${escapeHtml(t.name)}</span>
                             <span class="badge-tag ${badgeClass}">${badgeText}</span>
                         </div>
