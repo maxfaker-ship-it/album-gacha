@@ -56,7 +56,6 @@
             transform: none;
         }
 
-        /* Контейнер пака с фиксированной высотой карточек */
         .pack-container {
             display: flex;
             flex-direction: row;
@@ -70,7 +69,6 @@
             min-height: 420px;
         }
 
-        /* Карточка строго фиксированной формы */
         .card {
             flex: 1;
             min-width: 0;
@@ -158,7 +156,6 @@
             display: block;
         }
 
-        /* Заглушка, если обложка не найдена */
         .vinyl-placeholder {
             width: 100%;
             height: 100%;
@@ -203,7 +200,8 @@
             cursor: pointer;
         }
 
-        .cover-wrapper:hover .play-overlay {
+        .cover-wrapper:hover .play-overlay,
+        .mini-cover-wrapper:hover .play-overlay {
             opacity: 1;
         }
 
@@ -365,12 +363,28 @@
             text-align: center;
             border: 2px solid var(--rarity-common);
             font-size: 0.8rem;
-            cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .mini-card.playing {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
         }
 
         .mini-card:hover { transform: translateY(-4px); }
-        .mini-card img { width: 100%; border-radius: 6px; aspect-ratio: 1/1; object-fit: cover; }
+        
+        .mini-cover-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #18181c;
+        }
+
+        .mini-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
         .mini-card .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 6px; font-weight: bold; }
         .mini-card .mini-artist { color: #bbb; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
@@ -386,10 +400,23 @@
             align-items: center;
             gap: 15px;
             border-left: 4px solid var(--rarity-common);
-            cursor: pointer;
+            transition: background 0.2s;
         }
 
-        .list-card img { width: 45px; height: 45px; border-radius: 4px; object-fit: cover; }
+        .list-card.playing {
+            background: #282832;
+        }
+
+        .list-cover-wrapper {
+            position: relative;
+            width: 45px;
+            height: 45px;
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .list-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
         .list-card .list-main { flex-grow: 1; overflow: hidden; }
         .list-card .list-title { font-weight: bold; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .list-card .list-artist { color: #aaa; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -443,7 +470,7 @@
         let currentViewMode = 'grid';
 
         let currentAudio = null;
-        let currentPlayingSlot = null;
+        let currentPlayingId = null;
         let currentPackData = [];
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -567,7 +594,6 @@
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
 
-            // Функция нормализации текста (удаляет служебные подписи iTunes)
             const normalize = (str) => str.toLowerCase()
                 .replace(/\(.*?edition.*?\)/gi, '')
                 .replace(/\(.*?remastered.*?\)/gi, '')
@@ -596,7 +622,11 @@
                         const itemArtistNorm = normalize(item.artistName || '');
                         const itemCollectionNorm = normalize(item.collectionName || '');
                         
-                        const artistMatch = itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm);
+                        // Строгое равенство артиста для коротких имен вроде Yes, Gas, Can
+                        const artistMatch = targetArtistNorm.length <= 4 
+                            ? itemArtistNorm === targetArtistNorm 
+                            : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
+
                         const titleMatch = itemCollectionNorm.includes(targetTitleNorm) || targetTitleNorm.includes(itemCollectionNorm);
                         
                         return artistMatch && titleMatch;
@@ -626,7 +656,9 @@
                     if (artistSongsData && artistSongsData.results && artistSongsData.results.length > 0) {
                         const artistMatch = artistSongsData.results.find(s => {
                             const itemArtistNorm = normalize(s.artistName || '');
-                            return itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm);
+                            return targetArtistNorm.length <= 4
+                                ? itemArtistNorm === targetArtistNorm
+                                : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
                         }) || artistSongsData.results[0];
 
                         if (artistMatch) {
@@ -663,7 +695,6 @@
 
             card.className = `card rarity-${data.rarity} flip-reveal`;
             
-            // Заглушка обложки
             const coverHTML = data.cover ? `
                 <img src="${data.cover}" alt="${data.title}" class="cover-art" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'vinyl-placeholder\\'><div class=\\'ph-title\\'>${data.title}</div><div class=\\'ph-artist\\'>${data.artist}</div></div>';">
             ` : `
@@ -679,7 +710,6 @@
                 </div>
             ` : '';
 
-            // Отображение трека
             let trackDisplay = '';
             if (data.trackName) {
                 if (data.isFallbackTrack) {
@@ -752,6 +782,7 @@
             }
 
             currentPlayingSlot = slotIndex;
+            currentPlayingId = albumData.id;
             currentAudio = new Audio(albumData.preview);
 
             const card = document.getElementById(`pack-card-${slotIndex}`);
@@ -774,12 +805,36 @@
             };
 
             currentAudio.play().catch(e => console.log('Autoplay blocked or error:', e));
+            renderCollectionUI();
         }
 
         function playNextSlotInCarousel(fromSlotIndex) {
             if (currentPackData.length === 0) return;
             const nextSlot = (fromSlotIndex + 1) % 5;
             playSlot(nextSlot);
+        }
+
+        function playCollectionTrack(id) {
+            const albumObj = collection.get(id);
+            if (!albumObj || !albumObj.preview) return;
+
+            if (currentPlayingId === id && currentAudio && !currentAudio.paused) {
+                pauseCurrentAudio();
+                renderCollectionUI();
+                return;
+            }
+
+            stopCurrentAudio();
+            currentPlayingId = id;
+            currentAudio = new Audio(albumObj.preview);
+
+            currentAudio.onended = () => {
+                currentPlayingId = null;
+                renderCollectionUI();
+            };
+
+            currentAudio.play().catch(e => console.log('Autoplay blocked:', e));
+            renderCollectionUI();
         }
 
         function pauseCurrentAudio() {
@@ -801,6 +856,7 @@
                 resetSlotUI(currentPlayingSlot);
                 currentPlayingSlot = null;
             }
+            currentPlayingId = null;
         }
 
         function resetSlotUI(slotIndex) {
@@ -858,16 +914,28 @@
                 else if (item.rarity === 'Epic') borderVar = 'epic';
                 else if (item.rarity === 'Rare') borderVar = 'rare';
                 
+                const isPlayingThis = (currentPlayingId === item.id) && currentAudio && !currentAudio.paused;
+                const playIconText = isPlayingThis ? '❚❚' : '▶';
+
+                const miniOverlay = item.preview ? `
+                    <div class="play-overlay" onclick="playCollectionTrack(${item.id})">
+                        <div class="play-btn-icon">${playIconText}</div>
+                    </div>
+                ` : '';
+
                 const coverImg = item.cover 
                     ? `<img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
                     : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${item.title}</div>`;
 
                 if (currentViewMode === 'grid') {
                     const mini = document.createElement('div');
-                    mini.className = `mini-card rarity-${item.rarity}`;
+                    mini.className = `mini-card rarity-${item.rarity} ${isPlayingThis ? 'playing' : ''}`;
                     mini.style.borderColor = `var(--rarity-${borderVar})`;
                     mini.innerHTML = `
-                        ${coverImg}
+                        <div class="mini-cover-wrapper">
+                            ${coverImg}
+                            ${miniOverlay}
+                        </div>
                         <div class="title" title="${item.title}">${item.title}</div>
                         <div class="mini-artist" title="${item.artist}">${item.artist}</div>
                         <div class="mini-score">★ ${item.score}</div>
@@ -879,10 +947,13 @@
                     container.appendChild(mini);
                 } else {
                     const listItem = document.createElement('div');
-                    listItem.className = `list-card rarity-${item.rarity}`;
+                    listItem.className = `list-card rarity-${item.rarity} ${isPlayingThis ? 'playing' : ''}`;
                     listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                     listItem.innerHTML = `
-                        ${coverImg}
+                        <div class="list-cover-wrapper">
+                            ${coverImg}
+                            ${miniOverlay}
+                        </div>
                         <div class="list-main">
                             <div class="list-title">${item.title}</div>
                             <div class="list-artist">${item.artist}</div>
