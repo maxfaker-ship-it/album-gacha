@@ -91,7 +91,7 @@
             opacity: 0.6;
         }
 
-        .card.skeleton .cover-art {
+        .card.skeleton .cover-wrapper {
             background: #25252c;
         }
 
@@ -125,12 +125,78 @@
         .rarity-Эпическая .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Легендарная .rarity-badge { background: var(--rarity-legend); color: #000; }
 
-        .cover-art {
+        /* Контейнер обложки и кастомного плеера */
+        .cover-wrapper {
+            position: relative;
             width: 100%;
             aspect-ratio: 1/1;
-            object-fit: cover;
-            border-radius: 6px;
             margin-bottom: 6px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .cover-art {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Кнопка Play при наведении */
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            cursor: pointer;
+        }
+
+        .cover-wrapper:hover .play-overlay,
+        .card.playing .play-overlay {
+            opacity: 1;
+        }
+
+        .play-btn-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.15s ease;
+        }
+
+        .play-overlay:hover .play-btn-icon {
+            transform: scale(1.1);
+        }
+
+        /* Полоска прогресса внизу обложки */
+        .progress-bar-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #a855f7;
+            transition: width 0.1s linear;
         }
 
         .album-title {
@@ -178,8 +244,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
-        audio { width: 100%; height: 28px; border-radius: 4px; }
 
         .collection-section { width: 100%; max-width: 1300px; }
 
@@ -263,7 +327,7 @@
     <p class="sub">Точные обложки и стабильная загрузка пака из 5 релизов!</p>
 
     <div class="controls">
-        <button class="pull-btn" id="pullBtn" onclick="pull5Pack()">OPEN PACK (5x)</button>
+        <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
     </div>
 
     <div class="pack-container" id="packContainer"></div>
@@ -289,244 +353,351 @@
     </div>
 
     <script>
-    const RARITY_ORDER = { 'Легендарная': 4, 'Эпическая': 3, 'Редкая': 2, 'Обычная': 1 };
-    
-    // Проценты выпадения (Gacha Drop Rates)
-    const DROP_RATES = {
-        'Легендарная': 3,  // 3%
-        'Эпическая': 12,   // 12%
-        'Редкая': 30,      // 30%
-        'Обычная': 55      // 55%
-    };
+        const RARITY_ORDER = { 'Легендарная': 4, 'Эпическая': 3, 'Редкая': 2, 'Обычная': 1 };
+        const DROP_RATES = { 'Легендарная': 3, 'Эпическая': 12, 'Редкая': 30, 'Обычная': 55 };
 
-    let allAlbums = [];
-    const collection = new Map();
-    let currentViewMode = 'grid';
+        let allAlbums = [];
+        const collection = new Map();
+        let currentViewMode = 'grid';
 
-    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        // Управление аудио и каруселью
+        let currentAudio = null;
+        let currentPlayingSlot = null;
+        let currentPackData = [];
 
-    // 1. Загрузка базы альбомов из сгенерированного JSON
-    async function loadDatabase() {
-        try {
-            const res = await fetch('albums.json');
-            allAlbums = await res.json();
-            document.getElementById('pullBtn').disabled = false;
-        } catch (err) {
-            alert('Ошибка загрузки albums.json! Убедитесь, что файл лежит в той же папке.');
-            console.error(err);
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        async function loadDatabase() {
+            try {
+                const res = await fetch('albums.json');
+                allAlbums = await res.json();
+                document.getElementById('pullBtn').disabled = false;
+            } catch (err) {
+                alert('Ошибка загрузки albums.json!');
+                console.error(err);
+            }
         }
-    }
 
-    // 2. Бросок кубика на редкость (Gacha Roll)
-    function rollRarity() {
-        const rand = Math.random() * 100;
-        if (rand < DROP_RATES['Легендарная']) return 'Легендарная';
-        if (rand < DROP_RATES['Легендарная'] + DROP_RATES['Эпическая']) return 'Эпическая';
-        if (rand < DROP_RATES['Легендарная'] + DROP_RATES['Эпическая'] + DROP_RATES['Редкая']) return 'Редкая';
-        return 'Обычная';
-    }
-
-    // 3. Выборка случайного альбома нужной редкости
-    function getRandomAlbumByRarity(targetRarity) {
-        const pool = allAlbums.filter(a => a.rarity === targetRarity);
-        if (pool.length === 0) {
-            // Если вдруг пул пустой, берём случайный из всей базы
-            return allAlbums[Math.floor(Math.random() * allAlbums.length)];
+        function rollRarity() {
+            const rand = Math.random() * 100;
+            if (rand < DROP_RATES['Легендарная']) return 'Легендарная';
+            if (rand < DROP_RATES['Легендарная'] + DROP_RATES['Эпическая']) return 'Эпическая';
+            if (rand < DROP_RATES['Легендарная'] + DROP_RATES['Эпическая'] + DROP_RATES['Редкая']) return 'Редкая';
+            return 'Обычная';
         }
-        return pool[Math.floor(Math.random() * pool.length)];
-    }
 
-    function createInitialPackSkeletons() {
-        const packContainer = document.getElementById('packContainer');
-        packContainer.innerHTML = '';
+        function getRandomAlbumByRarity(targetRarity) {
+            const pool = allAlbums.filter(a => a.rarity === targetRarity);
+            return pool.length > 0 
+                ? pool[Math.floor(Math.random() * pool.length)] 
+                : allAlbums[Math.floor(Math.random() * allAlbums.length)];
+        }
 
-        for (let i = 0; i < 5; i++) {
-            const card = document.createElement('div');
-            card.id = `pack-card-${i}`;
-            card.className = 'card skeleton';
+        function createInitialPackSkeletons() {
+            stopCurrentAudio();
+            currentPackData = [];
+            const packContainer = document.getElementById('packContainer');
+            packContainer.innerHTML = '';
+
+            for (let i = 0; i < 5; i++) {
+                const card = document.createElement('div');
+                card.id = `pack-card-${i}`;
+                card.className = 'card skeleton';
+                card.innerHTML = `
+                    <div>
+                        <div class="rarity-badge">???</div>
+                        <div class="cover-wrapper"></div>
+                        <div class="album-title">Открытие...</div>
+                        <div class="artist-name">...</div>
+                    </div>
+                    <div>
+                        <div class="type-badge">...</div>
+                        <div class="score-badge">★ -.-</div>
+                        <div class="genre-badge">🏷️ ...</div>
+                    </div>
+                `;
+                packContainer.appendChild(card);
+            }
+        }
+
+        async function pull5Pack() {
+            if (allAlbums.length === 0) return;
+            
+            const btn = document.getElementById('pullBtn');
+            btn.disabled = true;
+
+            createInitialPackSkeletons();
+
+            for (let i = 0; i < 5; i++) {
+                const targetRarity = rollRarity();
+                const rawAlbum = getRandomAlbumByRarity(targetRarity);
+
+                const albumObj = await fetchiTunesMedia(rawAlbum);
+                currentPackData.push(albumObj);
+                
+                revealCardInPack(albumObj, i);
+                addToCollection(albumObj);
+                
+                await sleep(150);
+            }
+
+            btn.disabled = false;
+
+            // Автозапуск лучшего альбома после открытия всего пака
+            playBestAlbumInPack();
+        }
+
+        function fetchiTunesMedia(albumData) {
+            return new Promise((resolve) => {
+                const query = encodeURIComponent(`${albumData.artist} ${albumData.title}`);
+                const script = document.createElement('script');
+                const callbackName = `itunesCb_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+                const fallbackCover = `https://placehold.co/600x600/1e1e24/f0f0f5?text=${encodeURIComponent(albumData.title)}`;
+
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    if (script.parentNode) script.parentNode.removeChild(script);
+
+                    let match = data?.results?.[0];
+                    const coverUrl = (match && match.artworkUrl100) 
+                        ? match.artworkUrl100.replace('100x100bb', '600x600bb')
+                        : fallbackCover;
+
+                    resolve({
+                        ...albumData,
+                        cover: coverUrl,
+                        preview: match ? (match.previewUrl || '') : '',
+                        pulledAt: Date.now() + Math.random()
+                    });
+                };
+
+                script.onerror = function() {
+                    delete window[callbackName];
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                    
+                    resolve({
+                        ...albumData,
+                        cover: fallbackCover,
+                        preview: '',
+                        pulledAt: Date.now() + Math.random()
+                    });
+                };
+
+                script.src = `https://itunes.apple.com/search?term=${query}&entity=song&limit=1&callback=${callbackName}`;
+                document.body.appendChild(script);
+            });
+        }
+
+        function revealCardInPack(data, index) {
+            const card = document.getElementById(`pack-card-${index}`);
+            if (!card) return;
+
+            const fallbackImg = `https://placehold.co/600x600/1e1e24/f0f0f5?text=${encodeURIComponent(data.title)}`;
+
+            card.className = `card rarity-${data.rarity} flip-reveal`;
             card.innerHTML = `
                 <div>
-                    <div class="rarity-badge">???</div>
-                    <div class="cover-art"></div>
-                    <div class="album-title">Открытие...</div>
-                    <div class="artist-name">...</div>
+                    <div class="rarity-badge">${data.rarity}</div>
+                    <div class="cover-wrapper">
+                        <img src="${data.cover}" alt="${data.title}" class="cover-art" onerror="this.onerror=null;this.src='${fallbackImg}';">
+                        <div class="play-overlay" onclick="togglePlaySlot(${index})">
+                            <div class="play-btn-icon" id="play-icon-${index}">▶</div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="progress-${index}"></div>
+                        </div>
+                    </div>
+                    <div class="album-title" title="${data.title}">${data.title}</div>
+                    <div class="artist-name" title="${data.artist}">${data.artist}</div>
                 </div>
                 <div>
-                    <div class="type-badge">...</div>
-                    <div class="score-badge">★ -.-</div>
-                    <div class="genre-badge">🏷️ ...</div>
+                    <div class="type-badge">${data.type}</div>
+                    <div class="score-badge">★ ${data.score}</div>
+                    <div class="genre-badge">🏷️ ${data.genre} | 📅 ${data.year}</div>
                 </div>
             `;
-            packContainer.appendChild(card);
-        }
-    }
-
-    async function pull5Pack() {
-        if (allAlbums.length === 0) return;
-        
-        const btn = document.getElementById('pullBtn');
-        btn.disabled = true;
-
-        createInitialPackSkeletons();
-
-        for (let i = 0; i < 5; i++) {
-            const targetRarity = rollRarity();
-            const rawAlbum = getRandomAlbumByRarity(targetRarity);
-
-            // Подгружаем обложку и превью из iTunes на лету
-            const albumObj = await fetchiTunesMedia(rawAlbum);
-            
-            revealCardInPack(albumObj, i);
-            addToCollection(albumObj);
-            
-            await sleep(150);
         }
 
-        btn.disabled = false;
-    }
+        // --- ЛОГИКА ВОСПРОИЗВЕДЕНИЯ И КАРУСЕЛИ ---
 
-    // Запрос в iTunes для получения рабочей обложки и превью 30 сек
-    function fetchiTunesMedia(albumData) {
-        return new Promise((resolve) => {
-            const query = encodeURIComponent(`${albumData.artist} ${albumData.title}`);
-            const script = document.createElement('script');
-            const callbackName = `itunesCb_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        function playBestAlbumInPack() {
+            if (currentPackData.length === 0) return;
 
-            window[callbackName] = function(data) {
-                delete window[callbackName];
-                if (script.parentNode) script.parentNode.removeChild(script);
+            let maxScore = -1;
+            let bestSlot = 0;
 
-                let match = data?.results?.[0];
-                const coverUrl = (match && match.artworkUrl100) 
-                    ? match.artworkUrl100.replace('100x100bb', '600x600bb')
-                    : 'https://via.placeholder.com/600?text=No+Cover';
+            currentPackData.forEach((item, index) => {
+                const scoreNum = parseFloat(item.score) || 0;
+                if (scoreNum > maxScore) {
+                    maxScore = scoreNum;
+                    bestSlot = index;
+                }
+            });
 
-                resolve({
-                    ...albumData,
-                    cover: coverUrl,
-                    preview: match ? (match.previewUrl || '') : '',
-                    pulledAt: Date.now() + Math.random()
-                });
+            playSlot(bestSlot);
+        }
+
+        function togglePlaySlot(slotIndex) {
+            if (currentPlayingSlot === slotIndex && currentAudio && !currentAudio.paused) {
+                pauseCurrentAudio();
+            } else {
+                playSlot(slotIndex);
+            }
+        }
+
+        function playSlot(slotIndex) {
+            stopCurrentAudio();
+
+            const albumData = currentPackData[slotIndex];
+            if (!albumData || !albumData.preview) {
+                playNextSlotInCarousel(slotIndex);
+                return;
+            }
+
+            currentPlayingSlot = slotIndex;
+            currentAudio = new Audio(albumData.preview);
+
+            const card = document.getElementById(`pack-card-${slotIndex}`);
+            const icon = document.getElementById(`play-icon-${slotIndex}`);
+            const progressBar = document.getElementById(`progress-${slotIndex}`);
+
+            if (card) card.classList.add('playing');
+            if (icon) icon.innerText = '❚❚';
+
+            currentAudio.ontimeupdate = () => {
+                if (currentAudio.duration) {
+                    const pct = (currentAudio.currentTime / currentAudio.duration) * 100;
+                    if (progressBar) progressBar.style.width = `${pct}%`;
+                }
             };
 
-            script.onerror = function() {
-                delete window[callbackName];
-                if (script.parentNode) script.parentNode.removeChild(script);
-                
-                resolve({
-                    ...albumData,
-                    cover: 'https://via.placeholder.com/600?text=No+Cover',
-                    preview: '',
-                    pulledAt: Date.now() + Math.random()
-                });
+            currentAudio.onended = () => {
+                resetSlotUI(slotIndex);
+                playNextSlotInCarousel(slotIndex);
             };
 
-            script.src = `https://itunes.apple.com/search?term=${query}&entity=song&limit=1&callback=${callbackName}`;
-            document.body.appendChild(script);
-        });
-    }
+            currentAudio.play().catch(e => console.log('Autoplay blocked or error:', e));
+        }
 
-    function revealCardInPack(data, index) {
-        const card = document.getElementById(`pack-card-${index}`);
-        if (!card) return;
+        function playNextSlotInCarousel(fromSlotIndex) {
+            if (currentPackData.length === 0) return;
+            const nextSlot = (fromSlotIndex + 1) % 5;
+            playSlot(nextSlot);
+        }
 
-        card.className = `card rarity-${data.rarity} flip-reveal`;
-        card.innerHTML = `
-            <div>
-                <div class="rarity-badge">${data.rarity}</div>
-                <img src="${data.cover}" alt="Cover" class="cover-art" onerror="this.onerror=null;this.src='https://via.placeholder.com/600?text=No+Cover';">
-                <div class="album-title" title="${data.title}">${data.title}</div>
-                <div class="artist-name" title="${data.artist}">${data.artist}</div>
-            </div>
-            <div>
-                <div class="type-badge">${data.type}</div>
-                <div class="score-badge">★ ${data.score}</div>
-                <div class="genre-badge">🏷️ ${data.genre} | 📅 ${data.year}</div>
-                <audio src="${data.preview}" controls></audio>
-            </div>
-        `;
-    }
+        function pauseCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                if (currentPlayingSlot !== null) {
+                    const icon = document.getElementById(`play-icon-${currentPlayingSlot}`);
+                    if (icon) icon.innerText = '▶';
+                }
+            }
+        }
 
-    function addToCollection(albumObj) {
-        if (!collection.has(albumObj.id)) {
-            collection.set(albumObj.id, albumObj);
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            if (currentPlayingSlot !== null) {
+                resetSlotUI(currentPlayingSlot);
+                currentPlayingSlot = null;
+            }
+        }
+
+        function resetSlotUI(slotIndex) {
+            const card = document.getElementById(`pack-card-${slotIndex}`);
+            const icon = document.getElementById(`play-icon-${slotIndex}`);
+            const progressBar = document.getElementById(`progress-${slotIndex}`);
+
+            if (card) card.classList.remove('playing');
+            if (icon) icon.innerText = '▶';
+            if (progressBar) progressBar.style.width = '0%';
+        }
+
+        // --- КОЛЛЕКЦИЯ ---
+
+        function addToCollection(albumObj) {
+            if (!collection.has(albumObj.id)) {
+                collection.set(albumObj.id, albumObj);
+                renderCollectionUI();
+            }
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            document.getElementById('btnGridView').classList.toggle('active', mode === 'grid');
+            document.getElementById('btnListView').classList.toggle('active', mode === 'list');
+            
+            const container = document.getElementById('collectionContainer');
+            container.className = mode;
             renderCollectionUI();
         }
-    }
 
-    function setViewMode(mode) {
-        currentViewMode = mode;
-        document.getElementById('btnGridView').classList.toggle('active', mode === 'grid');
-        document.getElementById('btnListView').classList.toggle('active', mode === 'list');
-        
-        const container = document.getElementById('collectionContainer');
-        container.className = mode;
-        renderCollectionUI();
-    }
+        function renderCollectionUI() {
+            const container = document.getElementById('collectionContainer');
+            document.getElementById('colCount').innerText = collection.size;
+            container.innerHTML = '';
 
-    function renderCollectionUI() {
-        const container = document.getElementById('collectionContainer');
-        document.getElementById('colCount').innerText = collection.size;
-        container.innerHTML = '';
+            let albumsArray = Array.from(collection.values());
+            const sortMode = document.getElementById('sortSelect').value;
 
-        let albumsArray = Array.from(collection.values());
-        const sortMode = document.getElementById('sortSelect').value;
+            if (sortMode === 'rarity') {
+                albumsArray.sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
+            } else if (sortMode === 'score') {
+                albumsArray.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+            } else if (sortMode === 'genre') {
+                albumsArray.sort((a, b) => a.genre.localeCompare(b.genre));
+            } else if (sortMode === 'year') {
+                albumsArray.sort((a, b) => (b.year === 'N/A' ? 0 : b.year) - (a.year === 'N/A' ? 0 : a.year));
+            } else {
+                albumsArray.sort((a, b) => b.pulledAt - a.pulledAt);
+            }
 
-        if (sortMode === 'rarity') {
-            albumsArray.sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
-        } else if (sortMode === 'score') {
-            albumsArray.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
-        } else if (sortMode === 'genre') {
-            albumsArray.sort((a, b) => a.genre.localeCompare(b.genre));
-        } else if (sortMode === 'year') {
-            albumsArray.sort((a, b) => (b.year === 'N/A' ? 0 : b.year) - (a.year === 'N/A' ? 0 : a.year));
-        } else {
-            albumsArray.sort((a, b) => b.pulledAt - a.pulledAt);
+            albumsArray.forEach(item => {
+                let borderVar = 'common';
+                if (item.rarity === 'Легендарная') borderVar = 'legend';
+                else if (item.rarity === 'Эпическая') borderVar = 'epic';
+                else if (item.rarity === 'Редкая') borderVar = 'rare';
+                
+                if (currentViewMode === 'grid') {
+                    const mini = document.createElement('div');
+                    mini.className = `mini-card rarity-${item.rarity}`;
+                    mini.style.borderColor = `var(--rarity-${borderVar})`;
+                    mini.innerHTML = `
+                        <img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">
+                        <div class="title" title="${item.title}">${item.title}</div>
+                        <div class="mini-artist" title="${item.artist}">${item.artist}</div>
+                        <div class="mini-score">★ ${item.score}</div>
+                        <div class="mini-info">
+                            <span>🏷️ ${item.genre}</span>
+                            <span>[${item.type}]</span>
+                        </div>
+                    `;
+                    container.appendChild(mini);
+                } else {
+                    const listItem = document.createElement('div');
+                    listItem.className = `list-card rarity-${item.rarity}`;
+                    listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
+                    listItem.innerHTML = `
+                        <img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=No+Cover';">
+                        <div class="list-main">
+                            <div class="list-title">${item.title}</div>
+                            <div class="list-artist">${item.artist}</div>
+                        </div>
+                        <div class="list-meta">
+                            <div style="color: #eab308; font-weight: bold;">★ ${item.score}</div>
+                            <div>[${item.type}] | 🏷️ ${item.genre} | 📅 ${item.year} | <b>${item.rarity}</b></div>
+                        </div>
+                    `;
+                    container.appendChild(listItem);
+                }
+            });
         }
 
-        albumsArray.forEach(item => {
-            let borderVar = 'common';
-            if (item.rarity === 'Легендарная') borderVar = 'legend';
-            else if (item.rarity === 'Эпическая') borderVar = 'epic';
-            else if (item.rarity === 'Редкая') borderVar = 'rare';
-            
-            if (currentViewMode === 'grid') {
-                const mini = document.createElement('div');
-                mini.className = `mini-card rarity-${item.rarity}`;
-                mini.style.borderColor = `var(--rarity-${borderVar})`;
-                mini.innerHTML = `
-                    <img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">
-                    <div class="title" title="${item.title}">${item.title}</div>
-                    <div class="mini-artist" title="${item.artist}">${item.artist}</div>
-                    <div class="mini-score">★ ${item.score}</div>
-                    <div class="mini-info">
-                        <span>🏷️ ${item.genre}</span>
-                        <span>[${item.type}]</span>
-                    </div>
-                `;
-                container.appendChild(mini);
-            } else {
-                const listItem = document.createElement('div');
-                listItem.className = `list-card rarity-${item.rarity}`;
-                listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
-                listItem.innerHTML = `
-                    <img src="${item.cover}" alt="${item.title}" onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=No+Cover';">
-                    <div class="list-main">
-                        <div class="list-title">${item.title}</div>
-                        <div class="list-artist">${item.artist}</div>
-                    </div>
-                    <div class="list-meta">
-                        <div style="color: #eab308; font-weight: bold;">★ ${item.score}</div>
-                        <div>[${item.type}] | 🏷️ ${item.genre} | 📅 ${item.year} | <b>${item.rarity}</b></div>
-                    </div>
-                `;
-                container.appendChild(listItem);
-            }
-        });
-    }
-
-    // Старт при загрузке страницы
-    window.onload = loadDatabase;
-</script>
+        window.onload = loadDatabase;
+    </script>
 </body>
 </html>
