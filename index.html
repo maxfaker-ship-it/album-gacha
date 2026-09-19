@@ -125,7 +125,7 @@
         .rarity-Эпическая .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Легендарная .rarity-badge { background: var(--rarity-legend); color: #000; }
 
-        /* Контейнер обложки и кастомного плеера */
+        /* Контейнер обложки и плеера */
         .cover-wrapper {
             position: relative;
             width: 100%;
@@ -133,7 +133,7 @@
             margin-bottom: 6px;
             border-radius: 6px;
             overflow: hidden;
-            background: #000;
+            background: #18181c;
         }
 
         .cover-art {
@@ -143,7 +143,7 @@
             display: block;
         }
 
-        /* Кнопка Play при наведении */
+        /* Кнопка Play / Pause - ТОЛЬКО ПРИ НАВЕДЕНИИ */
         .play-overlay {
             position: absolute;
             top: 0;
@@ -159,8 +159,7 @@
             cursor: pointer;
         }
 
-        .cover-wrapper:hover .play-overlay,
-        .card.playing .play-overlay {
+        .cover-wrapper:hover .play-overlay {
             opacity: 1;
         }
 
@@ -195,9 +194,15 @@
         .progress-bar-fill {
             height: 100%;
             width: 0%;
-            background: #a855f7;
+            background: var(--rarity-common);
             transition: width 0.1s linear;
         }
+
+        /* Цвет полоски совпадает с редкостью карты */
+        .rarity-Обычная .progress-bar-fill { background: var(--rarity-common); }
+        .rarity-Редкая .progress-bar-fill { background: var(--rarity-rare); }
+        .rarity-Эпическая .progress-bar-fill { background: var(--rarity-epic); }
+        .rarity-Легендарная .progress-bar-fill { background: var(--rarity-legend); }
 
         .album-title {
             font-size: 0.85rem;
@@ -360,7 +365,6 @@
         const collection = new Map();
         let currentViewMode = 'grid';
 
-        // Управление аудио и каруселью
         let currentAudio = null;
         let currentPlayingSlot = null;
         let currentPackData = [];
@@ -442,14 +446,20 @@
             }
 
             btn.disabled = false;
-
-            // Автозапуск лучшего альбома после открытия всего пака
             playBestAlbumInPack();
+        }
+
+        // Очистка строки поиска для iTunes от скобок и мусора
+        function cleanQueryString(str) {
+            return str.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim();
         }
 
         function fetchiTunesMedia(albumData) {
             return new Promise((resolve) => {
-                const query = encodeURIComponent(`${albumData.artist} ${albumData.title}`);
+                const cleanArtist = cleanQueryString(albumData.artist);
+                const cleanTitle = cleanQueryString(albumData.title);
+                const query = encodeURIComponent(`${cleanArtist} ${cleanTitle}`);
+                
                 const script = document.createElement('script');
                 const callbackName = `itunesCb_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
@@ -465,7 +475,7 @@
                         : fallbackCover;
 
                     resolve({
-                        ...albumData,
+                        ...albumData, // Сохраняем год, жанры и данные ИЗ albums.json
                         cover: coverUrl,
                         preview: match ? (match.previewUrl || '') : '',
                         pulledAt: Date.now() + Math.random()
