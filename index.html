@@ -58,17 +58,19 @@
 
         button.reset-btn {
             background: #2a2a35;
-            color: #ff5555;
-            border: 1px solid #444;
-            padding: 10px 16px;
-            font-size: 0.85rem;
-            border-radius: 20px;
+            color: #888;
+            border: 1px solid #333;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, color 0.2s;
         }
 
         button.reset-btn:hover {
             background: #3a2a35;
+            color: #ff5555;
+            border-color: #ff5555;
         }
 
         .pack-container {
@@ -445,7 +447,6 @@
         .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
         .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: 4px; display: flex; justify-content: space-between; }
 
-        /* Список собранных треков в коллекции с контрастными бэйджами */
         .tracks-collected-list {
             margin-top: 8px;
             padding-top: 6px;
@@ -502,7 +503,6 @@
             border: 1px solid rgba(234, 179, 8, 0.4);
         }
 
-        /* Вид группировки по артистам */
         .artist-group {
             background: #18181c;
             border-radius: 12px;
@@ -568,17 +568,20 @@
 
     <div class="controls">
         <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
-        <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑️ Clear Save</button>
     </div>
 
     <div class="pack-container" id="packContainer"></div>
 
     <div class="collection-section">
         <div class="collection-header">
-            <h2>Collection (<span id="colCount">0</span>)</h2>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <h2>Collection (<span id="colCount">0</span>)</h2>
+                <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑️ Clear Save</button>
+            </div>
             <div class="filter-controls">
                 <select id="sortSelect" onchange="renderCollectionUI()">
                     <option value="default">Newest First</option>
+                    <option value="tracks_desc">By Tracks Count (Max → Min)</option>
                     <option value="rarity">By Rarity (Legendary → Common)</option>
                     <option value="score">By Score (★10 → ★1)</option>
                     <option value="genre">By Genre</option>
@@ -606,7 +609,7 @@
         const DROP_RATES = { 'Legendary': 3, 'Epic': 12, 'Rare': 30, 'Common': 55 };
 
         let allAlbums = [];
-        let collection = new Map(); // Ключ: album.id -> Объект альбома
+        let collection = new Map();
         let currentViewMode = 'grid';
 
         let currentAudio = null;
@@ -626,7 +629,7 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // --- LOCAL STORAGE (Сохранение прогресса) ---
+        // --- LOCAL STORAGE ---
         function saveProgress() {
             try {
                 const serializableCol = Array.from(collection.entries());
@@ -1000,7 +1003,7 @@
             `;
         }
 
-        // --- PLAYER LOGIC ---
+        // --- PLAYER LOGIC & AUTOMATIC LINK REFRESH ---
 
         function playBestAlbumInPack() {
             if (currentPackData.length === 0) return;
@@ -1068,7 +1071,7 @@
                 playNextSlotInCarousel(slotIndex);
             };
 
-            currentAudio.play().catch(e => console.log('Autoplay blocked or error:', e));
+            currentAudio.play().catch(e => console.log('Autoplay blocked or link expired:', e));
             renderCollectionUI();
         }
 
@@ -1084,7 +1087,21 @@
             }
         }
 
-        function playCollectionTrack(albumId, trackName, previewUrl) {
+        // Авто-обновление протухшей аудио-ссылки из API
+        async function refreshTrackPreview(album, trackObj) {
+            try {
+                const query = encodeURIComponent(`${album.artist} ${trackObj.name}`);
+                const data = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=5`);
+                if (data && data.results && data.results.length > 0 && data.results[0].previewUrl) {
+                    trackObj.preview = data.results[0].previewUrl;
+                    saveProgress();
+                    return data.results[0].previewUrl;
+                }
+            } catch (e) { console.log('Failed to refresh preview URL'); }
+            return null;
+        }
+
+        async function playCollectionTrack(albumId, trackName, previewUrl) {
             const trackKey = `${albumId}_${trackName}`;
 
             if (currentPlayingId === trackKey && currentAudio && !currentAudio.paused) {
@@ -1095,14 +1112,46 @@
 
             stopCurrentAudio();
             currentPlayingId = trackKey;
-            currentAudio = new Audio(previewUrl);
+            
+            let audioUrlToPlay = previewUrl;
+            currentAudio = new Audio(audioUrlToPlay);
+
+            // Резервная обработка истекшего токена (403/404)
+            currentAudio.onerror = async () => {
+                console.log('Preview link expired. Refreshing preview URL...');
+                const album = collection.get(albumId);
+                if (album) {
+                    const trackObj = album.tracks.find(t => t.name === trackName);
+                    if (trackObj) {
+                        const newUrl = await refreshTrackPreview(album, trackObj);
+                        if (newUrl) {
+                            currentAudio = new Audio(newUrl);
+                            currentAudio.play().catch(err => console.log('Playback error:', err));
+                        }
+                    }
+                }
+            };
 
             currentAudio.onended = () => {
                 currentPlayingId = null;
                 renderCollectionUI();
             };
 
-            currentAudio.play().catch(e => console.log('Autoplay blocked:', e));
+            currentAudio.play().catch(async (e) => {
+                console.log('Initial playback failed, trying link refresh...');
+                const album = collection.get(albumId);
+                if (album) {
+                    const trackObj = album.tracks.find(t => t.name === trackName);
+                    if (trackObj) {
+                        const newUrl = await refreshTrackPreview(album, trackObj);
+                        if (newUrl) {
+                            currentAudio = new Audio(newUrl);
+                            currentAudio.play().catch(err => console.log('Playback error:', err));
+                        }
+                    }
+                }
+            });
+
             renderCollectionUI();
         }
 
@@ -1202,7 +1251,6 @@
             let albumsArray = Array.from(collection.values());
             const sortMode = document.getElementById('sortSelect').value;
 
-            // Приоритетная сортировка Избранных (Favorites вверху)
             const sortWithFavorites = (sortFn) => {
                 albumsArray.sort((a, b) => {
                     if (a.isFavorite && !b.isFavorite) return -1;
@@ -1211,7 +1259,9 @@
                 });
             };
 
-            if (sortMode === 'rarity') {
+            if (sortMode === 'tracks_desc') {
+                sortWithFavorites((a, b) => (b.tracks ? b.tracks.length : 0) - (a.tracks ? a.tracks.length : 0));
+            } else if (sortMode === 'rarity') {
                 sortWithFavorites((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
             } else if (sortMode === 'score') {
                 sortWithFavorites((a, b) => parseFloat(b.score) - parseFloat(a.score));
@@ -1247,7 +1297,6 @@
                 ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
                 : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${escTitle}</div>`;
 
-            // Список выбитых треков с контрастными бэйджами (Альбомный vs Дискография)
             let tracksHtml = '';
             if (item.tracks && item.tracks.length > 0) {
                 tracksHtml = '<div class="tracks-collected-list">';
@@ -1256,7 +1305,7 @@
                     const isPlaying = (currentPlayingId === trackKey) && currentAudio && !currentAudio.paused;
                     const iconText = isPlaying ? '❚❚' : '▶';
                     const badgeClass = t.isFallback ? 'badge-discog' : 'badge-native';
-                    const badgeText = t.isFallback ? '⚠️ Дискография' : '💿 Альбомный';
+                    const badgeText = t.isFallback ? '⚠️ Discography' : '💿 Native';
 
                     tracksHtml += `
                         <div class="track-item ${isPlaying ? 'active-track' : ''}" onclick="playCollectionTrack('${item.id}', '${escapeHtml(t.name)}', '${escapeHtml(t.preview)}')">
