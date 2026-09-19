@@ -197,13 +197,23 @@
             line-height: 1;
         }
 
+        .shuffle-btn svg {
+            width: 12px;
+            height: 12px;
+            fill: #888;
+            transition: fill 0.2s;
+        }
+
         .fav-btn.active {
             color: #eab308;
             text-shadow: 0 0 6px rgba(234, 179, 8, 0.8);
         }
 
+        .shuffle-btn:hover svg {
+            fill: #fff;
+        }
+
         .shuffle-btn:hover, .fav-btn:hover {
-            color: #fff;
             transform: scale(1.15);
         }
 
@@ -576,6 +586,9 @@
         const RARITY_ORDER = { 'Legendary': 4, 'Epic': 3, 'Rare': 2, 'Common': 1 };
         const DROP_RATES = { 'Legendary': 3, 'Epic': 12, 'Rare': 30, 'Common': 55 };
 
+        // Иконка Shuffle в формате SVG
+        const SHUFFLE_SVG = `<svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>`;
+
         let allAlbums = [];
         let collection = new Map();
         let collectionTracksCache = new Map();
@@ -886,7 +899,7 @@
                         <div class="lvl-badge">LVL ${data.pulls || 1}</div>
                         <div class="rarity-badge">${escapeHtml(data.rarity)}</div>
                         <div style="display:flex; gap:4px; align-items:center;">
-                            <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track from album">🔀</button>
+                            <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track from album">${SHUFFLE_SVG}</button>
                             <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromPack(${index}, ${data.id}, event)" title="Toggle Favorite">★</button>
                         </div>
                     </div>
@@ -1236,7 +1249,7 @@
                             <div class="lvl-badge">LVL ${item.pulls || 1}</div>
                             <div class="rarity-badge">${escapeHtml(item.rarity)}</div>
                             <div style="display:flex; gap:4px; align-items:center;">
-                                <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track from album">🔀</button>
+                                <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track from album">${SHUFFLE_SVG}</button>
                                 <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
                             </div>
                         </div>
@@ -1285,7 +1298,7 @@
                             <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
                             <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)} | <b>${escapeHtml(item.rarity)}</b></div>
                         </div>
-                        <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track from album">🔀</button>
+                        <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track from album">${SHUFFLE_SVG}</button>
                         <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
                     </div>
                 `;
