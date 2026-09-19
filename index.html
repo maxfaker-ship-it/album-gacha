@@ -596,12 +596,14 @@
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
 
+            // Очистка от мусорных слов и удаление пробелов/знаков для полной склейки имен
             const normalize = (str) => str.toLowerCase()
                 .replace(/\(.*?edition.*?\)/gi, '')
                 .replace(/\(.*?remastered.*?\)/gi, '')
                 .replace(/\(.*?version.*?\)/gi, '')
                 .replace(/\(.*?bonus.*?\)/gi, '')
                 .replace(/deluxe|remastered|explicit/gi, '')
+                .replace(/[^a-z0-9]/gi, '')
                 .trim();
 
             const targetArtistNorm = normalize(cleanArtist);
@@ -614,6 +616,7 @@
             let isFallbackTrack = false;
 
             try {
+                // 1. Поиск ТОЧНОГО альбома
                 const query = encodeURIComponent(`${cleanArtist} ${cleanTitle}`);
                 const albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=album&limit=10`);
 
@@ -649,6 +652,7 @@
                     }
                 }
 
+                // 2. ФОЛЛБЭК: Если альбома нет, ищем трек артиста + ФОТО САМОГО АРТИСТА
                 if (!previewUrl) {
                     const artistQuery = encodeURIComponent(cleanArtist);
                     const artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${artistQuery}&entity=song&limit=5`);
@@ -662,14 +666,22 @@
                         }) || artistSongsData.results[0];
 
                         if (artistMatch) {
-                            if (!coverUrl && artistMatch.artworkUrl100) {
-                                coverUrl = artistMatch.artworkUrl100.replace('100x100bb', '600x600bb');
-                            }
                             previewUrl = artistMatch.previewUrl || '';
                             trackName = artistMatch.trackName || '';
                             sourceAlbumName = artistMatch.collectionName || '';
                             isFallbackTrack = true;
                         }
+                    }
+
+                    // Подтягиваем официальное фото исполнителя из Deezer API вместо чужой обложки
+                    try {
+                        const dzRes = await fetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(cleanArtist)}&limit=1`);
+                        const dzData = await dzRes.json();
+                        if (dzData && dzData.data && dzData.data.length > 0 && dzData.data[0].picture_big) {
+                            coverUrl = dzData.data[0].picture_big;
+                        }
+                    } catch (e) {
+                        coverUrl = '';
                     }
                 }
             } catch (err) {
