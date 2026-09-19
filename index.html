@@ -125,7 +125,7 @@
         .rarity-Эпическая .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Легендарная .rarity-badge { background: var(--rarity-legend); color: #000; }
 
-        /* Обложка и плей-оверлей */
+        /* Контейнер обложки и плеера */
         .cover-wrapper {
             position: relative;
             width: 100%;
@@ -143,6 +143,7 @@
             display: block;
         }
 
+        /* Кнопка Play/Pause только при наведении */
         .play-overlay {
             position: absolute;
             top: 0;
@@ -180,6 +181,7 @@
             transform: scale(1.1);
         }
 
+        /* Индикатор прогресса трека */
         .progress-bar-container {
             position: absolute;
             bottom: 0;
@@ -448,10 +450,10 @@
 
         function cleanQueryString(str) {
             if (!str) return '';
+            // Сохраняем символы !, ?, & для точности имён вроде Panic! at the Disco
             return str.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim();
         }
 
-        // Загрузка через JSONP скрипт-тег
         function jsonpFetch(url) {
             return new Promise((resolve) => {
                 const script = document.createElement('script');
@@ -484,9 +486,8 @@
             let previewUrl = '';
 
             try {
-                // 1. Поиск точного альбома по entity=album
                 const query = encodeURIComponent(`${cleanArtist} ${cleanTitle}`);
-                const albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=album&limit=5`);
+                const albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=album&limit=10`);
 
                 let matchAlbum = null;
 
@@ -494,19 +495,21 @@
                     const targetArtist = cleanArtist.toLowerCase();
                     const targetTitle = cleanTitle.toLowerCase();
 
-                    // Ищем точное совпадение альбома и исполнителя
+                    // 1. Ищем альбом, у которого строго совпадает и артист, и название альбома
                     matchAlbum = albumSearchData.results.find(item => {
                         const itemArtist = (item.artistName || '').toLowerCase();
                         const itemCollection = (item.collectionName || '').toLowerCase();
-                        return (itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist)) &&
-                               (itemCollection.includes(targetTitle) || targetTitle.includes(itemCollection));
-                    }) || albumSearchData.results[0];
+                        
+                        const artistMatch = itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist);
+                        const titleMatch = itemCollection.includes(targetTitle) || targetTitle.includes(itemCollection);
+                        
+                        return artistMatch && titleMatch;
+                    });
                 }
 
                 if (matchAlbum) {
                     coverUrl = matchAlbum.artworkUrl100 ? matchAlbum.artworkUrl100.replace('100x100bb', '600x600bb') : fallbackCover;
                     
-                    // Достаем аудиопревью 1-го трека альбома по его collectionId
                     if (matchAlbum.collectionId) {
                         const lookupData = await jsonpFetch(`https://itunes.apple.com/lookup?id=${matchAlbum.collectionId}&entity=song&limit=2`);
                         if (lookupData && lookupData.results) {
@@ -516,17 +519,24 @@
                             }
                         }
                     }
-                }
-
-                // 2. Фоллбэк: если аудиопревью не нашлось, делаем прямой поиск по трекам
-                if (!previewUrl) {
-                    const songSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=3`);
+                } else {
+                    // 2. Фоллбэк: ищем трек, проверяя совпадение и исполнителя, и названия альбома
+                    const songSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=5`);
                     if (songSearchData && songSearchData.results && songSearchData.results.length > 0) {
-                        const song = songSearchData.results[0];
-                        if (!matchAlbum && song.artworkUrl100) {
-                            coverUrl = song.artworkUrl100.replace('100x100bb', '600x600bb');
+                        const targetArtist = cleanArtist.toLowerCase();
+                        const targetTitle = cleanTitle.toLowerCase();
+
+                        const songMatch = songSearchData.results.find(song => {
+                            const itemArtist = (song.artistName || '').toLowerCase();
+                            const itemCollection = (song.collectionName || '').toLowerCase();
+                            return (itemArtist.includes(targetArtist) || targetArtist.includes(itemArtist)) &&
+                                   (itemCollection.includes(targetTitle) || targetTitle.includes(itemCollection));
+                        });
+
+                        if (songMatch) {
+                            coverUrl = songMatch.artworkUrl100 ? songMatch.artworkUrl100.replace('100x100bb', '600x600bb') : fallbackCover;
+                            previewUrl = songMatch.previewUrl || '';
                         }
-                        previewUrl = song.previewUrl || '';
                     }
                 }
             } catch (err) {
