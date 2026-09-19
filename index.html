@@ -113,11 +113,6 @@
             position: relative;
         }
 
-        .card.favorite {
-            border-color: #eab308 !important;
-            box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
-        }
-
         .card.playing {
             transform: translateY(-8px) scale(1.02);
             z-index: 5;
@@ -158,10 +153,11 @@
             height: 22px;
         }
 
+        /* LVL В ЦВЕТОВОМ СТИЛЕ НЕАКТИВНОЙ КНОПКИ ИЗБРАННОГО */
         .lvl-badge {
             background: rgba(0, 0, 0, 0.6);
-            color: #f59e0b;
-            border: 1px solid #f59e0b;
+            color: #888;
+            border: none;
             font-size: 0.65rem;
             font-weight: bold;
             padding: 2px 6px;
@@ -185,11 +181,12 @@
         .rarity-Epic .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Legendary .rarity-badge { background: var(--rarity-legend); color: #000; }
 
+        /* SHUFFLE И FAV КНОПКИ В ОДИНАКОВОМ ТЁМНОМ СТИЛЕ */
         .fav-btn, .shuffle-btn {
             background: rgba(0, 0, 0, 0.6);
             border: none;
             color: #888;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             width: 22px;
             height: 22px;
             border-radius: 50%;
@@ -197,7 +194,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: color 0.2s, transform 0.1s, background 0.2s;
+            transition: color 0.2s, transform 0.1s;
             padding: 0;
             line-height: 1;
         }
@@ -208,8 +205,7 @@
         }
 
         .shuffle-btn:hover {
-            color: #3b82f6;
-            background: rgba(59, 130, 246, 0.2);
+            color: #fff;
             transform: scale(1.15);
         }
 
@@ -311,7 +307,6 @@
             transform: scale(1.1);
         }
 
-        /* ПРОГРЕСС БАР С ДИНАМИЧЕСКИМ ЦВЕТОМ РЕДКОСТИ */
         .progress-bar-container {
             position: absolute;
             bottom: 0;
@@ -515,10 +510,6 @@
             transition: background 0.2s;
             position: relative;
             cursor: pointer;
-        }
-
-        .list-card.favorite {
-            border-left-color: #eab308 !important;
         }
 
         .list-card.playing {
@@ -846,7 +837,6 @@
             };
         }
 
-        // РЕФРЕШ ТРЕКА В ОТКРЫТОМ ПАКЕ ПРИ НАЖАТИИ SHUFFLE
         async function shuffleTrackInPack(slotIndex, event) {
             if (event) event.stopPropagation();
             const albumData = currentPackData[slotIndex];
@@ -868,7 +858,7 @@
 
             const favClass = data.isFavorite ? 'active' : '';
 
-            card.className = `card rarity-${escapeHtml(data.rarity)} ${data.isFavorite ? 'favorite' : ''} flip-reveal`;
+            card.className = `card rarity-${escapeHtml(data.rarity)} flip-reveal`;
             
             const escTitle = escapeHtml(data.title);
             const escArtist = escapeHtml(data.artist);
@@ -944,7 +934,6 @@
             if (card) {
                 const btn = card.querySelector('.fav-btn');
                 if (btn) btn.classList.toggle('active', currentPackData[slotIndex].isFavorite);
-                card.classList.toggle('favorite', currentPackData[slotIndex].isFavorite);
             }
         }
 
@@ -1300,7 +1289,7 @@
 
             if (mode === 'grid') {
                 const mini = document.createElement('div');
-                mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${item.isFavorite ? 'favorite' : ''} ${isPlaying ? 'playing' : ''}`;
+                mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing' : ''}`;
                 mini.style.borderColor = `var(--rarity-${borderVar})`;
                 mini.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 mini.innerHTML = `
@@ -1339,7 +1328,7 @@
                 return mini;
             } else {
                 const listItem = document.createElement('div');
-                listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${item.isFavorite ? 'favorite' : ''} ${isPlaying ? 'playing' : ''}`;
+                listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing' : ''}`;
                 listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                 listItem.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 listItem.innerHTML = `
