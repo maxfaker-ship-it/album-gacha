@@ -185,7 +185,7 @@
         .rarity-Epic .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Legendary .rarity-badge { background: var(--rarity-legend); color: #000; }
 
-        .fav-btn {
+        .fav-btn, .shuffle-btn {
             background: rgba(0, 0, 0, 0.6);
             border: none;
             color: #888;
@@ -197,7 +197,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: color 0.2s, transform 0.1s;
+            transition: color 0.2s, transform 0.1s, background 0.2s;
             padding: 0;
             line-height: 1;
         }
@@ -205,6 +205,12 @@
         .fav-btn.active {
             color: #eab308;
             text-shadow: 0 0 6px rgba(234, 179, 8, 0.8);
+        }
+
+        .shuffle-btn:hover {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.2);
+            transform: scale(1.15);
         }
 
         .fav-btn:hover {
@@ -580,6 +586,7 @@
 
         let allAlbums = [];
         let collection = new Map();
+        let collectionTracksCache = new Map(); // Хранилище сгенерированных/запрошенных треков коллекции
         let currentViewMode = 'grid';
 
         let currentAudio = null;
@@ -631,6 +638,7 @@
             if (confirm('Are you sure you want to clear your collection and restart?')) {
                 localStorage.removeItem('album_gacha_collection');
                 collection.clear();
+                collectionTracksCache.clear();
                 renderCollectionUI();
             }
         }
@@ -756,7 +764,7 @@
             });
         }
 
-        async function fetchHitTrackForAlbum(albumData) {
+        async function fetchHitTrackForAlbum(albumData, forceRandom = false) {
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
 
@@ -777,7 +785,8 @@
                         if (tracksData && tracksData.data && tracksData.data.length > 0) {
                             const validTracks = tracksData.data.filter(s => s.preview);
                             if (validTracks.length > 0) {
-                                const selected = validTracks[Math.floor(Math.random() * validTracks.length)];
+                                const idx = forceRandom ? Math.floor(Math.random() * validTracks.length) : 0;
+                                const selected = validTracks[idx];
                                 hitTrack = { name: selected.title, preview: selected.preview };
                             }
                         }
@@ -788,11 +797,12 @@
             // 2. iTunes API
             if (!hitTrack) {
                 try {
-                    const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=song&limit=15`);
+                    const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=song&limit=20`);
                     if (itunesData && itunesData.results && itunesData.results.length > 0) {
                         const validSongs = itunesData.results.filter(s => s.previewUrl);
                         if (validSongs.length > 0) {
-                            const selected = validSongs[Math.floor(Math.random() * validSongs.length)];
+                            const idx = forceRandom ? Math.floor(Math.random() * validSongs.length) : 0;
+                            const selected = validSongs[idx];
                             if (!coverUrl && selected.artworkUrl100) coverUrl = selected.artworkUrl100.replace('100x100bb', '600x600bb');
                             hitTrack = { name: selected.trackName, preview: selected.previewUrl };
                         }
@@ -803,11 +813,12 @@
             // 3. Artist Top Tracks Fallback
             if (!hitTrack) {
                 try {
-                    const artistData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanArtist)}&entity=song&limit=10`);
+                    const artistData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanArtist)}&entity=song&limit=15`);
                     if (artistData && artistData.results && artistData.results.length > 0) {
                         const validArtistSongs = artistData.results.filter(s => s.previewUrl);
                         if (validArtistSongs.length > 0) {
-                            const selected = validArtistSongs[Math.floor(Math.random() * validArtistSongs.length)];
+                            const idx = forceRandom ? Math.floor(Math.random() * validArtistSongs.length) : 0;
+                            const selected = validArtistSongs[idx];
                             if (!coverUrl && selected.artworkUrl100) coverUrl = selected.artworkUrl100.replace('100x100bb', '600x600bb');
                             hitTrack = { name: selected.trackName, preview: selected.previewUrl };
                         }
@@ -823,7 +834,7 @@
                 isFavorite: isFav,
                 cover: coverUrl,
                 preview: hitTrack ? hitTrack.preview : '',
-                trackName: hitTrack ? hitTrack.name : '',
+                trackName: hitTrack ? hitTrack.name : 'Ambient Sample',
                 pulledAt: Date.now() + Math.random()
             };
         }
@@ -911,7 +922,7 @@
             }
         }
 
-        // WEBAUDIO SYNTH ENGINE FOR GUARANTEED UNINTERRUPTED PLAYBACK
+        // SYNTH AUDIO GENERATOR FOR GUARANTEED PLAYBACK
         function playSynthAmbientTrack(seedString) {
             stopCurrentAudio();
 
@@ -1055,10 +1066,12 @@
             }
         }
 
-        async function playCollectionAlbum(albumId) {
+        async function playCollectionAlbum(albumId, forceNextTrack = false, event = null) {
+            if (event) event.stopPropagation();
+
             const trackKey = `col_${albumId}`;
 
-            if (currentPlayingId === trackKey && ((currentAudio && !currentAudio.paused) || synthAudioContext)) {
+            if (!forceNextTrack && currentPlayingId === trackKey && ((currentAudio && !currentAudio.paused) || synthAudioContext)) {
                 pauseCurrentAudio();
                 renderCollectionUI();
                 return;
@@ -1072,8 +1085,12 @@
             loadingCollectionId = albumId;
             renderCollectionUI();
 
-            const refreshedData = await fetchHitTrackForAlbum(album);
+            const refreshedData = await fetchHitTrackForAlbum(album, forceNextTrack);
             loadingCollectionId = null;
+
+            if (refreshedData) {
+                collectionTracksCache.set(albumId, refreshedData.trackName || 'Ambient Sample');
+            }
 
             currentPlayingId = trackKey;
 
@@ -1228,6 +1245,8 @@
             const isPlaying = (currentPlayingId === `col_${item.id}`) && ((currentAudio && !currentAudio.paused) || synthAudioContext);
             const isLoading = (loadingCollectionId === item.id);
 
+            const activeTrackName = collectionTracksCache.get(item.id) || '';
+
             const coverImg = item.cover 
                 ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
                 : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${escTitle}</div>`;
@@ -1238,17 +1257,27 @@
             if (isLoading) playIconSVG = '';
             else if (isPlaying) playIconSVG = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
 
+            let trackDisplay = '';
+            if (isPlaying && activeTrackName) {
+                trackDisplay = `<div class="track-preview-name" title="${escapeHtml(activeTrackName)}">🎵 ${escapeHtml(activeTrackName)}</div>`;
+            } else if (isLoading) {
+                trackDisplay = `<div class="track-preview-name" style="color:#eab308;">⏳ Fetching track...</div>`;
+            }
+
             if (mode === 'grid') {
                 const mini = document.createElement('div');
                 mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${item.isFavorite ? 'favorite' : ''} ${isPlaying ? 'playing' : ''}`;
                 mini.style.borderColor = `var(--rarity-${borderVar})`;
-                mini.onclick = () => playCollectionAlbum(item.id);
+                mini.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 mini.innerHTML = `
                     <div>
                         <div class="card-top-bar">
                             <div class="lvl-badge">LVL ${item.pulls || 1}</div>
                             <div class="rarity-badge">${escapeHtml(item.rarity)}</div>
-                            <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
+                            <div style="display:flex; gap:4px; align-items:center;">
+                                <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track from album">🔀</button>
+                                <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
+                            </div>
                         </div>
                         <div class="mini-cover-wrapper">
                             ${coverImg}
@@ -1260,6 +1289,7 @@
                         </div>
                         <div class="title" title="${escTitle}">${escTitle}</div>
                         <div class="mini-artist" title="${escArtist}">${escArtist}</div>
+                        ${trackDisplay}
                         <div class="mini-score">★ ${escapeHtml(item.score)}</div>
                     </div>
                     <div>
@@ -1274,7 +1304,7 @@
                 const listItem = document.createElement('div');
                 listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${item.isFavorite ? 'favorite' : ''} ${isPlaying ? 'playing' : ''}`;
                 listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
-                listItem.onclick = () => playCollectionAlbum(item.id);
+                listItem.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 listItem.innerHTML = `
                     <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
                         <div class="list-cover-wrapper">
@@ -1283,6 +1313,7 @@
                         <div class="list-main">
                             <div class="list-title">${escTitle} <span style="font-size:0.75rem; color:#f59e0b;">(LVL ${item.pulls || 1})</span></div>
                             <div class="list-artist">${escArtist}</div>
+                            ${trackDisplay}
                         </div>
                     </div>
                     <div class="list-right-group">
@@ -1290,6 +1321,7 @@
                             <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
                             <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)} | <b>${escapeHtml(item.rarity)}</b></div>
                         </div>
+                        <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track from album">🔀</button>
                         <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
                     </div>
                 `;
