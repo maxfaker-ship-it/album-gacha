@@ -593,10 +593,24 @@
         }
 
         async function fetchiTunesMedia(albumData) {
+            const removeAccents = (str) => {
+                return str
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/\$/g, 's')
+                    .replace(/&/g, 'and');
+            };
+
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
 
-            const normalize = (str) => str.toLowerCase()
+            const asciiArtist = removeAccents(cleanArtist);
+            const asciiTitle = removeAccents(cleanTitle);
+
+            // Мягкая нормализация: удаление точек, кавычек, скобок и спецсимволов
+            const normalize = (str) => removeAccents(str)
+                .toLowerCase()
+                .replace(/[\.,\?!'"]+/g, '')
                 .replace(/\(.*?edition.*?\)/gi, '')
                 .replace(/\(.*?remastered.*?\)/gi, '')
                 .replace(/\(.*?version.*?\)/gi, '')
@@ -615,9 +629,12 @@
             let isFallbackTrack = false;
 
             try {
-                // 1. Поиск ТОЧНОГО альбома
-                const query = encodeURIComponent(`${cleanArtist} ${cleanTitle}`);
-                const albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${query}&entity=album&limit=10`);
+                // 1. Поиск точного альбома
+                let albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=album&limit=25`);
+                
+                if (!albumSearchData || !albumSearchData.results || albumSearchData.results.length === 0) {
+                    albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${asciiArtist}${asciiTitle}`)}&entity=album&limit=25`);
+                }
 
                 let matchAlbum = null;
 
@@ -651,7 +668,7 @@
 
                             let bestHitTrack = null;
                             try {
-                                const topSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanArtist)}&entity=song&limit=15`);
+                                const topSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(asciiArtist)}&entity=song&limit=15`);
                                 if (topSongsData && topSongsData.results) {
                                     bestHitTrack = topSongsData.results.find(s => 
                                         s.collectionId === matchAlbum.collectionId && s.previewUrl
@@ -674,10 +691,12 @@
                     }
                 }
 
-                // 2. ФОЛЛБЭК: Если альбома нет в iTunes, ищем хит-трек + портрет через Deezer API
+                // 2. ФОЛЛБЭК: Если альбома нет в iTunes, берем трек + обложку трека напрямую!
                 if (!previewUrl) {
-                    const artistQuery = encodeURIComponent(cleanArtist);
-                    const artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${artistQuery}&entity=song&limit=5`);
+                    let artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanArtist)}&entity=song&limit=10`);
+                    if (!artistSongsData || !artistSongsData.results || artistSongsData.results.length === 0) {
+                        artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(asciiArtist)}&entity=song&limit=10`);
+                    }
 
                     if (artistSongsData && artistSongsData.results && artistSongsData.results.length > 0) {
                         const artistMatch = artistSongsData.results.find(s => {
@@ -692,17 +711,24 @@
                             trackName = artistMatch.trackName || '';
                             sourceAlbumName = artistMatch.collectionName || '';
                             isFallbackTrack = true;
+
+                            // Забираем обложку трека напрямую, если у нас нет обложки альбома
+                            if (!coverUrl && artistMatch.artworkUrl100) {
+                                coverUrl = artistMatch.artworkUrl100.replace('100x100bb', '600x600bb');
+                            }
                         }
                     }
 
-                    try {
-                        const dzRes = await fetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(cleanArtist)}&limit=1`);
-                        const dzData = await dzRes.json();
-                        if (dzData && dzData.data && dzData.data.length > 0 && dzData.data[0].picture_big) {
-                            coverUrl = dzData.data[0].picture_big;
+                    // Если обложки всё еще нет, подтягиваем портрет исполнителя через Deezer API (JSONP)
+                    if (!coverUrl) {
+                        try {
+                            const dzData = await jsonpFetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(asciiArtist)}&limit=1&output=jsonp`);
+                            if (dzData && dzData.data && dzData.data.length > 0 && dzData.data[0].picture_big) {
+                                coverUrl = dzData.data[0].picture_big;
+                            }
+                        } catch (e) {
+                            coverUrl = '';
                         }
-                    } catch (e) {
-                        coverUrl = '';
                     }
                 }
             } catch (err) {
@@ -786,7 +812,6 @@
             let maxScore = -1;
             let bestSlot = -1;
 
-            // Ищем лучший альбом СТРОГО среди слотов с доступным аудио
             currentPackData.forEach((item, index) => {
                 if (item.preview) {
                     const scoreNum = parseFloat(item.score) || 0;
@@ -817,7 +842,6 @@
 
             const albumData = currentPackData[slotIndex];
 
-            // Если у слота нет аудио, сразу переходим к следующему звучащему слоту
             if (!albumData || !albumData.preview) {
                 playNextSlotInCarousel(slotIndex);
                 return;
@@ -853,7 +877,6 @@
         function playNextSlotInCarousel(fromSlotIndex) {
             if (currentPackData.length === 0) return;
 
-            // Находим БЛИЖАЙШИЙ слот с аудио по кругу
             for (let i = 1; i <= 5; i++) {
                 const checkSlot = (fromSlotIndex + i) % 5;
                 if (currentPackData[checkSlot] && currentPackData[checkSlot].preview) {
