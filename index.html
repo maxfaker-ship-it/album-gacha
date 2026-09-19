@@ -311,6 +311,7 @@
             transform: scale(1.1);
         }
 
+        /* ПРОГРЕСС БАР С ДИНАМИЧЕСКИМ ЦВЕТОМ РЕДКОСТИ */
         .progress-bar-container {
             position: absolute;
             bottom: 0;
@@ -318,6 +319,7 @@
             width: 100%;
             height: 4px;
             background: rgba(255, 255, 255, 0.2);
+            z-index: 4;
         }
 
         .progress-bar-fill {
@@ -326,6 +328,11 @@
             background: var(--rarity-common);
             transition: width 0.1s linear;
         }
+
+        .rarity-Common .progress-bar-fill { background: var(--rarity-common); }
+        .rarity-Rare .progress-bar-fill { background: var(--rarity-rare); }
+        .rarity-Epic .progress-bar-fill { background: var(--rarity-epic); }
+        .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
 
         .album-info-top {
             display: flex;
@@ -586,7 +593,7 @@
 
         let allAlbums = [];
         let collection = new Map();
-        let collectionTracksCache = new Map(); // Хранилище сгенерированных/запрошенных треков коллекции
+        let collectionTracksCache = new Map();
         let currentViewMode = 'grid';
 
         let currentAudio = null;
@@ -839,6 +846,22 @@
             };
         }
 
+        // РЕФРЕШ ТРЕКА В ОТКРЫТОМ ПАКЕ ПРИ НАЖАТИИ SHUFFLE
+        async function shuffleTrackInPack(slotIndex, event) {
+            if (event) event.stopPropagation();
+            const albumData = currentPackData[slotIndex];
+            if (!albumData) return;
+
+            const icon = document.getElementById(`play-icon-${slotIndex}`);
+            if (icon) icon.innerHTML = '⏳';
+
+            const refreshedData = await fetchHitTrackForAlbum(albumData, true);
+            currentPackData[slotIndex] = refreshedData;
+            
+            revealCardInPack(refreshedData, slotIndex);
+            playSlot(slotIndex);
+        }
+
         function revealCardInPack(data, index) {
             const card = document.getElementById(`pack-card-${index}`);
             if (!card) return;
@@ -877,7 +900,10 @@
                     <div class="card-top-bar">
                         <div class="lvl-badge">LVL ${data.pulls || 1}</div>
                         <div class="rarity-badge">${escapeHtml(data.rarity)}</div>
-                        <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromPack(${index}, ${data.id}, event)" title="Toggle Favorite">★</button>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                            <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track from album">🔀</button>
+                            <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromPack(${index}, ${data.id}, event)" title="Toggle Favorite">★</button>
+                        </div>
                     </div>
                     <div class="cover-wrapper" onclick="togglePlaySlot(${index})">
                         ${coverHTML}
@@ -922,7 +948,6 @@
             }
         }
 
-        // SYNTH AUDIO GENERATOR FOR GUARANTEED PLAYBACK
         function playSynthAmbientTrack(seedString) {
             stopCurrentAudio();
 
@@ -1096,6 +1121,15 @@
 
             if (refreshedData && refreshedData.preview) {
                 currentAudio = new Audio(refreshedData.preview);
+                
+                currentAudio.ontimeupdate = () => {
+                    if (currentAudio.duration) {
+                        const pct = (currentAudio.currentTime / currentAudio.duration) * 100;
+                        const progressBar = document.getElementById(`col-progress-${albumId}`);
+                        if (progressBar) progressBar.style.width = `${pct}%`;
+                    }
+                };
+
                 currentAudio.onended = () => {
                     currentPlayingId = null;
                     renderCollectionUI();
@@ -1285,6 +1319,9 @@
                                 <div class="play-btn-icon">
                                     ${isLoading ? '⏳' : `<svg viewBox="0 0 24 24">${playIconSVG}</svg>`}
                                 </div>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="col-progress-${item.id}"></div>
                             </div>
                         </div>
                         <div class="title" title="${escTitle}">${escTitle}</div>
