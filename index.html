@@ -30,7 +30,7 @@
         h1 { margin-bottom: 5px; }
         p.sub { color: #888; margin-top: 0; margin-bottom: 25px; }
 
-        .controls { margin-bottom: 25px; }
+        .controls { margin-bottom: 25px; display: flex; gap: 15px; align-items: center; }
 
         button.pull-btn {
             background: linear-gradient(135deg, #6366f1, #a855f7);
@@ -54,6 +54,21 @@
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
+        }
+
+        button.reset-btn {
+            background: #2a2a35;
+            color: #ff5555;
+            border: 1px solid #444;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button.reset-btn:hover {
+            background: #3a2a35;
         }
 
         .pack-container {
@@ -360,7 +375,7 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
             gap: 15px;
         }
 
@@ -376,6 +391,11 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+        }
+
+        .mini-card.favorite {
+            border-color: #eab308 !important;
+            box-shadow: 0 0 10px rgba(234, 179, 8, 0.3);
         }
 
         .mini-card.playing {
@@ -396,33 +416,59 @@
 
         .mini-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+        .fav-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: #888;
+            font-size: 1rem;
+            padding: 3px 6px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 6;
+            transition: color 0.2s, transform 0.1s;
+        }
+
+        .fav-btn.active {
+            color: #eab308;
+            text-shadow: 0 0 6px rgba(234, 179, 8, 0.8);
+        }
+
+        .fav-btn:hover {
+            transform: scale(1.2);
+        }
+
         .mini-card .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 6px; font-weight: bold; }
         .mini-card .mini-artist { color: #bbb; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
         .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: 4px; display: flex; justify-content: space-between; }
 
-        /* Список собранных треков в коллекции */
+        /* Список собранных треков в коллекции с контрастными бэйджами */
         .tracks-collected-list {
             margin-top: 8px;
             padding-top: 6px;
             border-top: 1px dashed #333;
             text-align: left;
             font-size: 0.7rem;
-            max-height: 80px;
+            max-height: 95px;
             overflow-y: auto;
         }
 
         .track-item {
             color: #aaa;
-            padding: 2px 4px;
-            border-radius: 3px;
+            padding: 3px 4px;
+            border-radius: 4px;
             cursor: pointer;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 4px;
+            margin-bottom: 2px;
         }
 
         .track-item:hover {
@@ -436,6 +482,47 @@
             background: #222230;
         }
 
+        .badge-tag {
+            font-size: 0.6rem;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .badge-native {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+        }
+
+        .badge-discog {
+            background: rgba(234, 179, 8, 0.2);
+            color: #fde047;
+            border: 1px solid rgba(234, 179, 8, 0.4);
+        }
+
+        /* Вид группировки по артистам */
+        .artist-group {
+            background: #18181c;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #2e2e38;
+        }
+
+        .artist-group-header {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #a855f7;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #2e2e38;
+            padding-bottom: 6px;
+        }
+
         .list { display: flex; flex-direction: column; gap: 8px; }
 
         .list-card {
@@ -447,6 +534,11 @@
             gap: 15px;
             border-left: 4px solid var(--rarity-common);
             transition: background 0.2s;
+            position: relative;
+        }
+
+        .list-card.favorite {
+            border-left-color: #eab308 !important;
         }
 
         .list-card.playing {
@@ -455,8 +547,8 @@
 
         .list-cover-wrapper {
             position: relative;
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
             border-radius: 4px;
             overflow: hidden;
             flex-shrink: 0;
@@ -476,6 +568,7 @@
 
     <div class="controls">
         <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
+        <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑️ Clear Save</button>
     </div>
 
     <div class="pack-container" id="packContainer"></div>
@@ -493,6 +586,7 @@
                 </select>
 
                 <button class="view-btn active" id="btnGridView" onclick="setViewMode('grid')">📷 Grid</button>
+                <button class="view-btn" id="btnArtistView" onclick="setViewMode('artist')">🎤 By Artist</button>
                 <button class="view-btn" id="btnListView" onclick="setViewMode('list')">📄 List</button>
             </div>
         </div>
@@ -512,12 +606,12 @@
         const DROP_RATES = { 'Legendary': 3, 'Epic': 12, 'Rare': 30, 'Common': 55 };
 
         let allAlbums = [];
-        const collection = new Map(); // Ключ: album.id -> Объекты альбомов с коллекцией треков
+        let collection = new Map(); // Ключ: album.id -> Объект альбома
         let currentViewMode = 'grid';
 
         let currentAudio = null;
         let currentPlayingSlot = null;
-        let currentPlayingId = null; // format: `${albumId}_${trackName}`
+        let currentPlayingId = null; 
         let currentPackData = [];
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -532,6 +626,36 @@
                 .replace(/'/g, '&#039;');
         }
 
+        // --- LOCAL STORAGE (Сохранение прогресса) ---
+        function saveProgress() {
+            try {
+                const serializableCol = Array.from(collection.entries());
+                localStorage.setItem('album_gacha_collection', JSON.stringify(serializableCol));
+            } catch (e) {
+                console.error('Failed to save collection:', e);
+            }
+        }
+
+        function loadProgress() {
+            try {
+                const saved = localStorage.getItem('album_gacha_collection');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    collection = new Map(parsed);
+                }
+            } catch (e) {
+                console.error('Failed to load collection:', e);
+            }
+        }
+
+        function clearSaveData() {
+            if (confirm('Are you sure you want to clear your collection and restart?')) {
+                localStorage.removeItem('album_gacha_collection');
+                collection.clear();
+                renderCollectionUI();
+            }
+        }
+
         async function loadDatabase() {
             try {
                 const res = await fetch('albums.json');
@@ -542,6 +666,8 @@
                     rarity: RARITY_MAP[item.rarity] || item.rarity || 'Common'
                 }));
 
+                loadProgress();
+                renderCollectionUI();
                 document.getElementById('pullBtn').disabled = false;
             } catch (err) {
                 alert('Error loading albums.json!');
@@ -676,7 +802,6 @@
             const targetArtistNorm = normalize(cleanArtist);
             const targetTitleNorm = normalize(cleanTitle);
 
-            // Получаем ранее утянутые треки из коллекции для этого альбома
             const existingEntry = collection.get(albumData.id);
             const collectedTracks = existingEntry ? existingEntry.tracks : [];
             const collectedTrackNames = collectedTracks.map(t => normalize(t.name));
@@ -723,7 +848,7 @@
                 }
             } catch (e) { console.log('Deezer search skipped'); }
 
-            // --- 2. iTUNES API (если Deezer не вернул треков) ---
+            // --- 2. iTUNES API ---
             if (candidateTracks.length === 0) {
                 try {
                     let albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=album&limit=25`);
@@ -764,7 +889,7 @@
                 } catch (err) { console.error('Error in iTunes search:', err); }
             }
 
-            // --- 3. ФОЛЛБЭК: Ищем дискографию/треки артиста, если у альбома нет треков ---
+            // --- 3. ФОЛЛБЭК: Дискография исполнителя ---
             if (candidateTracks.length === 0) {
                 isFallback = true;
                 try {
@@ -793,10 +918,8 @@
                 } catch (e) { console.log('Fallback photo fetch error'); }
             }
 
-            // Ищем следующий ПОПУЛЯРНЫЙ НЕЗАБРАННЫЙ ТРЕК
             let selectedTrack = candidateTracks.find(t => !collectedTrackNames.includes(normalize(t.name)));
 
-            // Если все треки альбома уже выбиты, закольцовываем или выбираем произвольный
             if (!selectedTrack && candidateTracks.length > 0) {
                 selectedTrack = candidateTracks[collectedTracks.length % candidateTracks.length];
             }
@@ -1027,6 +1150,7 @@
             if (!existing) {
                 collection.set(albumObj.id, {
                     ...albumObj,
+                    isFavorite: false,
                     tracks: albumObj.trackName ? [{
                         name: albumObj.trackName,
                         preview: albumObj.preview,
@@ -1034,7 +1158,6 @@
                     }] : []
                 });
             } else {
-                // Если альбом уже есть, пополняем его список выбитых треков
                 if (albumObj.trackName) {
                     const trackExists = existing.tracks.some(t => t.name === albumObj.trackName);
                     if (!trackExists) {
@@ -1045,19 +1168,29 @@
                         });
                     }
                 }
-                existing.pulledAt = albumObj.pulledAt; // Обновляем время последнего выпадения
+                existing.pulledAt = albumObj.pulledAt;
             }
 
+            saveProgress();
             renderCollectionUI();
+        }
+
+        function toggleFavorite(albumId, event) {
+            if (event) event.stopPropagation();
+            const item = collection.get(albumId);
+            if (item) {
+                item.isFavorite = !item.isFavorite;
+                saveProgress();
+                renderCollectionUI();
+            }
         }
 
         function setViewMode(mode) {
             currentViewMode = mode;
             document.getElementById('btnGridView').classList.toggle('active', mode === 'grid');
+            document.getElementById('btnArtistView').classList.toggle('active', mode === 'artist');
             document.getElementById('btnListView').classList.toggle('active', mode === 'list');
             
-            const container = document.getElementById('collectionContainer');
-            container.className = mode;
             renderCollectionUI();
         }
 
@@ -1069,90 +1202,148 @@
             let albumsArray = Array.from(collection.values());
             const sortMode = document.getElementById('sortSelect').value;
 
+            // Приоритетная сортировка Избранных (Favorites вверху)
+            const sortWithFavorites = (sortFn) => {
+                albumsArray.sort((a, b) => {
+                    if (a.isFavorite && !b.isFavorite) return -1;
+                    if (!a.isFavorite && b.isFavorite) return 1;
+                    return sortFn(a, b);
+                });
+            };
+
             if (sortMode === 'rarity') {
-                albumsArray.sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
+                sortWithFavorites((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
             } else if (sortMode === 'score') {
-                albumsArray.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+                sortWithFavorites((a, b) => parseFloat(b.score) - parseFloat(a.score));
             } else if (sortMode === 'genre') {
-                albumsArray.sort((a, b) => a.genre.localeCompare(b.genre));
+                sortWithFavorites((a, b) => a.genre.localeCompare(b.genre));
             } else if (sortMode === 'year') {
-                albumsArray.sort((a, b) => (b.year === 'N/A' ? 0 : b.year) - (a.year === 'N/A' ? 0 : a.year));
+                sortWithFavorites((a, b) => (b.year === 'N/A' ? 0 : b.year) - (a.year === 'N/A' ? 0 : a.year));
             } else {
-                albumsArray.sort((a, b) => b.pulledAt - a.pulledAt);
+                sortWithFavorites((a, b) => b.pulledAt - a.pulledAt);
             }
 
-            albumsArray.forEach(item => {
-                let borderVar = 'common';
-                if (item.rarity === 'Legendary') borderVar = 'legend';
-                else if (item.rarity === 'Epic') borderVar = 'epic';
-                else if (item.rarity === 'Rare') borderVar = 'rare';
-                
-                const escTitle = escapeHtml(item.title);
-                const escArtist = escapeHtml(item.artist);
+            if (currentViewMode === 'artist') {
+                container.className = '';
+                renderArtistGroupView(container, albumsArray);
+            } else {
+                container.className = currentViewMode;
+                albumsArray.forEach(item => {
+                    container.appendChild(createAlbumCardElement(item, currentViewMode));
+                });
+            }
+        }
 
-                const coverImg = item.cover 
-                    ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
-                    : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${escTitle}</div>`;
+        function createAlbumCardElement(item, mode) {
+            let borderVar = 'common';
+            if (item.rarity === 'Legendary') borderVar = 'legend';
+            else if (item.rarity === 'Epic') borderVar = 'epic';
+            else if (item.rarity === 'Rare') borderVar = 'rare';
+            
+            const escTitle = escapeHtml(item.title);
+            const escArtist = escapeHtml(item.artist);
 
-                // Формируем список выбитых треков
-                let tracksHtml = '';
-                if (item.tracks && item.tracks.length > 0) {
-                    tracksHtml = '<div class="tracks-collected-list">';
-                    item.tracks.forEach((t, idx) => {
-                        const trackKey = `${item.id}_${t.name}`;
-                        const isPlaying = (currentPlayingId === trackKey) && currentAudio && !currentAudio.paused;
-                        const iconText = isPlaying ? '❚❚' : '▶';
-                        tracksHtml += `
-                            <div class="track-item ${isPlaying ? 'active-track' : ''}" onclick="playCollectionTrack('${item.id}', '${escapeHtml(t.name)}', '${escapeHtml(t.preview)}')">
-                                <span>${iconText}</span> ${idx + 1}. ${escapeHtml(t.name)}
-                            </div>
-                        `;
-                    });
-                    tracksHtml += '</div>';
-                }
+            const coverImg = item.cover 
+                ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
+                : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${escTitle}</div>`;
 
-                if (currentViewMode === 'grid') {
-                    const mini = document.createElement('div');
-                    mini.className = `mini-card rarity-${escapeHtml(item.rarity)}`;
-                    mini.style.borderColor = `var(--rarity-${borderVar})`;
-                    mini.innerHTML = `
-                        <div>
-                            <div class="mini-cover-wrapper">
-                                ${coverImg}
-                            </div>
-                            <div class="title" title="${escTitle}">${escTitle}</div>
-                            <div class="mini-artist" title="${escArtist}">${escArtist}</div>
-                            <div class="mini-score">★ ${escapeHtml(item.score)} (${item.tracks.length} track${item.tracks.length > 1 ? 's' : ''})</div>
-                        </div>
-                        <div>
-                            ${tracksHtml}
-                            <div class="mini-info">
-                                <span>🏷️ ${escapeHtml(item.genre)}</span>
-                                <span>[${escapeHtml(item.type)}]</span>
-                            </div>
+            // Список выбитых треков с контрастными бэйджами (Альбомный vs Дискография)
+            let tracksHtml = '';
+            if (item.tracks && item.tracks.length > 0) {
+                tracksHtml = '<div class="tracks-collected-list">';
+                item.tracks.forEach((t, idx) => {
+                    const trackKey = `${item.id}_${t.name}`;
+                    const isPlaying = (currentPlayingId === trackKey) && currentAudio && !currentAudio.paused;
+                    const iconText = isPlaying ? '❚❚' : '▶';
+                    const badgeClass = t.isFallback ? 'badge-discog' : 'badge-native';
+                    const badgeText = t.isFallback ? '⚠️ Дискография' : '💿 Альбомный';
+
+                    tracksHtml += `
+                        <div class="track-item ${isPlaying ? 'active-track' : ''}" onclick="playCollectionTrack('${item.id}', '${escapeHtml(t.name)}', '${escapeHtml(t.preview)}')">
+                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${iconText} ${idx + 1}. ${escapeHtml(t.name)}</span>
+                            <span class="badge-tag ${badgeClass}">${badgeText}</span>
                         </div>
                     `;
-                    container.appendChild(mini);
-                } else {
-                    const listItem = document.createElement('div');
-                    listItem.className = `list-card rarity-${escapeHtml(item.rarity)}`;
-                    listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
-                    listItem.innerHTML = `
-                        <div class="list-cover-wrapper">
+                });
+                tracksHtml += '</div>';
+            }
+
+            const favStarClass = item.isFavorite ? 'active' : '';
+
+            if (mode === 'grid') {
+                const mini = document.createElement('div');
+                mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${item.isFavorite ? 'favorite' : ''}`;
+                mini.style.borderColor = `var(--rarity-${borderVar})`;
+                mini.innerHTML = `
+                    <div>
+                        <div class="mini-cover-wrapper">
                             ${coverImg}
+                            <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
                         </div>
-                        <div class="list-main">
-                            <div class="list-title">${escTitle}</div>
-                            <div class="list-artist">${escArtist} (${item.tracks.length} track${item.tracks.length > 1 ? 's' : ''})</div>
-                            ${tracksHtml}
+                        <div class="title" title="${escTitle}">${escTitle}</div>
+                        <div class="mini-artist" title="${escArtist}">${escArtist}</div>
+                        <div class="mini-score">★ ${escapeHtml(item.score)} (${item.tracks.length} track${item.tracks.length > 1 ? 's' : ''})</div>
+                    </div>
+                    <div>
+                        ${tracksHtml}
+                        <div class="mini-info">
+                            <span>🏷️ ${escapeHtml(item.genre)}</span>
+                            <span>[${escapeHtml(item.type)}]</span>
                         </div>
-                        <div class="list-meta">
-                            <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
-                            <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)} | <b>${escapeHtml(item.rarity)}</b></div>
-                        </div>
-                    `;
-                    container.appendChild(listItem);
-                }
+                    </div>
+                `;
+                return mini;
+            } else {
+                const listItem = document.createElement('div');
+                listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${item.isFavorite ? 'favorite' : ''}`;
+                listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
+                listItem.innerHTML = `
+                    <div class="list-cover-wrapper">
+                        ${coverImg}
+                    </div>
+                    <div class="list-main">
+                        <div class="list-title">${escTitle}</div>
+                        <div class="list-artist">${escArtist} (${item.tracks.length} track${item.tracks.length > 1 ? 's' : ''})</div>
+                        ${tracksHtml}
+                    </div>
+                    <div class="list-meta">
+                        <button class="fav-btn ${favStarClass}" style="position:static; margin-bottom:4px;" onclick="toggleFavorite(${item.id}, event)">★</button>
+                        <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
+                        <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)} | <b>${escapeHtml(item.rarity)}</b></div>
+                    </div>
+                `;
+                return listItem;
+            }
+        }
+
+        function renderArtistGroupView(container, albumsArray) {
+            const groups = new Map();
+
+            albumsArray.forEach(album => {
+                const artist = album.artist || 'Unknown Artist';
+                if (!groups.has(artist)) groups.set(artist, []);
+                groups.get(artist).push(album);
+            });
+
+            groups.forEach((artistAlbums, artistName) => {
+                const groupEl = document.createElement('div');
+                groupEl.className = 'artist-group';
+
+                groupEl.innerHTML = `
+                    <div class="artist-group-header">
+                        🎤 ${escapeHtml(artistName)} <span style="color:#777; font-size:0.8rem;">(${artistAlbums.length} album${artistAlbums.length > 1 ? 's' : ''})</span>
+                    </div>
+                `;
+
+                const gridEl = document.createElement('div');
+                gridEl.className = 'grid';
+
+                artistAlbums.forEach(album => {
+                    gridEl.appendChild(createAlbumCardElement(album, 'grid'));
+                });
+
+                groupEl.appendChild(gridEl);
+                container.appendChild(groupEl);
             });
         }
 
