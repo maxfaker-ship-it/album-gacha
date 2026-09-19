@@ -207,7 +207,6 @@
             opacity: 1;
         }
 
-        /* Выравнивание кнопки Play ровно по центру */
         .play-btn-icon {
             width: 44px;
             height: 44px;
@@ -219,7 +218,6 @@
             justify-content: center;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             transition: transform 0.15s ease;
-            padding-left: 3px; /* Оптическое выравнивание символа ▶ */
             box-sizing: border-box;
         }
 
@@ -362,7 +360,7 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 15px;
         }
 
@@ -375,6 +373,9 @@
             font-size: 0.8rem;
             transition: transform 0.2s, box-shadow 0.2s;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .mini-card.playing {
@@ -399,6 +400,41 @@
         .mini-card .mini-artist { color: #bbb; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
         .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: 4px; display: flex; justify-content: space-between; }
+
+        /* Список собранных треков в коллекции */
+        .tracks-collected-list {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px dashed #333;
+            text-align: left;
+            font-size: 0.7rem;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .track-item {
+            color: #aaa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .track-item:hover {
+            background: #2a2a35;
+            color: #fff;
+        }
+
+        .track-item.active-track {
+            color: #6366f1;
+            font-weight: bold;
+            background: #222230;
+        }
 
         .list { display: flex; flex-direction: column; gap: 8px; }
 
@@ -476,17 +512,16 @@
         const DROP_RATES = { 'Legendary': 3, 'Epic': 12, 'Rare': 30, 'Common': 55 };
 
         let allAlbums = [];
-        const collection = new Map();
+        const collection = new Map(); // Ключ: album.id -> Объекты альбомов с коллекцией треков
         let currentViewMode = 'grid';
 
         let currentAudio = null;
         let currentPlayingSlot = null;
-        let currentPlayingId = null;
+        let currentPlayingId = null; // format: `${albumId}_${trackName}`
         let currentPackData = [];
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-        // Экранирование HTML-символов против поломки верстки
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
@@ -571,7 +606,7 @@
                 const targetRarity = rollRarity();
                 const rawAlbum = getRandomAlbumByRarity(targetRarity);
 
-                const albumObj = await fetchiTunesMedia(rawAlbum);
+                const albumObj = await fetchNextTrackForAlbum(rawAlbum);
                 currentPackData.push(albumObj);
                 
                 revealCardInPack(albumObj, i);
@@ -612,7 +647,7 @@
             });
         }
 
-        async function fetchiTunesMedia(albumData) {
+        async function fetchNextTrackForAlbum(albumData) {
             const removeAccents = (str) => {
                 return str
                     .normalize('NFD')
@@ -641,13 +676,16 @@
             const targetArtistNorm = normalize(cleanArtist);
             const targetTitleNorm = normalize(cleanTitle);
 
-            let coverUrl = '';
-            let previewUrl = '';
-            let trackName = '';
-            let sourceAlbumName = '';
-            let isFallbackTrack = false;
+            // Получаем ранее утянутые треки из коллекции для этого альбома
+            const existingEntry = collection.get(albumData.id);
+            const collectedTracks = existingEntry ? existingEntry.tracks : [];
+            const collectedTrackNames = collectedTracks.map(t => normalize(t.name));
 
-            // --- ШАГ 1: Deezer API ---
+            let coverUrl = existingEntry ? existingEntry.cover : '';
+            let candidateTracks = [];
+            let isFallback = false;
+
+            // --- 1. DEEZER API ---
             try {
                 const dzQuery = encodeURIComponent(`${asciiArtist} ${asciiTitle}`);
                 const dzAlbumData = await jsonpFetch(`https://api.deezer.com/search/album?q=${dzQuery}&limit=10&output=jsonp`);
@@ -666,27 +704,27 @@
                     });
 
                     if (matchAlbum) {
-                        coverUrl = matchAlbum.cover_xl || matchAlbum.cover_big || matchAlbum.cover_medium || '';
+                        if (!coverUrl) coverUrl = matchAlbum.cover_xl || matchAlbum.cover_big || matchAlbum.cover_medium || '';
                         
                         if (matchAlbum.id) {
                             const dzTracksData = await jsonpFetch(`https://api.deezer.com/album/${matchAlbum.id}/tracks?output=jsonp`);
                             if (dzTracksData && dzTracksData.data && dzTracksData.data.length > 0) {
-                                const validSongs = dzTracksData.data.filter(s => (s.duration || 0) > 60 && s.preview);
-                                const chosenTrack = validSongs.find(s => s.track_position >= 2 && s.track_position <= 5) || validSongs[0] || dzTracksData.data[0];
-                                if (chosenTrack) {
-                                    previewUrl = chosenTrack.preview;
-                                    trackName = chosenTrack.title;
-                                }
+                                candidateTracks = dzTracksData.data
+                                    .filter(s => (s.duration || 0) > 40 && s.preview)
+                                    .map(s => ({
+                                        name: s.title,
+                                        preview: s.preview,
+                                        source: matchAlbum.title,
+                                        isFallback: false
+                                    }));
                             }
                         }
                     }
                 }
-            } catch (e) {
-                console.log('Deezer search skipped');
-            }
+            } catch (e) { console.log('Deezer search skipped'); }
 
-            // --- ШАГ 2: iTunes API (Резервный) ---
-            if (!coverUrl || !previewUrl) {
+            // --- 2. iTUNES API (если Deezer не вернул треков) ---
+            if (candidateTracks.length === 0) {
                 try {
                     let albumSearchData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=album&limit=25`);
                     if (!albumSearchData || !albumSearchData.results || albumSearchData.results.length === 0) {
@@ -707,50 +745,42 @@
                         });
 
                         if (matchAlbum) {
-                            if (!coverUrl) {
-                                coverUrl = matchAlbum.artworkUrl100 ? matchAlbum.artworkUrl100.replace('100x100bb', '600x600bb') : '';
-                            }
-                            if (!previewUrl && matchAlbum.collectionId) {
-                                const lookupData = await jsonpFetch(`https://itunes.apple.com/lookup?id=${matchAlbum.collectionId}&entity=song&limit=25`);
+                            if (!coverUrl) coverUrl = matchAlbum.artworkUrl100 ? matchAlbum.artworkUrl100.replace('100x100bb', '600x600bb') : '';
+                            if (matchAlbum.collectionId) {
+                                const lookupData = await jsonpFetch(`https://itunes.apple.com/lookup?id=${matchAlbum.collectionId}&entity=song&limit=30`);
                                 if (lookupData && lookupData.results) {
-                                    const allSongs = lookupData.results.filter(r => r.wrapperType === 'track' && r.previewUrl);
-                                    const validSongs = allSongs.filter(s => (s.trackTimeMillis || 0) > 90000);
-                                    const chosenTrack = validSongs.find(s => s.trackNumber >= 2 && s.trackNumber <= 5) || validSongs[0] || allSongs[0];
-                                    if (chosenTrack) {
-                                        previewUrl = chosenTrack.previewUrl;
-                                        trackName = chosenTrack.trackName || '';
-                                    }
+                                    candidateTracks = lookupData.results
+                                        .filter(r => r.wrapperType === 'track' && r.previewUrl)
+                                        .map(s => ({
+                                            name: s.trackName,
+                                            preview: s.previewUrl,
+                                            source: matchAlbum.collectionName,
+                                            isFallback: false
+                                        }));
                                 }
                             }
                         }
                     }
-                } catch (err) {
-                    console.error('Error in iTunes search:', err);
-                }
+                } catch (err) { console.error('Error in iTunes search:', err); }
             }
 
-            // --- ШАГ 3: Фоллбэк на синглы ---
-            if (!previewUrl || !coverUrl) {
+            // --- 3. ФОЛЛБЭК: Ищем дискографию/треки артиста, если у альбома нет треков ---
+            if (candidateTracks.length === 0) {
+                isFallback = true;
                 try {
-                    let artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(asciiArtist)}&entity=song&limit=10`);
+                    let artistSongsData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(asciiArtist)}&entity=song&limit=25`);
                     if (artistSongsData && artistSongsData.results && artistSongsData.results.length > 0) {
-                        const artistMatch = artistSongsData.results.find(s => {
-                            const itemArtistNorm = normalize(s.artistName || '');
-                            return targetArtistNorm.length <= 4
-                                ? itemArtistNorm === targetArtistNorm
-                                : (itemArtistNorm.includes(targetArtistNorm) || targetArtistNorm.includes(itemArtistNorm));
-                        }) || artistSongsData.results[0];
-
-                        if (artistMatch) {
-                            if (!previewUrl) {
-                                previewUrl = artistMatch.previewUrl || '';
-                                trackName = artistMatch.trackName || '';
-                                sourceAlbumName = artistMatch.collectionName || '';
-                                isFallbackTrack = true;
-                            }
-                            if (!coverUrl && artistMatch.artworkUrl100) {
-                                coverUrl = artistMatch.artworkUrl100.replace('100x100bb', '600x600bb');
-                            }
+                        candidateTracks = artistSongsData.results
+                            .filter(s => s.previewUrl)
+                            .map(s => ({
+                                name: s.trackName,
+                                preview: s.previewUrl,
+                                source: s.collectionName || 'Single/Top Track',
+                                isFallback: true,
+                                art: s.artworkUrl100
+                            }));
+                        if (!coverUrl && candidateTracks.length > 0 && candidateTracks[0].art) {
+                            coverUrl = candidateTracks[0].art.replace('100x100bb', '600x600bb');
                         }
                     }
 
@@ -760,18 +790,24 @@
                             coverUrl = dzData.data[0].picture_big;
                         }
                     }
-                } catch (e) {
-                    console.log('Fallback photo fetch error');
-                }
+                } catch (e) { console.log('Fallback photo fetch error'); }
+            }
+
+            // Ищем следующий ПОПУЛЯРНЫЙ НЕЗАБРАННЫЙ ТРЕК
+            let selectedTrack = candidateTracks.find(t => !collectedTrackNames.includes(normalize(t.name)));
+
+            // Если все треки альбома уже выбиты, закольцовываем или выбираем произвольный
+            if (!selectedTrack && candidateTracks.length > 0) {
+                selectedTrack = candidateTracks[collectedTracks.length % candidateTracks.length];
             }
 
             return {
                 ...albumData,
                 cover: coverUrl,
-                preview: previewUrl,
-                trackName: trackName,
-                sourceAlbumName: sourceAlbumName,
-                isFallbackTrack: isFallbackTrack,
+                preview: selectedTrack ? selectedTrack.preview : '',
+                trackName: selectedTrack ? selectedTrack.name : '',
+                sourceAlbumName: selectedTrack ? selectedTrack.source : '',
+                isFallbackTrack: selectedTrack ? selectedTrack.isFallback : false,
                 pulledAt: Date.now() + Math.random()
             };
         }
@@ -798,7 +834,6 @@
                 </div>
             `;
 
-            // Выравнивание кнопки Play с помощью векторной иконки
             const overlayHTML = hasAudio ? `
                 <div class="play-overlay" onclick="togglePlaySlot(${index})">
                     <div class="play-btn-icon" id="play-icon-${index}">
@@ -810,7 +845,7 @@
             let trackDisplay = '';
             if (data.trackName) {
                 if (data.isFallbackTrack) {
-                    trackDisplay = `<div class="track-preview-name fallback" title="${escTrack} (from album '${escSourceAlbum}')">⚠️ 🎵 ${escTrack} (from "${escSourceAlbum}")</div>`;
+                    trackDisplay = `<div class="track-preview-name fallback" title="${escTrack} (from '${escSourceAlbum}')">⚠️ 🎵 ${escTrack}</div>`;
                 } else {
                     trackDisplay = `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`;
                 }
@@ -886,7 +921,7 @@
             }
 
             currentPlayingSlot = slotIndex;
-            currentPlayingId = albumData.id;
+            currentPlayingId = `${albumData.id}_${albumData.trackName}`;
             currentAudio = new Audio(albumData.preview);
 
             const card = document.getElementById(`pack-card-${slotIndex}`);
@@ -895,7 +930,7 @@
 
             if (card) card.classList.add('playing');
             if (icon) {
-                icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:3px;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+                icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
             }
 
             currentAudio.ontimeupdate = () => {
@@ -926,19 +961,18 @@
             }
         }
 
-        function playCollectionTrack(id) {
-            const albumObj = collection.get(id);
-            if (!albumObj || !albumObj.preview) return;
+        function playCollectionTrack(albumId, trackName, previewUrl) {
+            const trackKey = `${albumId}_${trackName}`;
 
-            if (currentPlayingId === id && currentAudio && !currentAudio.paused) {
+            if (currentPlayingId === trackKey && currentAudio && !currentAudio.paused) {
                 pauseCurrentAudio();
                 renderCollectionUI();
                 return;
             }
 
             stopCurrentAudio();
-            currentPlayingId = id;
-            currentAudio = new Audio(albumObj.preview);
+            currentPlayingId = trackKey;
+            currentAudio = new Audio(previewUrl);
 
             currentAudio.onended = () => {
                 currentPlayingId = null;
@@ -988,10 +1022,33 @@
         // --- COLLECTION ---
 
         function addToCollection(albumObj) {
-            if (!collection.has(albumObj.id)) {
-                collection.set(albumObj.id, albumObj);
-                renderCollectionUI();
+            const existing = collection.get(albumObj.id);
+
+            if (!existing) {
+                collection.set(albumObj.id, {
+                    ...albumObj,
+                    tracks: albumObj.trackName ? [{
+                        name: albumObj.trackName,
+                        preview: albumObj.preview,
+                        isFallback: albumObj.isFallbackTrack
+                    }] : []
+                });
+            } else {
+                // Если альбом уже есть, пополняем его список выбитых треков
+                if (albumObj.trackName) {
+                    const trackExists = existing.tracks.some(t => t.name === albumObj.trackName);
+                    if (!trackExists) {
+                        existing.tracks.push({
+                            name: albumObj.trackName,
+                            preview: albumObj.preview,
+                            isFallback: albumObj.isFallbackTrack
+                        });
+                    }
+                }
+                existing.pulledAt = albumObj.pulledAt; // Обновляем время последнего выпадения
             }
+
+            renderCollectionUI();
         }
 
         function setViewMode(mode) {
@@ -1030,17 +1087,6 @@
                 else if (item.rarity === 'Epic') borderVar = 'epic';
                 else if (item.rarity === 'Rare') borderVar = 'rare';
                 
-                const isPlayingThis = (currentPlayingId === item.id) && currentAudio && !currentAudio.paused;
-                const playIconSVG = isPlayingThis 
-                    ? '<svg viewBox="0 0 24 24" style="padding-right:3px;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>' 
-                    : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-
-                const miniOverlay = item.preview ? `
-                    <div class="play-overlay" onclick="playCollectionTrack(${item.id})">
-                        <div class="play-btn-icon">${playIconSVG}</div>
-                    </div>
-                ` : '';
-
                 const escTitle = escapeHtml(item.title);
                 const escArtist = escapeHtml(item.artist);
 
@@ -1048,36 +1094,57 @@
                     ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
                     : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${escTitle}</div>`;
 
+                // Формируем список выбитых треков
+                let tracksHtml = '';
+                if (item.tracks && item.tracks.length > 0) {
+                    tracksHtml = '<div class="tracks-collected-list">';
+                    item.tracks.forEach((t, idx) => {
+                        const trackKey = `${item.id}_${t.name}`;
+                        const isPlaying = (currentPlayingId === trackKey) && currentAudio && !currentAudio.paused;
+                        const iconText = isPlaying ? '❚❚' : '▶';
+                        tracksHtml += `
+                            <div class="track-item ${isPlaying ? 'active-track' : ''}" onclick="playCollectionTrack('${item.id}', '${escapeHtml(t.name)}', '${escapeHtml(t.preview)}')">
+                                <span>${iconText}</span> ${idx + 1}. ${escapeHtml(t.name)}
+                            </div>
+                        `;
+                    });
+                    tracksHtml += '</div>';
+                }
+
                 if (currentViewMode === 'grid') {
                     const mini = document.createElement('div');
-                    mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${isPlayingThis ? 'playing' : ''}`;
+                    mini.className = `mini-card rarity-${escapeHtml(item.rarity)}`;
                     mini.style.borderColor = `var(--rarity-${borderVar})`;
                     mini.innerHTML = `
-                        <div class="mini-cover-wrapper">
-                            ${coverImg}
-                            ${miniOverlay}
+                        <div>
+                            <div class="mini-cover-wrapper">
+                                ${coverImg}
+                            </div>
+                            <div class="title" title="${escTitle}">${escTitle}</div>
+                            <div class="mini-artist" title="${escArtist}">${escArtist}</div>
+                            <div class="mini-score">★ ${escapeHtml(item.score)} (${item.tracks.length} track${item.tracks.length > 1 ? 's' : ''})</div>
                         </div>
-                        <div class="title" title="${escTitle}">${escTitle}</div>
-                        <div class="mini-artist" title="${escArtist}">${escArtist}</div>
-                        <div class="mini-score">★ ${escapeHtml(item.score)}</div>
-                        <div class="mini-info">
-                            <span>🏷️ ${escapeHtml(item.genre)}</span>
-                            <span>[${escapeHtml(item.type)}]</span>
+                        <div>
+                            ${tracksHtml}
+                            <div class="mini-info">
+                                <span>🏷️ ${escapeHtml(item.genre)}</span>
+                                <span>[${escapeHtml(item.type)}]</span>
+                            </div>
                         </div>
                     `;
                     container.appendChild(mini);
                 } else {
                     const listItem = document.createElement('div');
-                    listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${isPlayingThis ? 'playing' : ''}`;
+                    listItem.className = `list-card rarity-${escapeHtml(item.rarity)}`;
                     listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                     listItem.innerHTML = `
                         <div class="list-cover-wrapper">
                             ${coverImg}
-                            ${miniOverlay}
                         </div>
                         <div class="list-main">
                             <div class="list-title">${escTitle}</div>
-                            <div class="list-artist">${escArtist}</div>
+                            <div class="list-artist">${escArtist} (${item.tracks.length} track${item.tracks.length > 1 ? 's' : ''})</div>
+                            ${tracksHtml}
                         </div>
                         <div class="list-meta">
                             <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
