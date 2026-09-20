@@ -45,7 +45,6 @@
 
         h1 { margin: 0 0 2px 0; font-size: 1.35rem; }
         
-        /* 2. Стилизованный и уменьшенный подзаголовок */
         p.sub { 
             color: #888; 
             margin-top: 0; 
@@ -58,7 +57,6 @@
             padding: 2px 0;
         }
 
-        /* 1. Менее выступающее верхнее меню */
         .mode-tabs {
             display: flex;
             justify-content: center;
@@ -477,7 +475,6 @@
             position: relative;
         }
 
-        /* 3. Свечение выбора победителя */
         .tourn-card.winner-glow {
             border-color: #eab308 !important;
             box-shadow: 0 0 35px rgba(234, 179, 8, 0.95) !important;
@@ -943,6 +940,7 @@
                         if (tracksData && tracksData.data && tracksData.data.length > 0) {
                             const validTracks = tracksData.data.filter(s => s.preview);
                             if (validTracks.length > 0) {
+                                // 1. ПРОВЕРКА ПОПУЛЯРНОСТИ: По умолчанию берем самый первый (главный) трек с аудио (validTracks[0])
                                 const idx = forceRandom ? Math.floor(Math.random() * validTracks.length) : 0;
                                 const selected = validTracks[idx];
                                 hitTrack = { name: selected.title, preview: selected.preview };
@@ -1107,7 +1105,23 @@
             currentAudio.ontimeupdate = () => {
                 if (currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
             };
-            currentAudio.onended = () => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); };
+            
+            // 2. В GACHA PULL: по окончании трека автопереход дальше, а после 5-го - подгрузка новой песни первого альбома по кругу
+            currentAudio.onended = async () => {
+                resetSlotUI(slotIndex);
+                const nextSlot = (slotIndex + 1) % 5;
+                
+                if (nextSlot === 0) {
+                    for (let i = 0; i < 5; i++) {
+                        if (currentPackData[i]) {
+                            currentPackData[i] = await fetchHitTrackForAlbum(currentPackData[i], true, true);
+                            revealCardInPack(currentPackData[i], i);
+                        }
+                    }
+                }
+                playSlot(nextSlot);
+            };
+
             currentAudio.play().catch(e => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); });
             renderCollectionUI();
         }
@@ -1391,7 +1405,6 @@
 
             pool.sort(() => Math.random() - 0.5);
 
-            // 4. Предзагрузка и фиксация списка участников ДО СТАРТА
             const validBracket = [];
             for (let i = 0; i < pool.length; i++) {
                 if (validBracket.length >= targetSize) break;
@@ -1435,17 +1448,14 @@
             stopCurrentAudio();
             document.getElementById('btnRollDice').disabled = false;
 
-            // 5. Завершение турнира, когда остался ровно один альбом
             if (tournBracket.length === 1 && tournNextRound.length === 0) {
                 showChampionScreen(tournBracket[0]);
                 return;
             }
 
-            // Переход на следующий раунд
             if (tournBracket.length < matchSize) {
                 if (tournBracket.length > 0) tournNextRound.push(...tournBracket);
                 
-                // Проверка завершения турнира
                 if (tournNextRound.length === 1) {
                     showChampionScreen(tournNextRound[0]);
                     return;
@@ -1461,7 +1471,6 @@
             currentMatchAlbums = [];
             currentMatchVotes = [];
 
-            // 4. Берем участников СТРОГО из фиксированного пула tournBracket
             for (let i = 0; i < matchSize; i++) {
                 if (tournBracket.length > 0) {
                     const participant = tournBracket.shift();
@@ -1684,12 +1693,11 @@
             });
         }
 
-        // 3. При рулетке полностью убираем свечение проигрываемого альбома
         async function rollDiceAndDetermineWinner() {
             const btn = document.getElementById('btnRollDice');
             btn.disabled = true;
 
-            // Снимаем класс 'playing' со всех карточек, чтобы прополо сведение
+            // 3. Убираем свечение играющего альбома при запуске рулетки
             if (currentPlayingSlot !== null) {
                 resetTournamentSlotUI(currentPlayingSlot);
             }
