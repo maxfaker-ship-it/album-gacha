@@ -101,8 +101,8 @@
             min-height: 380px;
         }
 
-        .card, .mini-card {
-            container-type: inline-size; /* Включаем отслеживание ширины узла */
+        .card, .mini-card, .list-card {
+            container-type: inline-size;
         }
 
         .card {
@@ -128,10 +128,10 @@
             z-index: 5;
         }
 
-        .card.playing.rarity-Common, .mini-card.playing.rarity-Common { box-shadow: 0 10px 30px rgba(160, 160, 160, 0.6), 0 0 15px var(--rarity-common); }
-        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare { box-shadow: 0 10px 35px rgba(59, 130, 246, 0.8), 0 0 20px var(--rarity-rare); }
-        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic { box-shadow: 0 10px 40px rgba(168, 85, 247, 0.9), 0 0 25px var(--rarity-epic); }
-        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary { box-shadow: 0 10px 50px rgba(234, 179, 8, 1), 0 0 30px var(--rarity-legend); }
+        .card.playing.rarity-Common, .mini-card.playing.rarity-Common, .list-card.playing.rarity-Common { box-shadow: 0 10px 30px rgba(160, 160, 160, 0.6), 0 0 15px var(--rarity-common); }
+        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare, .list-card.playing.rarity-Rare { box-shadow: 0 10px 35px rgba(59, 130, 246, 0.8), 0 0 20px var(--rarity-rare); }
+        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic, .list-card.playing.rarity-Epic { box-shadow: 0 10px 40px rgba(168, 85, 247, 0.9), 0 0 25px var(--rarity-epic); }
+        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary, .list-card.playing.rarity-Legendary { box-shadow: 0 10px 50px rgba(234, 179, 8, 1), 0 0 30px var(--rarity-legend); }
 
         .card.skeleton {
             border-color: #333;
@@ -177,6 +177,13 @@
             transition: all 0.3s;
             flex-shrink: 0;
         }
+
+        .copies-progress {
+            font-size: 0.65rem;
+            color: #aaa;
+            margin-left: 2px;
+            font-weight: normal;
+        }
         
         .lvl-color-1 { color: var(--lvl-1-color); }
         .lvl-color-2 { color: var(--lvl-2-color); text-shadow: 0 0 5px rgba(74,222,128,0.4); }
@@ -209,7 +216,6 @@
             text-overflow: ellipsis;
         }
 
-        /* СКРЫВАЕМ НАДПИСЬ РЕДКОСТИ ПРИ СЖАТИИ КАРТОЧКИ МЕНЕЕ 160PX */
         @container (max-width: 160px) {
             .rarity-badge {
                 display: none !important;
@@ -344,16 +350,37 @@
         .artist-group { background: #18181c; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #2e2e38; }
         .artist-group-header { font-size: 1.1rem; font-weight: bold; color: #a855f7; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2e2e38; padding-bottom: 6px; }
 
+        /* === ИСПРАВЛЕННЫЙ РЕЖИМ СПИСКА (LIST) === */
         .list { display: flex; flex-direction: column; gap: 8px; }
-        .list-card { background: var(--card-bg); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 15px; border-left: 4px solid var(--rarity-common); transition: background 0.2s; position: relative; cursor: pointer; }
+        .list-card { 
+            background: var(--card-bg); 
+            border-radius: 8px; 
+            padding: 8px 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 12px; 
+            border-left: 4px solid var(--rarity-common); 
+            transition: background 0.2s; 
+            position: relative; 
+            cursor: pointer;
+            box-sizing: border-box;
+            width: 100%;
+        }
         .list-card.playing { background: #282832; }
-        .list-cover-wrapper { position: relative; width: 50px; height: 50px; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
+        .list-cover-wrapper { position: relative; width: 46px; height: 46px; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
         .list-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-        .list-card .list-main { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
-        .list-card .list-title { font-weight: bold; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .list-card .list-artist { color: #aaa; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .list-card .list-right-group { display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
-        .list-card .list-meta { color: #777; font-size: 0.75rem; text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
+        .list-card .list-main { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
+        .list-card .list-title { font-weight: bold; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-card .list-artist { color: #aaa; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-card .list-right-group { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .list-card .list-meta { color: #777; font-size: 0.7rem; text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; white-space: nowrap; }
+
+        @container (max-width: 320px) {
+            .list-card .list-meta div:last-child {
+                display: none; /* Скрываем текстовые жанры на узких экранах */
+            }
+        }
 
         /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
         @media (max-width: 768px) {
@@ -440,12 +467,21 @@
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
 
+        // --- ЛОГИКА ЭВОЛЮЦИИ И ПОРОГОВ ДУБЛИКАТОВ ---
         function calculateLevel(pulls) {
             if (pulls >= 81) return 5;
             if (pulls >= 27) return 4;
             if (pulls >= 9) return 3;
             if (pulls >= 3) return 2;
             return 1;
+        }
+
+        function getCopiesProgressText(pulls) {
+            if (pulls >= 81) return 'MAX';
+            if (pulls >= 27) return `${pulls}/81`;
+            if (pulls >= 9) return `${pulls}/27`;
+            if (pulls >= 3) return `${pulls}/9`;
+            return `${pulls}/3`;
         }
 
         function getLevelColorClass(level) {
@@ -701,6 +737,7 @@
             const favClass = data.isFavorite ? 'active' : '';
             const lvlClass = getLevelColorClass(data.level || 1);
             const animClass = data.isLevelUp ? 'level-up-trigger' : '';
+            const progressText = getCopiesProgressText(data.pulls || 1);
 
             card.className = `card rarity-${escapeHtml(data.rarity)} flip-reveal`;
             
@@ -723,7 +760,7 @@
             card.innerHTML = `
                 <div>
                     <div class="card-top-bar">
-                        <div class="lvl-badge ${lvlClass} ${animClass}">LVL ${data.level || 1}</div>
+                        <div class="lvl-badge ${lvlClass} ${animClass}">LVL ${data.level || 1} <span class="copies-progress">(${progressText})</span></div>
                         <div class="rarity-badge">${escapeHtml(data.rarity)}</div>
                         <div style="display:flex; gap:4px; align-items:center;">
                             <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track">${SHUFFLE_SVG}</button>
@@ -968,6 +1005,7 @@
 
             const favStarClass = item.isFavorite ? 'active' : '';
             const lvlClass = getLevelColorClass(item.level || 1);
+            const progressText = getCopiesProgressText(item.pulls || 1);
 
             let playIconSVG = '<path d="M8 5v14l11-7z"/>';
             if (isLoading) playIconSVG = '';
@@ -988,7 +1026,7 @@
                 mini.innerHTML = `
                     <div>
                         <div class="card-top-bar">
-                            <div class="lvl-badge ${lvlClass}">LVL ${item.level || 1}</div>
+                            <div class="lvl-badge ${lvlClass}">LVL ${item.level || 1} <span class="copies-progress">(${progressText})</span></div>
                             <div class="rarity-badge">${escapeHtml(item.rarity)}</div>
                             <div style="display:flex; gap:4px; align-items:center;">
                                 <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
@@ -1018,10 +1056,10 @@
                 listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                 listItem.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 listItem.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
+                    <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; overflow:hidden;">
                         <div class="list-cover-wrapper">${coverImg}</div>
                         <div class="list-main">
-                            <div class="list-title">${escTitle} <span class="${lvlClass}" style="font-size:0.75rem;">(LVL ${item.level || 1})</span></div>
+                            <div class="list-title">${escTitle} <span class="${lvlClass}" style="font-size:0.75rem;">(LVL ${item.level || 1} • ${progressText})</span></div>
                             <div class="list-artist">${escArtist}</div>
                             <div class="mini-track-container" style="justify-content: flex-start; min-height:16px; margin:0;">${trackDisplay}</div>
                         </div>
@@ -1029,7 +1067,7 @@
                     <div class="list-right-group">
                         <div class="list-meta">
                             <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
-                            <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)} | <b>${escapeHtml(item.rarity)}</b></div>
+                            <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)}</div>
                         </div>
                         <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
                         <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
