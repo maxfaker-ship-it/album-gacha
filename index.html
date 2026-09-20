@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Album Gacha 5x Pack Pro & Tournament</title>
+    <title>Album Gacha 5x Pack Pro & Tournament Pro</title>
     <style>
         :root {
             --bg-color: #121214;
@@ -27,11 +27,12 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            box-sizing: border-box;
         }
 
         .header-container {
@@ -41,23 +42,22 @@
             max-width: 1300px;
         }
 
-        h1 { margin-bottom: 5px; }
-        p.sub { color: #888; margin-top: 0; margin-bottom: 15px; }
+        h1 { margin: 0 0 4px 0; font-size: 1.6rem; }
+        p.sub { color: #888; margin-top: 0; margin-bottom: 12px; font-size: 0.85rem; }
 
-        /* Табы режимов */
         .mode-tabs {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
 
         .tab-btn {
             background: #1e1e24;
             color: #888;
             border: 1px solid #333;
-            padding: 10px 24px;
-            font-size: 1rem;
+            padding: 8px 20px;
+            font-size: 0.95rem;
             font-weight: bold;
             border-radius: 20px;
             cursor: pointer;
@@ -81,14 +81,14 @@
 
         .hidden { display: none !important; }
 
-        .controls { margin-bottom: 25px; display: flex; gap: 15px; align-items: center; }
+        .controls { margin-bottom: 15px; display: flex; gap: 15px; align-items: center; }
 
         button.pull-btn, button.action-btn {
             background: linear-gradient(135deg, #6366f1, #a855f7);
             color: white;
             border: none;
-            padding: 14px 32px;
-            font-size: 1.1rem;
+            padding: 12px 28px;
+            font-size: 1rem;
             font-weight: bold;
             border-radius: 30px;
             cursor: pointer;
@@ -130,7 +130,7 @@
             gap: 12px;
             justify-content: space-between;
             align-items: stretch;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             width: 100%;
             max-width: 1300px;
             box-sizing: border-box;
@@ -160,7 +160,7 @@
         }
 
         .card.playing {
-            transform: translateY(-8px) scale(1.02);
+            transform: translateY(-6px) scale(1.02);
             z-index: 5;
         }
 
@@ -225,17 +225,6 @@
         .lvl-color-4 { color: var(--lvl-4-color); text-shadow: 0 0 5px rgba(192,132,252,0.4); }
         .lvl-color-5 { color: var(--lvl-5-color); text-shadow: 0 0 5px rgba(250,204,21,0.4); }
 
-        @keyframes levelUpAnim {
-            0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
-            30% { transform: scale(1.4) rotate(5deg); background: currentColor; color: #111; box-shadow: 0 0 15px currentColor; }
-            70% { transform: scale(1.4) rotate(-5deg); background: currentColor; color: #111; box-shadow: 0 0 15px currentColor; }
-            100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 rgba(255,255,255,0); background: rgba(0,0,0,0.6); }
-        }
-        .level-up-trigger {
-            animation: levelUpAnim 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            z-index: 10;
-        }
-
         .rarity-badge {
             display: inline-block;
             padding: 2px 8px;
@@ -285,7 +274,7 @@
             position: relative;
             width: 100%;
             aspect-ratio: 1/1;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             border-radius: 6px;
             overflow: hidden;
             background: #18181c;
@@ -312,11 +301,11 @@
         .cover-wrapper:hover .play-overlay, .mini-cover-wrapper:hover .play-overlay, .list-cover-wrapper:hover .play-overlay { opacity: 1; }
 
         .play-btn-icon {
-            width: 44px; height: 44px; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 50%;
+            width: 40px; height: 40px; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); transition: transform 0.15s ease; box-sizing: border-box;
         }
 
-        .play-btn-icon svg { width: 18px; height: 18px; fill: #000; }
+        .play-btn-icon svg { width: 16px; height: 16px; fill: #000; }
         .play-overlay:hover .play-btn-icon { transform: scale(1.1); }
 
         .progress-bar-container { 
@@ -333,7 +322,7 @@
         .playing .progress-bar-container { display: block; }
         .progress-bar-fill { height: 100%; width: 0%; background: var(--rarity-common); transition: width 0.1s linear; }
 
-        .album-info-top { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+        .album-info-top { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
         .album-title { font-size: 0.85rem; font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .artist-name { color: #aaa; font-size: 0.75rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -402,37 +391,31 @@
         .list-card .list-right-group { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .list-card .list-meta { color: #777; font-size: 0.7rem; text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; white-space: nowrap; }
 
-        /* --- СТИЛИ ДЛЯ ТУРНИРА --- */
+        /* --- ОПТИМИЗИРОВАННЫЙ ОДНОЭКРАННЫЙ ТУРНИР --- */
         .tournament-setup {
             background: #1e1e24;
             border-radius: 16px;
-            padding: 25px;
-            max-width: 600px;
+            padding: 20px;
+            max-width: 550px;
             width: 100%;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 14px;
             box-sizing: border-box;
             border: 1px solid #2e2e38;
         }
 
-        .setup-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            text-align: left;
-        }
-
-        .setup-group label { font-size: 0.9rem; color: #aaa; font-weight: bold; }
-        .setup-group select { padding: 10px; font-size: 0.95rem; background: #121214; border-color: #3e3e4a; }
+        .setup-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+        .setup-group label { font-size: 0.85rem; color: #aaa; font-weight: bold; }
+        .setup-group select { padding: 8px; font-size: 0.9rem; background: #121214; border-color: #3e3e4a; }
 
         .battle-arena {
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
         }
 
         .tournament-info-bar {
@@ -440,68 +423,92 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
+            max-width: 1100px;
             background: #1e1e24;
-            padding: 12px 20px;
-            border-radius: 10px;
+            padding: 8px 16px;
+            border-radius: 8px;
             box-sizing: border-box;
             border: 1px solid #333;
+            font-size: 0.85rem;
         }
 
         .match-cards-container {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
             width: 100%;
-            flex-wrap: wrap;
+            max-width: 1100px;
+            align-items: stretch;
         }
 
-        .battle-card {
+        .tourn-card {
             flex: 1;
-            min-width: 220px;
-            max-width: 280px;
-            background: #1e1e24;
-            border-radius: 12px;
-            padding: 12px;
-            border: 2px solid #333;
+            max-width: 250px;
+            min-width: 0;
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 2px solid var(--rarity-common);
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            justify-content: space-between;
+            box-sizing: border-box;
             position: relative;
         }
 
-        .battle-card.winner-glow {
-            border-color: #eab308;
-            box-shadow: 0 0 25px rgba(234, 179, 8, 0.8);
-            transform: scale(1.05);
+        .tourn-card.winner-glow {
+            border-color: #eab308 !important;
+            box-shadow: 0 0 25px rgba(234, 179, 8, 0.9);
+            transform: scale(1.04);
+            z-index: 10;
         }
 
-        .vote-btn {
+        .vote-control-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #121214;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 3px 6px;
+            margin-top: 6px;
+        }
+
+        .vote-btn-step {
             background: #2a2a35;
             color: #fff;
-            border: 1px solid var(--accent-color);
-            padding: 10px 16px;
-            width: 100%;
-            border-radius: 8px;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.2s;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            line-height: 1;
         }
 
-        .vote-btn:hover { background: var(--accent-color); }
+        .vote-btn-step:hover { background: var(--accent-color); }
+
+        .vote-score-val {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #eab308;
+        }
 
         .probability-bar-container {
             width: 100%;
-            height: 14px;
+            max-width: 800px;
+            height: 10px;
             background: #121214;
-            border-radius: 7px;
+            border-radius: 5px;
             overflow: hidden;
             display: flex;
-            margin-top: 15px;
+            margin-top: 6px;
             border: 1px solid #333;
         }
 
@@ -510,11 +517,7 @@
             transition: width 0.3s ease;
         }
 
-        .roll-btn-container {
-            margin-top: 10px;
-            display: flex;
-            gap: 12px;
-        }
+        .roll-btn-container { margin-top: 6px; display: flex; gap: 10px; }
 
         .trophy-badge {
             display: inline-block;
@@ -526,22 +529,45 @@
             border-radius: 6px;
             margin-left: 4px;
         }
+
+        .end-options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .end-option-btn {
+            background: #2a2a35;
+            color: #fff;
+            border: 1px solid #3d3d4e;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .end-option-btn:hover {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
     </style>
 </head>
 <body>
 
     <div class="header-container">
-        <h1>🎵 Music Album Gacha & Tournament</h1>
-        <p class="sub">Accurate artwork, 5x Pack Pulls & Underdog Bracket Party Game!</p>
+        <h1>🎵 Music Album Gacha & Tournament Pro</h1>
+        <p class="sub">Accurate artwork, 5x Pack Pulls & Underdog Tournament Game!</p>
 
-        <!-- Переключатель вкладок -->
         <div class="mode-tabs">
             <button class="tab-btn active" id="tabGacha" onclick="switchMode('gacha')">🎰 Gacha Pull</button>
             <button class="tab-btn" id="tabTournament" onclick="switchMode('tournament')">🏆 Tournament</button>
         </div>
     </div>
 
-    <!-- ВКТАДКА GACHA -->
+    <!-- Вкладка GACHA -->
     <div class="view-section" id="gachaSection">
         <div class="controls">
             <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
@@ -576,11 +602,11 @@
         </div>
     </div>
 
-    <!-- ВКТАДКА TOURNAMENT -->
+    <!-- Вкладка TOURNAMENT -->
     <div class="view-section hidden" id="tournamentSection">
         <!-- Настройки перед стартом -->
         <div class="tournament-setup" id="tournamentSetup">
-            <h2>🏆 Create Tournament</h2>
+            <h2 style="margin: 0;">🏆 Tournament Setup</h2>
             
             <div class="setup-group">
                 <label>Card Source Pool:</label>
@@ -614,18 +640,18 @@
             <button class="action-btn" onclick="startTournament()">🚀 START TOURNAMENT</button>
         </div>
 
-        <!-- Игровая Арена Матча -->
+        <!-- Одноэкранная Арена Матча -->
         <div class="battle-arena hidden" id="battleArena">
             <div class="tournament-info-bar">
-                <span id="tournRoundTitle" style="font-weight: bold; color: #a855f7;">Round 1 / Match 1</span>
-                <button class="reset-btn" onclick="abortTournament()">❌ Abort Tournament</button>
+                <span id="tournRoundTitle" style="font-weight: bold; color: #a855f7;">Round 1 | Match 1</span>
+                <span id="tournRemainingText" style="color: #aaa;">Remaining: 32</span>
+                <button class="reset-btn" onclick="abortTournament()">❌ Abort</button>
             </div>
 
             <div class="match-cards-container" id="matchCardsContainer"></div>
 
-            <!-- Вероятностный прогресс-бар -->
             <div style="width: 100%; max-width: 800px; text-align: center;">
-                <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 4px;">🎲 Win Probability (Score + Votes):</div>
+                <div style="font-size: 0.75rem; color: #aaa;">🎲 Win Probability (Score + Votes):</div>
                 <div class="probability-bar-container" id="probabilityBar"></div>
             </div>
 
@@ -634,11 +660,16 @@
             </div>
         </div>
 
-        <!-- Экран Победителя -->
-        <div class="tournament-setup hidden" id="winnerScreen" style="text-align: center;">
-            <h1 style="color: #eab308; font-size: 2.5rem; margin: 0;">🏆 CHAMPION 🏆</h1>
-            <div id="championCardContainer" style="margin: 20px auto; width: 260px;"></div>
-            <button class="action-btn" onclick="resetTournamentUI()">🎮 Play Another Tournament</button>
+        <!-- Финальный Экран Победителя с опциями -->
+        <div class="tournament-setup hidden" id="winnerScreen" style="text-align: center; max-width: 320px;">
+            <h2 style="color: #eab308; font-size: 1.8rem; margin: 0;">🏆 CHAMPION 🏆</h2>
+            <div id="championCardContainer" style="margin: 12px auto; width: 100%;"></div>
+            
+            <div class="end-options-container">
+                <button class="end-option-btn" onclick="startTournamentWithSameRules()">🔄 Play Again (Same Rules)</button>
+                <button class="end-option-btn" onclick="resetTournamentUI()">⚙️ Change Rules</button>
+                <button class="end-option-btn" onclick="switchMode('gacha')">🎰 Switch to Gacha Mode</button>
+            </div>
         </div>
     </div>
 
@@ -885,7 +916,7 @@
             let hitTrack = null;
 
             try {
-                const dzData = await jsonpFetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&limit=5&output=jsonp`);
+                const dzData = await jsonpFetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(`${cleanArtist} ${cleanTitle}`)}&limit=5&output=jsonp`);
                 if (dzData && dzData.data && dzData.data.length > 0) {
                     let match = dzData.data.find(a => isStrictMatch(a.artist.name));
                     if (!match) match = dzData.data[0];
@@ -907,7 +938,7 @@
 
             if (!hitTrack) {
                 try {
-                    const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=song&limit=20`);
+                    const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist} ${cleanTitle}`)}&entity=song&limit=20`);
                     if (itunesData && itunesData.results && itunesData.results.length > 0) {
                         const validSongs = itunesData.results.filter(s => s.previewUrl && isStrictMatch(s.artistName));
                         if (validSongs.length > 0) {
@@ -1061,9 +1092,7 @@
                 if (currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
             };
             currentAudio.onended = () => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); };
-            currentAudio.play().catch(e => {
-                resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex);
-            });
+            currentAudio.play().catch(e => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); });
             renderCollectionUI();
         }
 
@@ -1316,7 +1345,7 @@
             });
         }
 
-        // --- TOURNAMENT LOGIC ---
+        // --- PRO TOURNAMENT LOGIC ---
         const SEGMENT_COLORS = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6'];
 
         function startTournament() {
@@ -1332,11 +1361,10 @@
             else pool = [...allAlbums];
 
             if (pool.length < matchSize) {
-                alert(`Not enough albums in pool (${pool.length}) to start tournament format!`);
+                alert(`Not enough albums in pool (${pool.length}) to start tournament!`);
                 return;
             }
 
-            // Перемешивание и посев
             pool.sort(() => Math.random() - 0.5);
             tournBracket = pool.slice(0, Math.min(targetSize, pool.length));
             tournNextRound = [];
@@ -1348,6 +1376,10 @@
             document.getElementById('battleArena').classList.remove('hidden');
 
             loadNextMatch();
+        }
+
+        function startTournamentWithSameRules() {
+            startTournament();
         }
 
         async function loadNextMatch() {
@@ -1377,43 +1409,86 @@
                     const fullObj = await fetchHitTrackForAlbum(raw, false, true);
                     currentMatchAlbums.push(fullObj);
                     currentMatchVotes.push(0);
+
+                    // 9. Автоматически добавляем вытянутый альбом в коллекцию
+                    addToCollectionDataOnly(fullObj);
                 }
             }
 
+            saveProgress();
+            renderCollectionUI();
             renderBattleMatchUI();
+
+            // 1. Автозапуск первого трека при загрузке матча
+            playTournamentCarouselTrack(0);
         }
 
         function renderBattleMatchUI() {
+            const totalRemaining = tournBracket.length + currentMatchAlbums.length + tournNextRound.length;
             document.getElementById('tournRoundTitle').innerText = `Round ${currentRoundNumber} | Match ${currentMatchNumber}`;
+            document.getElementById('tournRemainingText').innerText = `Remaining in tournament: ${totalRemaining}`;
+
             const container = document.getElementById('matchCardsContainer');
             container.innerHTML = '';
 
             currentMatchAlbums.forEach((album, idx) => {
                 const card = document.createElement('div');
-                card.className = `battle-card rarity-${escapeHtml(album.rarity)}`;
-                card.id = `bcard-${idx}`;
+                let borderVar = 'common';
+                if (album.rarity === 'Legendary') borderVar = 'legend';
+                else if (album.rarity === 'Epic') borderVar = 'epic';
+                else if (album.rarity === 'Rare') borderVar = 'rare';
+
+                card.className = `tourn-card rarity-${escapeHtml(album.rarity)}`;
+                card.style.borderColor = `var(--rarity-${borderVar})`;
+                card.id = `tcard-${idx}`;
 
                 const escTitle = escapeHtml(album.title);
                 const escArtist = escapeHtml(album.artist);
                 const escTrack = escapeHtml(album.trackName || 'No track');
+                const lvlClass = getLevelColorClass(album.level || 1);
+                const progressText = getCopiesProgressText(album.pulls || 1);
 
                 const coverHTML = album.cover ? `<img src="${escapeHtml(album.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
 
+                let trackDisplay = album.trackName 
+                    ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
+                    : `<div class="track-preview-name" style="color: #666;">🔇 No Audio</div>`;
+
                 card.innerHTML = `
-                    <div class="cover-wrapper" onclick="playMatchTrack(${idx})">
-                        ${coverHTML}
-                        <div class="play-overlay"><div class="play-btn-icon" id="bplay-icon-${idx}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+                    <div>
+                        <div class="card-top-bar">
+                            <div class="lvl-badge ${lvlClass}">LVL ${album.level || 1}</div>
+                            <div class="rarity-badge">${escapeHtml(album.rarity)}</div>
+                            <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                        </div>
+
+                        <div class="cover-wrapper" onclick="playTournamentCarouselTrack(${idx})">
+                            ${coverHTML}
+                            <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+                            <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
+                        </div>
+
+                        <div class="album-info-top">
+                            <div class="album-title" title="${escTitle}">${escTitle}</div>
+                            <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                            <div class="mini-track-container">${trackDisplay}</div>
+                        </div>
                     </div>
-                    <div class="album-info-top" style="text-align:center; width:100%;">
-                        <div class="album-title" title="${escTitle}">${escTitle}</div>
-                        <div class="artist-name" title="${escArtist}">${escArtist}</div>
-                        <div class="mini-track-container"><div class="track-preview-name">🎵 ${escTrack}</div></div>
-                        <div class="score-badge">★ ${escapeHtml(album.score)}</div>
+
+                    <div>
+                        <div class="album-info-bottom">
+                            <div class="type-badge">${escapeHtml(album.type)}</div>
+                            <div class="score-badge">★ ${escapeHtml(album.score)}</div>
+                            <div class="copies-tag">🃏 ${progressText} copies</div>
+                            <div class="genre-badge">🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}</div>
+                        </div>
+
+                        <div class="vote-control-bar">
+                            <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
+                            <span class="vote-score-val" id="tvote-val-${idx}">0 votes</span>
+                            <button class="vote-btn-step" onclick="changeVote(${idx}, 1)">+</button>
+                        </div>
                     </div>
-                    <button class="vote-btn" onclick="addVoteToCard(${idx})">
-                        <span>👍 Vote</span>
-                        <span id="vote-count-${idx}">0</span>
-                    </button>
                 `;
                 container.appendChild(card);
             });
@@ -1421,23 +1496,80 @@
             updateProbabilityBar();
         }
 
-        function playMatchTrack(idx) {
-            stopCurrentAudio();
-            const album = currentMatchAlbums[idx];
-            if (!album || !album.preview) return;
+        async function shuffleTrackInTournament(slotIndex, event) {
+            if (event) event.stopPropagation();
+            const albumData = currentMatchAlbums[slotIndex];
+            if (!albumData) return;
 
-            const icon = document.getElementById(`bplay-icon-${idx}`);
-            if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            const icon = document.getElementById(`tplay-icon-${slotIndex}`);
+            if (icon) icon.innerHTML = '⏳';
 
-            currentAudio = new Audio(album.preview);
-            currentAudio.onended = () => { if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'; };
-            currentAudio.play();
+            const refreshedData = await fetchHitTrackForAlbum(albumData, true, true);
+            currentMatchAlbums[slotIndex] = refreshedData;
+            
+            renderBattleMatchUI();
+            playTournamentCarouselTrack(slotIndex);
         }
 
-        function addVoteToCard(idx) {
-            currentMatchVotes[idx]++;
-            const badge = document.getElementById(`vote-count-${idx}`);
-            if (badge) badge.innerText = currentMatchVotes[idx];
+        function playTournamentCarouselTrack(idx) {
+            stopCurrentAudio();
+            const album = currentMatchAlbums[idx];
+            if (!album || !album.preview) {
+                // 3. Если у первого нет превью, пробывать следующий
+                playNextMatchTrackInCarousel(idx);
+                return;
+            }
+
+            currentPlayingSlot = idx;
+            currentPlayingId = `tourn_${idx}`;
+
+            const card = document.getElementById(`tcard-${idx}`);
+            const icon = document.getElementById(`tplay-icon-${idx}`);
+            const progressBar = document.getElementById(`tprogress-${idx}`);
+
+            if (card) card.classList.add('playing');
+            if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+
+            currentAudio = new Audio(album.preview);
+            currentAudio.ontimeupdate = () => {
+                if (currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+            };
+            
+            // 3. По окончании воспроизведения автоматически переходит к следующему претенденту
+            currentAudio.onended = () => {
+                resetTournamentSlotUI(idx);
+                playNextMatchTrackInCarousel(idx);
+            };
+
+            currentAudio.play().catch(e => {
+                resetTournamentSlotUI(idx);
+                playNextMatchTrackInCarousel(idx);
+            });
+        }
+
+        function playNextMatchTrackInCarousel(fromIdx) {
+            if (currentMatchAlbums.length === 0) return;
+            const nextIdx = (fromIdx + 1) % currentMatchAlbums.length;
+            if (nextIdx !== 0 || fromIdx !== currentMatchAlbums.length - 1) {
+                playTournamentCarouselTrack(nextIdx);
+            }
+        }
+
+        function resetTournamentSlotUI(idx) {
+            const card = document.getElementById(`tcard-${idx}`);
+            const icon = document.getElementById(`tplay-icon-${idx}`);
+            const progressBar = document.getElementById(`tprogress-${idx}`);
+
+            if (card) card.classList.remove('playing');
+            if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            if (progressBar) progressBar.style.width = '0%';
+        }
+
+        // 6. Кнопки + и - для корректировки голосов
+        function changeVote(idx, delta) {
+            currentMatchVotes[idx] = Math.max(0, currentMatchVotes[idx] + delta);
+            const valSpan = document.getElementById(`tvote-val-${idx}`);
+            if (valSpan) valSpan.innerText = `${currentMatchVotes[idx]} vote${currentMatchVotes[idx] === 1 ? '' : 's'}`;
             updateProbabilityBar();
         }
 
@@ -1468,7 +1600,9 @@
             });
         }
 
+        // 10. Динамическая длительность анимации рулетки в зависимости от стадии
         async function rollDiceAndDetermineWinner() {
+            stopCurrentAudio();
             const btn = document.getElementById('btnRollDice');
             btn.disabled = true;
 
@@ -1486,22 +1620,27 @@
                 }
             }
 
-            // Анимация рулетки / мигания
-            for (let t = 0; t < 12; t++) {
+            const remainingInBracket = tournBracket.length + tournNextRound.length;
+            // Динамические шаги: Чем меньше альбомов остается, тем больше тиков рулетки
+            let totalTicks = 8;
+            if (remainingInBracket <= 4) totalTicks = 22; // Полуфинал и Финал
+            else if (remainingInBracket <= 12) totalTicks = 14;
+
+            for (let t = 0; t < totalTicks; t++) {
                 const flashIdx = t % currentMatchAlbums.length;
                 currentMatchAlbums.forEach((_, i) => {
-                    const c = document.getElementById(`bcard-${i}`);
+                    const c = document.getElementById(`tcard-${i}`);
                     if (c) c.classList.toggle('winner-glow', i === flashIdx);
                 });
-                await sleep(100 + t * 20);
+                await sleep(80 + t * 15);
             }
 
             currentMatchAlbums.forEach((_, i) => {
-                const c = document.getElementById(`bcard-${i}`);
+                const c = document.getElementById(`tcard-${i}`);
                 if (c) c.classList.toggle('winner-glow', i === winnerIdx);
             });
 
-            await sleep(800);
+            await sleep(600);
 
             const winnerAlbum = currentMatchAlbums[winnerIdx];
             tournNextRound.push(winnerAlbum);
@@ -1510,16 +1649,18 @@
             loadNextMatch();
         }
 
+        // 8. Финальный экран с опциями
         function showChampionScreen(champion) {
             stopCurrentAudio();
 
-            // Бейдж чемпиона
             champion.isTrophyWinner = true;
             if (collection.has(champion.id)) {
                 collection.get(champion.id).isTrophyWinner = true;
-                saveProgress();
-                renderCollectionUI();
+            } else {
+                addToCollectionDataOnly(champion);
             }
+            saveProgress();
+            renderCollectionUI();
 
             document.getElementById('battleArena').classList.add('hidden');
             document.getElementById('winnerScreen').classList.remove('hidden');
