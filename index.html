@@ -139,13 +139,13 @@
             opacity: 0.6;
         }
 
-        /* УСКОРЕННАЯ АНИМАЦИЯ ПЕРЕВОРОТА (0.25s) */
+        /* ДИНАМИЧНЫЙ БЫСТРЫЙ ПЕРЕВОРОТ (0.18s) */
         .card.flip-reveal {
-            animation: flip 0.25s ease-in-out forwards;
+            animation: flip 0.18s ease-out forwards;
         }
 
         @keyframes flip {
-            0% { transform: rotateY(90deg) scale(0.9); opacity: 0.5; }
+            0% { transform: rotateY(90deg) scale(0.92); opacity: 0.3; }
             100% { transform: rotateY(0deg) scale(1); opacity: 1; }
         }
 
@@ -646,13 +646,13 @@
             currentPackData = prefetchedPackData;
             prefetchedPackData = null; 
 
-            // УСКОРЕННЫЙ ПЕРЕВОРОТ КАРТ (80ms задержки)
+            // ОЧЕНЬ БЫСТРЫЙ ДИНАМИЧНЫЙ ПЕРЕХОД (25ms задержка)
             for (let i = 0; i < 5; i++) {
                 const albumObj = currentPackData[i];
                 revealCardInPack(albumObj, i);
                 addToCollection(albumObj);
 
-                await sleep(80); 
+                await sleep(25); 
             }
 
             btn.disabled = false;
@@ -1132,7 +1132,6 @@
             }
         }
 
-        // РЕЖИМ ОТОБРАЖЕНИЯ ПО АРТИСТАМ
         function renderArtistGroupView(container, albumsArray) {
             const groups = new Map();
             albumsArray.forEach(album => {
@@ -1141,7 +1140,6 @@
                 groups.get(artist).push(album);
             });
 
-            // Сортировка артистов по алфавиту
             const sortedArtists = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b));
 
             sortedArtists.forEach(artistName => {
@@ -1150,7 +1148,6 @@
                 groupEl.className = 'artist-group';
                 groupEl.innerHTML = `<div class="artist-group-header">🎤 ${escapeHtml(artistName)} <span style="color:#777; font-size:0.8rem;">(${artistAlbums.length} album${artistAlbums.length > 1 ? 's' : ''})</span></div>`;
                 
-                // ВАЖНО: Явно задаем класс grid для корректной верстки карточек
                 const gridEl = document.createElement('div');
                 gridEl.className = 'grid';
                 
