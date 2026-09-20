@@ -164,7 +164,7 @@
             gap: 4px;
         }
 
-        /* ДИНАМИЧЕСКИЕ ЦВЕТА УРОВНЕЙ */
+        /* КОМПАКТНЫЙ ЧИСТЫЙ БЕЙДЖ LVL */
         .lvl-badge {
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid currentColor;
@@ -178,11 +178,11 @@
             flex-shrink: 0;
         }
 
-        .copies-progress {
+        .copies-tag {
             font-size: 0.65rem;
-            color: #aaa;
-            margin-left: 2px;
-            font-weight: normal;
+            color: #888;
+            margin-top: 1px;
+            white-space: nowrap;
         }
         
         .lvl-color-1 { color: var(--lvl-1-color); }
@@ -350,7 +350,7 @@
         .artist-group { background: #18181c; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #2e2e38; }
         .artist-group-header { font-size: 1.1rem; font-weight: bold; color: #a855f7; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2e2e38; padding-bottom: 6px; }
 
-        /* === ИСПРАВЛЕННЫЙ РЕЖИМ СПИСКА (LIST) === */
+        /* === РЕЖИМ СПИСКА (LIST) === */
         .list { display: flex; flex-direction: column; gap: 8px; }
         .list-card { 
             background: var(--card-bg); 
@@ -378,7 +378,7 @@
 
         @container (max-width: 320px) {
             .list-card .list-meta div:last-child {
-                display: none; /* Скрываем текстовые жанры на узких экранах */
+                display: none;
             }
         }
 
@@ -760,7 +760,7 @@
             card.innerHTML = `
                 <div>
                     <div class="card-top-bar">
-                        <div class="lvl-badge ${lvlClass} ${animClass}">LVL ${data.level || 1} <span class="copies-progress">(${progressText})</span></div>
+                        <div class="lvl-badge ${lvlClass} ${animClass}">LVL ${data.level || 1}</div>
                         <div class="rarity-badge">${escapeHtml(data.rarity)}</div>
                         <div style="display:flex; gap:4px; align-items:center;">
                             <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track">${SHUFFLE_SVG}</button>
@@ -781,6 +781,7 @@
                 <div class="album-info-bottom">
                     <div class="type-badge">${escapeHtml(data.type)}</div>
                     <div class="score-badge">★ ${escapeHtml(data.score)}</div>
+                    <div class="copies-tag">🃏 ${progressText} copies</div>
                     <div class="genre-badge">🏷️ ${escapeHtml(data.genre)} | 📅 ${escapeHtml(data.year)}</div>
                 </div>
             `;
@@ -1026,7 +1027,7 @@
                 mini.innerHTML = `
                     <div>
                         <div class="card-top-bar">
-                            <div class="lvl-badge ${lvlClass}">LVL ${item.level || 1} <span class="copies-progress">(${progressText})</span></div>
+                            <div class="lvl-badge ${lvlClass}">LVL ${item.level || 1}</div>
                             <div class="rarity-badge">${escapeHtml(item.rarity)}</div>
                             <div style="display:flex; gap:4px; align-items:center;">
                                 <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
@@ -1045,6 +1046,7 @@
                     <div>
                         <div class="mini-info">
                             <span class="mini-score">★ ${escapeHtml(item.score)}</span>
+                            <span class="copies-tag">🃏 ${progressText} copies</span>
                             <span>📅 ${escapeHtml(item.year)} | 🏷️ ${escapeHtml(item.genre)}</span>
                         </div>
                     </div>
@@ -1059,14 +1061,14 @@
                     <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; overflow:hidden;">
                         <div class="list-cover-wrapper">${coverImg}</div>
                         <div class="list-main">
-                            <div class="list-title">${escTitle} <span class="${lvlClass}" style="font-size:0.75rem;">(LVL ${item.level || 1} • ${progressText})</span></div>
+                            <div class="list-title">${escTitle} <span class="${lvlClass}" style="font-size:0.75rem;">(LVL ${item.level || 1})</span></div>
                             <div class="list-artist">${escArtist}</div>
                             <div class="mini-track-container" style="justify-content: flex-start; min-height:16px; margin:0;">${trackDisplay}</div>
                         </div>
                     </div>
                     <div class="list-right-group">
                         <div class="list-meta">
-                            <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
+                            <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)} <span class="copies-tag" style="margin-left:4px;">(🃏 ${progressText})</span></div>
                             <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)}</div>
                         </div>
                         <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
