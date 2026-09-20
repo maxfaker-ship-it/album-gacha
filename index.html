@@ -288,7 +288,22 @@
         .play-btn-icon svg { width: 18px; height: 18px; fill: #000; }
         .play-overlay:hover .play-btn-icon { transform: scale(1.1); }
 
-        .progress-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255, 255, 255, 0.2); z-index: 4; }
+        /* СКРЫВАЕМ ПРОГРЕСС-БАР ПО УМОЛЧАНИЮ (показываем только при .playing) */
+        .progress-bar-container { 
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 4px; 
+            background: rgba(255, 255, 255, 0.2); 
+            z-index: 4; 
+            display: none; 
+        }
+
+        .playing .progress-bar-container {
+            display: block;
+        }
+
         .progress-bar-fill { height: 100%; width: 0%; background: var(--rarity-common); transition: width 0.1s linear; }
 
         .rarity-Common .progress-bar-fill { background: var(--rarity-common); }
@@ -346,9 +361,6 @@
         .mini-card .mini-artist { color: #bbb; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
         .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: auto; display: flex; flex-direction: column; gap: 2px; align-items: center; padding-top: 6px;}
-
-        .artist-group { background: #18181c; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #2e2e38; }
-        .artist-group-header { font-size: 1.1rem; font-weight: bold; color: #a855f7; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2e2e38; padding-bottom: 6px; }
 
         /* === РЕЖИМ СПИСКА (LIST) === */
         .list { display: flex; flex-direction: column; gap: 8px; }
@@ -421,8 +433,9 @@
                 <select id="sortSelect" onchange="renderCollectionUI()">
                     <option value="default">Newest First</option>
                     <option value="pulls_desc">By Level (Max → Min)</option>
+                    <option value="copies_desc">By Copies / Duplicates (Max → Min)</option>
                     <option value="rarity">By Rarity (Legendary → Common)</option>
-                    <option value="score">By Score (★10 → ★1)</option>
+                    <option value="score">By Score (★5 → ★1)</option>
                     <option value="genre">By Genre</option>
                     <option value="year">By Year (New → Old)</option>
                 </select>
@@ -974,6 +987,7 @@
             };
 
             if (sortMode === 'pulls_desc') sortWithFavs((a, b) => b.level - a.level || b.pulls - a.pulls);
+            else if (sortMode === 'copies_desc') sortWithFavs((a, b) => (b.pulls || 1) - (a.pulls || 1));
             else if (sortMode === 'rarity') sortWithFavs((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
             else if (sortMode === 'score') sortWithFavs((a, b) => parseFloat(b.score) - parseFloat(a.score));
             else if (sortMode === 'genre') sortWithFavs((a, b) => a.genre.localeCompare(b.genre));
