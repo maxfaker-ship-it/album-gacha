@@ -144,7 +144,7 @@
         }
 
         @keyframes flip {
-            0% { transform: rotateY(90deg) scale(0.9); opacity: 0; }
+            0% { transform: rotateY(90deg) scale(0.9); opacity: 0.5; }
             100% { transform: rotateY(0deg) scale(1); opacity: 1; }
         }
 
@@ -623,13 +623,15 @@
             const btn = document.getElementById('pullBtn');
             btn.disabled = true;
 
+            // 1. Мгновенно создаем все 5 скелетонов, чтобы сразу зафиксировать сетку
+            createInitialPackSkeletons();
+
+            // 2. Ждем предзагруженных данных, если они еще не готовы
             if (isPrefetching && prefetchPromise) {
-                createInitialPackSkeletons();
                 await prefetchPromise;
             }
 
             if (!prefetchedPackData) {
-                createInitialPackSkeletons();
                 prefetchedPackData = [];
                 for (let i = 0; i < 5; i++) {
                     const targetRarity = rollRarity();
@@ -642,26 +644,19 @@
             currentPackData = prefetchedPackData;
             prefetchedPackData = null; 
 
-            const packContainer = document.getElementById('packContainer');
-            packContainer.className = 'pack-container';
-            packContainer.innerHTML = '';
-
-            // ПОСЛЕДОВАТЕЛЬНОЕ ПОЯВЛЕНИЕ КАРТ СЛЕВА НАПРАВО
+            // 3. Последовательно открываем карты слева направо в уже готовых слотах
             for (let i = 0; i < 5; i++) {
                 const albumObj = currentPackData[i];
-                const card = document.createElement('div');
-                card.id = `pack-card-${i}`;
-                packContainer.appendChild(card);
-
                 revealCardInPack(albumObj, i);
                 addToCollection(albumObj);
 
-                await sleep(180); // Пауза между открытием карт
+                await sleep(180); // Пауза для эффекта очереди
             }
 
             btn.disabled = false;
             playBestAlbumInPack();
 
+            // Запускаем фоновую подгрузку следующего пака
             prefetchNextPack();
         }
 
