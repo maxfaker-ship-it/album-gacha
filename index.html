@@ -27,7 +27,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 15px;
+            padding: 10px 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -40,26 +40,40 @@
             position: relative;
             width: 100%;
             max-width: 1300px;
+            margin-bottom: 8px;
         }
 
-        h1 { margin: 0 0 4px 0; font-size: 1.6rem; }
-        p.sub { color: #888; margin-top: 0; margin-bottom: 12px; font-size: 0.85rem; }
+        h1 { margin: 0 0 2px 0; font-size: 1.35rem; }
+        
+        /* 2. Стилизованный и уменьшенный подзаголовок */
+        p.sub { 
+            color: #888; 
+            margin-top: 0; 
+            margin-bottom: 8px; 
+            font-size: 0.7rem; 
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            opacity: 0.75;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            padding: 2px 0;
+        }
 
+        /* 1. Менее выступающее верхнее меню */
         .mode-tabs {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         .tab-btn {
             background: #1e1e24;
             color: #888;
             border: 1px solid #333;
-            padding: 8px 20px;
-            font-size: 0.95rem;
+            padding: 5px 16px;
+            font-size: 0.85rem;
             font-weight: bold;
-            border-radius: 20px;
+            border-radius: 16px;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -68,7 +82,7 @@
             background: var(--accent-color);
             color: #fff;
             border-color: var(--accent-color);
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 3px 10px rgba(99, 102, 241, 0.3);
         }
 
         .view-section {
@@ -81,16 +95,16 @@
 
         .hidden { display: none !important; }
 
-        .controls { margin-bottom: 15px; display: flex; gap: 15px; align-items: center; }
+        .controls { margin-bottom: 12px; display: flex; gap: 15px; align-items: center; }
 
         button.pull-btn, button.action-btn {
             background: linear-gradient(135deg, #6366f1, #a855f7);
             color: white;
             border: none;
-            padding: 12px 28px;
-            font-size: 1rem;
+            padding: 10px 24px;
+            font-size: 0.95rem;
             font-weight: bold;
-            border-radius: 30px;
+            border-radius: 24px;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
             transition: transform 0.1s, box-shadow 0.2s;
@@ -111,7 +125,7 @@
             background: #2a2a35;
             color: #888;
             border: 1px solid #333;
-            padding: 6px 12px;
+            padding: 5px 10px;
             font-size: 0.75rem;
             border-radius: 6px;
             cursor: pointer;
@@ -130,7 +144,7 @@
             gap: 12px;
             justify-content: space-between;
             align-items: stretch;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             width: 100%;
             max-width: 1300px;
             box-sizing: border-box;
@@ -419,7 +433,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .tournament-info-bar {
@@ -429,11 +443,11 @@
             width: 100%;
             max-width: 1100px;
             background: #1e1e24;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 8px;
             box-sizing: border-box;
             border: 1px solid #333;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
         .match-cards-container {
@@ -463,6 +477,7 @@
             position: relative;
         }
 
+        /* 3. Свечение выбора победителя */
         .tourn-card.winner-glow {
             border-color: #eab308 !important;
             box-shadow: 0 0 35px rgba(234, 179, 8, 0.95) !important;
@@ -512,7 +527,7 @@
             border-radius: 5px;
             overflow: hidden;
             display: flex;
-            margin-top: 6px;
+            margin-top: 4px;
             border: 1px solid #333;
         }
 
@@ -521,7 +536,7 @@
             transition: width 0.3s ease;
         }
 
-        .roll-btn-container { margin-top: 6px; display: flex; gap: 10px; }
+        .roll-btn-container { margin-top: 4px; display: flex; gap: 10px; }
 
         .trophy-badge {
             display: inline-block;
@@ -563,7 +578,7 @@
 
     <div class="header-container">
         <h1>🎵 Music Album Gacha & Tournament Pro</h1>
-        <p class="sub">Accurate artwork, 5x Pack Pulls & Underdog Tournament Game!</p>
+        <p class="sub">Accurate artwork &bull; 5x Pack Pulls &bull; Underdog Tournament Game</p>
 
         <div class="mode-tabs">
             <button class="tab-btn active" id="tabGacha" onclick="switchMode('gacha')">🎰 Gacha Pull</button>
@@ -640,7 +655,7 @@
                 </select>
             </div>
 
-            <button class="action-btn" onclick="startTournament()">🚀 START TOURNAMENT</button>
+            <button class="action-btn" id="btnStartTourn" onclick="startTournament()">🚀 START TOURNAMENT</button>
         </div>
 
         <div class="battle-arena hidden" id="battleArena">
@@ -1353,10 +1368,11 @@
         // --- PRO TOURNAMENT LOGIC ---
         const SEGMENT_COLORS = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6'];
 
-        function startTournament() {
+        async function startTournament() {
             const source = document.getElementById('tournSource').value;
             const targetSize = parseInt(document.getElementById('tournSize').value, 10);
             const format = document.getElementById('tournFormat').value;
+            const btn = document.getElementById('btnStartTourn');
 
             matchSize = (format === '3way') ? 3 : (format === '4way') ? 4 : 2;
 
@@ -1370,11 +1386,39 @@
                 return;
             }
 
+            btn.disabled = true;
+            btn.innerText = '⏳ PREPARING BRACKET...';
+
             pool.sort(() => Math.random() - 0.5);
-            tournBracket = pool.slice(0, Math.min(targetSize, pool.length));
+
+            // 4. Предзагрузка и фиксация списка участников ДО СТАРТА
+            const validBracket = [];
+            for (let i = 0; i < pool.length; i++) {
+                if (validBracket.length >= targetSize) break;
+                const fullObj = await fetchHitTrackForAlbum(pool[i], false, true);
+                if (fullObj && fullObj.preview) {
+                    validBracket.push(fullObj);
+                    addToCollectionDataOnly(fullObj);
+                }
+            }
+
+            if (validBracket.length < matchSize) {
+                alert('Could not load enough working audio tracks for tournament.');
+                btn.disabled = false;
+                btn.innerText = '🚀 START TOURNAMENT';
+                return;
+            }
+
+            tournBracket = validBracket;
             tournNextRound = [];
             currentRoundNumber = 1;
             currentMatchNumber = 1;
+
+            saveProgress();
+            renderCollectionUI();
+
+            btn.disabled = false;
+            btn.innerText = '🚀 START TOURNAMENT';
 
             document.getElementById('tournamentSetup').classList.add('hidden');
             document.getElementById('winnerScreen').classList.add('hidden');
@@ -1391,13 +1435,22 @@
             stopCurrentAudio();
             document.getElementById('btnRollDice').disabled = false;
 
+            // 5. Завершение турнира, когда остался ровно один альбом
             if (tournBracket.length === 1 && tournNextRound.length === 0) {
                 showChampionScreen(tournBracket[0]);
                 return;
             }
 
+            // Переход на следующий раунд
             if (tournBracket.length < matchSize) {
                 if (tournBracket.length > 0) tournNextRound.push(...tournBracket);
+                
+                // Проверка завершения турнира
+                if (tournNextRound.length === 1) {
+                    showChampionScreen(tournNextRound[0]);
+                    return;
+                }
+
                 tournBracket = [...tournNextRound];
                 tournNextRound = [];
                 tournBracket.sort(() => Math.random() - 0.5);
@@ -1408,26 +1461,16 @@
             currentMatchAlbums = [];
             currentMatchVotes = [];
 
-            // 3. Отфильтровываем и берем ТОЛЬКО альбомы с доступным аудио-превью
-            while (currentMatchAlbums.length < matchSize && (tournBracket.length > 0 || allAlbums.length > 0)) {
-                let raw = tournBracket.shift();
-                if (!raw) {
-                    raw = allAlbums[Math.floor(Math.random() * allAlbums.length)];
-                }
-                
-                const fullObj = await fetchHitTrackForAlbum(raw, false, true);
-                if (fullObj && fullObj.preview) {
-                    currentMatchAlbums.push(fullObj);
+            // 4. Берем участников СТРОГО из фиксированного пула tournBracket
+            for (let i = 0; i < matchSize; i++) {
+                if (tournBracket.length > 0) {
+                    const participant = tournBracket.shift();
+                    currentMatchAlbums.push(participant);
                     currentMatchVotes.push(0);
-                    addToCollectionDataOnly(fullObj);
                 }
             }
 
-            saveProgress();
-            renderCollectionUI();
             renderBattleMatchUI();
-
-            // 1. Автозапуск первого превью
             playTournamentCarouselTrack(0);
         }
 
@@ -1469,7 +1512,6 @@
 
                 card.innerHTML = `
                     <div>
-                        <!-- 1. Добавлена кнопка Добавить в Избранное (★) -->
                         <div class="card-top-bar">
                             <div class="lvl-badge ${lvlClass}">LVL ${album.level || 1}</div>
                             <div class="rarity-badge">${escapeHtml(album.rarity)}</div>
@@ -1482,7 +1524,6 @@
                         <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
                             ${coverHTML}
                             <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
-                            <!-- 2. Прогресс-бар цвета редкости -->
                             <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
                         </div>
 
@@ -1501,7 +1542,6 @@
                             <div class="genre-badge">🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}</div>
                         </div>
 
-                        <!-- 6. Кнопки + и - для коррекции голосов -->
                         <div class="vote-control-bar">
                             <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
                             <span class="vote-score-val" id="tvote-val-${idx}">${currentMatchVotes[idx]} votes</span>
@@ -1566,7 +1606,6 @@
             const icon = document.getElementById(`tplay-icon-${idx}`);
             const progressBar = document.getElementById(`tprogress-${idx}`);
 
-            // 4. Свечение карточки играющего альбома
             if (card) card.classList.add('playing');
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
@@ -1575,12 +1614,10 @@
                 if (currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
             };
             
-            // 6. Ротация треков по кругу с авто-подгрузкой следующих песен
             currentAudio.onended = async () => {
                 resetTournamentSlotUI(idx);
                 const nextIdx = (idx + 1) % currentMatchAlbums.length;
                 
-                // Если сделали полный круг, меняем треки у всех на новые
                 if (nextIdx === 0) {
                     for (let i = 0; i < currentMatchAlbums.length; i++) {
                         currentMatchAlbums[i] = await fetchHitTrackForAlbum(currentMatchAlbums[i], true, true);
@@ -1647,10 +1684,15 @@
             });
         }
 
-        // 5. Музыка играет во время анимации рулетки
+        // 3. При рулетке полностью убираем свечение проигрываемого альбома
         async function rollDiceAndDetermineWinner() {
             const btn = document.getElementById('btnRollDice');
             btn.disabled = true;
+
+            // Снимаем класс 'playing' со всех карточек, чтобы прополо сведение
+            if (currentPlayingSlot !== null) {
+                resetTournamentSlotUI(currentPlayingSlot);
+            }
 
             const probs = calculateProbabilities();
             const rand = Math.random();
