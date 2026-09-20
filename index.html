@@ -14,6 +14,13 @@
             --rarity-epic: #a855f7;     /* Epic */
             --rarity-legend: #eab308;   /* Legendary */
             --accent-color: #6366f1;
+            
+            /* Цвета Уровней */
+            --lvl-1-color: #a0a0a0;
+            --lvl-2-color: #4ade80;
+            --lvl-3-color: #60a5fa;
+            --lvl-4-color: #c084fc;
+            --lvl-5-color: #facc15;
         }
 
         body {
@@ -91,7 +98,7 @@
             width: 100%;
             max-width: 1300px;
             box-sizing: border-box;
-            min-height: 420px;
+            min-height: 380px;
         }
 
         .card {
@@ -109,7 +116,6 @@
             justify-content: space-between;
             box-sizing: border-box;
             height: 100%;
-            overflow: hidden;
             position: relative;
         }
 
@@ -118,10 +124,10 @@
             z-index: 5;
         }
 
-        .card.playing.rarity-Common { box-shadow: 0 10px 30px rgba(160, 160, 160, 0.6), 0 0 15px var(--rarity-common); }
-        .card.playing.rarity-Rare { box-shadow: 0 10px 35px rgba(59, 130, 246, 0.8), 0 0 20px var(--rarity-rare); }
-        .card.playing.rarity-Epic { box-shadow: 0 10px 40px rgba(168, 85, 247, 0.9), 0 0 25px var(--rarity-epic); }
-        .card.playing.rarity-Legendary { box-shadow: 0 10px 50px rgba(234, 179, 8, 1), 0 0 30px var(--rarity-legend); }
+        .card.playing.rarity-Common, .mini-card.playing.rarity-Common { box-shadow: 0 10px 30px rgba(160, 160, 160, 0.6), 0 0 15px var(--rarity-common); }
+        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare { box-shadow: 0 10px 35px rgba(59, 130, 246, 0.8), 0 0 20px var(--rarity-rare); }
+        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic { box-shadow: 0 10px 40px rgba(168, 85, 247, 0.9), 0 0 25px var(--rarity-epic); }
+        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary { box-shadow: 0 10px 50px rgba(234, 179, 8, 1), 0 0 30px var(--rarity-legend); }
 
         .card.skeleton {
             border-color: #333;
@@ -153,16 +159,35 @@
             height: 22px;
         }
 
+        /* ДИНАМИЧЕСКИЕ ЦВЕТА УРОВНЕЙ */
         .lvl-badge {
             background: rgba(0, 0, 0, 0.6);
-            color: #888;
-            border: none;
+            border: 1px solid currentColor;
             font-size: 0.65rem;
             font-weight: bold;
             padding: 2px 6px;
             border-radius: 8px;
             line-height: 1;
             white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .lvl-color-1 { color: var(--lvl-1-color); }
+        .lvl-color-2 { color: var(--lvl-2-color); text-shadow: 0 0 5px rgba(74,222,128,0.4); }
+        .lvl-color-3 { color: var(--lvl-3-color); text-shadow: 0 0 5px rgba(96,165,250,0.4); }
+        .lvl-color-4 { color: var(--lvl-4-color); text-shadow: 0 0 5px rgba(192,132,252,0.4); }
+        .lvl-color-5 { color: var(--lvl-5-color); text-shadow: 0 0 5px rgba(250,204,21,0.4); }
+
+        /* АНИМАЦИЯ ПОВЫШЕНИЯ УРОВНЯ */
+        @keyframes levelUpAnim {
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
+            30% { transform: scale(1.4) rotate(5deg); background: currentColor; color: #111; box-shadow: 0 0 15px currentColor; }
+            70% { transform: scale(1.4) rotate(-5deg); background: currentColor; color: #111; box-shadow: 0 0 15px currentColor; }
+            100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 rgba(255,255,255,0); background: rgba(0,0,0,0.6); }
+        }
+        .level-up-trigger {
+            animation: levelUpAnim 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            z-index: 10;
         }
 
         .rarity-badge {
@@ -197,25 +222,10 @@
             line-height: 1;
         }
 
-        .shuffle-btn svg {
-            width: 12px;
-            height: 12px;
-            fill: #888;
-            transition: fill 0.2s;
-        }
-
-        .fav-btn.active {
-            color: #eab308;
-            text-shadow: 0 0 6px rgba(234, 179, 8, 0.8);
-        }
-
-        .shuffle-btn:hover svg {
-            fill: #fff;
-        }
-
-        .shuffle-btn:hover, .fav-btn:hover {
-            transform: scale(1.15);
-        }
+        .shuffle-btn svg { width: 12px; height: 12px; fill: #888; transition: fill 0.2s; }
+        .fav-btn.active { color: #eab308; text-shadow: 0 0 6px rgba(234, 179, 8, 0.8); }
+        .shuffle-btn:hover svg { fill: #fff; }
+        .shuffle-btn:hover, .fav-btn:hover { transform: scale(1.15); }
 
         .cover-wrapper {
             position: relative;
@@ -231,310 +241,118 @@
             cursor: pointer;
         }
 
-        .cover-art {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
+        .cover-art { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .vinyl-placeholder {
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, #2a2a35 0%, #111115 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid #333;
+            width: 100%; height: 100%; background: radial-gradient(circle, #2a2a35 0%, #111115 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; border: 1px solid #333;
         }
-
-        .vinyl-placeholder .ph-title {
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 4px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .vinyl-placeholder .ph-artist {
-            font-size: 0.7rem;
-            color: #888;
-        }
+        .vinyl-placeholder .ph-title { font-size: 0.85rem; font-weight: bold; color: #fff; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .vinyl-placeholder .ph-artist { font-size: 0.7rem; color: #888; }
 
         .play-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s ease;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
+            display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
         }
 
-        .cover-wrapper:hover .play-overlay,
-        .mini-cover-wrapper:hover .play-overlay,
-        .list-cover-wrapper:hover .play-overlay {
-            opacity: 1;
-        }
+        .cover-wrapper:hover .play-overlay, .mini-cover-wrapper:hover .play-overlay, .list-cover-wrapper:hover .play-overlay { opacity: 1; }
 
         .play-btn-icon {
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.95);
-            color: #000;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            transition: transform 0.15s ease;
-            box-sizing: border-box;
+            width: 44px; height: 44px; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); transition: transform 0.15s ease; box-sizing: border-box;
         }
 
-        .play-btn-icon svg {
-            width: 18px;
-            height: 18px;
-            fill: #000;
-        }
+        .play-btn-icon svg { width: 18px; height: 18px; fill: #000; }
+        .play-overlay:hover .play-btn-icon { transform: scale(1.1); }
 
-        .play-overlay:hover .play-btn-icon {
-            transform: scale(1.1);
-        }
-
-        .progress-bar-container {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            z-index: 4;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--rarity-common);
-            transition: width 0.1s linear;
-        }
+        .progress-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255, 255, 255, 0.2); z-index: 4; }
+        .progress-bar-fill { height: 100%; width: 0%; background: var(--rarity-common); transition: width 0.1s linear; }
 
         .rarity-Common .progress-bar-fill { background: var(--rarity-common); }
         .rarity-Rare .progress-bar-fill { background: var(--rarity-rare); }
         .rarity-Epic .progress-bar-fill { background: var(--rarity-epic); }
         .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
 
-        .album-info-top {
+        .album-info-top { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+        .album-title { font-size: 0.85rem; font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .artist-name { color: #aaa; font-size: 0.75rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* ФИКСИРОВАННЫЙ КОНТЕЙНЕР ДЛЯ НАЗВАНИЯ ТРЕКА (чтобы карточки не прыгали) */
+        .mini-track-container {
+            min-height: 18px;
             display: flex;
-            flex-direction: column;
-            gap: 2px;
-            margin-bottom: 6px;
-        }
-
-        .album-title {
-            font-size: 0.85rem;
-            font-weight: bold;
-            margin: 0;
-            white-space: nowrap;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2px;
+            width: 100%;
             overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .artist-name {
-            color: #aaa;
-            font-size: 0.75rem;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .track-preview-name {
             color: var(--accent-color);
             font-size: 0.7rem;
             font-weight: bold;
-            margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            width: 100%;
         }
 
-        .album-info-bottom {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            margin-top: auto;
-        }
-
-        .type-badge {
-            display: inline-block;
-            align-self: center;
-            background: #2a2a32;
-            color: var(--accent-color);
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-size: 0.65rem;
-            font-weight: bold;
-        }
-
-        .score-badge {
-            color: #eab308;
-            font-weight: bold;
-            font-size: 0.8rem;
-            margin: 1px 0;
-        }
-
-        .genre-badge {
-            color: #888;
-            font-size: 0.7rem;
-            margin: 0;
-            font-style: italic;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .album-info-bottom { display: flex; flex-direction: column; gap: 2px; margin-top: auto; }
+        .type-badge { display: inline-block; align-self: center; background: #2a2a32; color: var(--accent-color); padding: 1px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
+        .score-badge { color: #eab308; font-weight: bold; font-size: 0.8rem; margin: 1px 0; }
+        .genre-badge { color: #888; font-size: 0.7rem; margin: 0; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .collection-section { width: 100%; max-width: 1300px; }
+        .collection-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+        .filter-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-        .collection-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
+        select, button.view-btn { background: #1e1e24; color: #fff; border: 1px solid #333; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+        button.view-btn.active { background: var(--accent-color); border-color: var(--accent-color); }
 
-        .filter-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        select, button.view-btn {
-            background: #1e1e24;
-            color: #fff;
-            border: 1px solid #333;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
-
-        button.view-btn.active {
-            background: var(--accent-color);
-            border-color: var(--accent-color);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-            gap: 15px;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
 
         .mini-card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            border: 2px solid var(--rarity-common);
-            font-size: 0.8rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            cursor: pointer;
-        }
-
-        .mini-card.playing {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+            background: var(--card-bg); border-radius: 10px; padding: 10px; text-align: center; border: 2px solid var(--rarity-common);
+            font-size: 0.8rem; transition: transform 0.2s, box-shadow 0.2s; position: relative; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer;
         }
 
         .mini-card:hover { transform: translateY(-4px); }
-        
-        .mini-cover-wrapper {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1/1;
-            border-radius: 6px;
-            overflow: hidden;
-            background: #18181c;
-            margin-bottom: 6px;
-        }
-
+        .mini-cover-wrapper { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 6px; overflow: hidden; background: #18181c; margin-bottom: 6px; }
         .mini-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
         .mini-card .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; font-weight: bold; }
         .mini-card .mini-artist { color: #bbb; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
-        .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: 6px; display: flex; flex-direction: column; gap: 2px; align-items: center; }
+        .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: auto; display: flex; flex-direction: column; gap: 2px; align-items: center; padding-top: 6px;}
 
-        .artist-group {
-            background: #18181c;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #2e2e38;
-        }
-
-        .artist-group-header {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #a855f7;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid #2e2e38;
-            padding-bottom: 6px;
-        }
+        .artist-group { background: #18181c; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #2e2e38; }
+        .artist-group-header { font-size: 1.1rem; font-weight: bold; color: #a855f7; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2e2e38; padding-bottom: 6px; }
 
         .list { display: flex; flex-direction: column; gap: 8px; }
-
-        .list-card {
-            background: var(--card-bg);
-            border-radius: 8px;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            border-left: 4px solid var(--rarity-common);
-            transition: background 0.2s;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .list-card.playing {
-            background: #282832;
-        }
-
-        .list-cover-wrapper {
-            position: relative;
-            width: 50px;
-            height: 50px;
-            border-radius: 4px;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
+        .list-card { background: var(--card-bg); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 15px; border-left: 4px solid var(--rarity-common); transition: background 0.2s; position: relative; cursor: pointer; }
+        .list-card.playing { background: #282832; }
+        .list-cover-wrapper { position: relative; width: 50px; height: 50px; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
         .list-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
         .list-card .list-main { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
         .list-card .list-title { font-weight: bold; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .list-card .list-artist { color: #aaa; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .list-card .list-right-group { display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
         .list-card .list-meta { color: #777; font-size: 0.75rem; text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
+
+        /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
+        @media (max-width: 768px) {
+            .pack-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                gap: 12px;
+                justify-content: center;
+                min-height: auto;
+            }
+            .card { min-height: 250px; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); }
+            h1 { font-size: 1.5rem; }
+            .controls { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -559,7 +377,7 @@
             <div class="filter-controls">
                 <select id="sortSelect" onchange="renderCollectionUI()">
                     <option value="default">Newest First</option>
-                    <option value="pulls_desc">By Level/Pulls (Max → Min)</option>
+                    <option value="pulls_desc">By Level (Max → Min)</option>
                     <option value="rarity">By Rarity (Legendary → Common)</option>
                     <option value="score">By Score (★10 → ★1)</option>
                     <option value="genre">By Genre</option>
@@ -586,7 +404,6 @@
         const RARITY_ORDER = { 'Legendary': 4, 'Epic': 3, 'Rare': 2, 'Common': 1 };
         const DROP_RATES = { 'Legendary': 3, 'Epic': 12, 'Rare': 30, 'Common': 55 };
 
-        // Иконка Shuffle в формате SVG
         const SHUFFLE_SVG = `<svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>`;
 
         let allAlbums = [];
@@ -595,6 +412,8 @@
         let currentViewMode = 'grid';
 
         let currentAudio = null;
+        let synthAudioContext = null;
+        let synthOscillators = [];
         let currentPlayingSlot = null;
         let currentPlayingId = null; 
         let loadingCollectionId = null;
@@ -604,12 +423,20 @@
 
         function escapeHtml(str) {
             if (!str) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        // --- ЛОГИКА УРОВНЕЙ И СЛИЯНИЯ ---
+        function calculateLevel(pulls) {
+            if (pulls >= 81) return 5;
+            if (pulls >= 27) return 4;
+            if (pulls >= 9) return 3;
+            if (pulls >= 3) return 2;
+            return 1;
+        }
+
+        function getLevelColorClass(level) {
+            return `lvl-color-${Math.min(level, 5)}`;
         }
 
         function saveProgress() {
@@ -618,12 +445,11 @@
                     const cleanItem = { ...item };
                     delete cleanItem.preview;
                     delete cleanItem.trackName;
+                    delete cleanItem.isLevelUp; // Не сохраняем флаг анимации
                     return [id, cleanItem];
                 });
                 localStorage.setItem('album_gacha_collection', JSON.stringify(serializableCol));
-            } catch (e) {
-                console.error('Failed to save collection:', e);
-            }
+            } catch (e) { console.error('Failed to save collection:', e); }
         }
 
         function loadProgress() {
@@ -632,9 +458,7 @@
                 if (savedCol) {
                     collection = new Map(JSON.parse(savedCol));
                 }
-            } catch (e) {
-                console.error('Failed to load collection:', e);
-            }
+            } catch (e) { console.error('Failed to load collection:', e); }
         }
 
         function clearSaveData() {
@@ -675,9 +499,7 @@
 
         function getRandomAlbumByRarity(targetRarity) {
             const pool = allAlbums.filter(a => a.rarity === targetRarity);
-            return pool.length > 0 
-                ? pool[Math.floor(Math.random() * pool.length)] 
-                : allAlbums[Math.floor(Math.random() * allAlbums.length)];
+            return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : allAlbums[Math.floor(Math.random() * allAlbums.length)];
         }
 
         function createInitialPackSkeletons() {
@@ -716,7 +538,6 @@
 
         async function pull5Pack() {
             if (allAlbums.length === 0) return;
-            
             const btn = document.getElementById('pullBtn');
             btn.disabled = true;
 
@@ -730,7 +551,7 @@
                 currentPackData.push(albumObj);
                 
                 revealCardInPack(albumObj, i);
-                addToCollection(albumObj);
+                addToCollection(albumObj); // Сохраняем в коллекцию сразу
                 
                 await sleep(150);
             }
@@ -739,6 +560,11 @@
             playBestAlbumInPack();
         }
 
+        function normalizeStr(str) {
+            if (!str) return '';
+            return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/gi, '').trim();
+        }
+        
         function cleanQueryString(str) {
             if (!str) return '';
             return str.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').replace(/[-_]/g, ' ').trim();
@@ -754,7 +580,6 @@
                     if (script.parentNode) script.parentNode.removeChild(script);
                     resolve(data);
                 };
-
                 script.onerror = function() {
                     delete window[callbackName];
                     if (script.parentNode) script.parentNode.removeChild(script);
@@ -770,21 +595,32 @@
         async function fetchHitTrackForAlbum(albumData, forceRandom = false, preserveLevel = false) {
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
+            const targetNormArtist = normalizeStr(cleanArtist);
+
+            // СТРОГАЯ ПРОВЕРКА ИСПОЛНИТЕЛЯ (чтобы отсекать ложные подстановки типа русских ремиксов)
+            const isStrictMatch = (fetchedArtist) => {
+                const fetchedNorm = normalizeStr(fetchedArtist);
+                return fetchedNorm === targetNormArtist || fetchedNorm.includes(targetNormArtist) || targetNormArtist.includes(fetchedNorm);
+            };
 
             const existingEntry = collection.get(albumData.id);
-            const pullCount = preserveLevel 
-                ? (albumData.pulls || (existingEntry ? existingEntry.pulls : 1)) 
-                : (existingEntry ? (existingEntry.pulls || 1) + 1 : 1);
+            const oldPulls = existingEntry ? existingEntry.pulls : 0;
+            const newPulls = preserveLevel ? (albumData.pulls || oldPulls || 1) : oldPulls + 1;
+            
+            const oldLevel = calculateLevel(oldPulls);
+            const newLevel = calculateLevel(newPulls);
+            const isLevelUp = !preserveLevel && (newLevel > oldLevel) && (oldPulls > 0);
                 
             let coverUrl = existingEntry ? existingEntry.cover : (albumData.cover || '');
-
             let hitTrack = null;
 
             // 1. Deezer API
             try {
                 const dzData = await jsonpFetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&limit=5&output=jsonp`);
                 if (dzData && dzData.data && dzData.data.length > 0) {
-                    const match = dzData.data[0];
+                    let match = dzData.data.find(a => isStrictMatch(a.artist.name));
+                    if (!match) match = dzData.data[0]; // fallback 
+
                     if (!coverUrl) coverUrl = match.cover_xl || match.cover_big || '';
                     if (match.id) {
                         const tracksData = await jsonpFetch(`https://api.deezer.com/album/${match.id}/tracks?output=jsonp`);
@@ -798,14 +634,15 @@
                         }
                     }
                 }
-            } catch (e) { console.log('Deezer hit fetch skipped'); }
+            } catch (e) { console.log('Deezer fetch err'); }
 
             // 2. iTunes API
             if (!hitTrack) {
                 try {
                     const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=song&limit=20`);
                     if (itunesData && itunesData.results && itunesData.results.length > 0) {
-                        const validSongs = itunesData.results.filter(s => s.previewUrl);
+                        // Строгий фильтр iTunes
+                        const validSongs = itunesData.results.filter(s => s.previewUrl && isStrictMatch(s.artistName));
                         if (validSongs.length > 0) {
                             const idx = forceRandom ? Math.floor(Math.random() * validSongs.length) : 0;
                             const selected = validSongs[idx];
@@ -813,30 +650,16 @@
                             hitTrack = { name: selected.trackName, preview: selected.previewUrl };
                         }
                     }
-                } catch (e) { console.log('iTunes hit fetch skipped'); }
-            }
-
-            // 3. Artist Top Tracks Fallback
-            if (!hitTrack) {
-                try {
-                    const artistData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanArtist)}&entity=song&limit=15`);
-                    if (artistData && artistData.results && artistData.results.length > 0) {
-                        const validArtistSongs = artistData.results.filter(s => s.previewUrl);
-                        if (validArtistSongs.length > 0) {
-                            const idx = forceRandom ? Math.floor(Math.random() * validArtistSongs.length) : 0;
-                            const selected = validArtistSongs[idx];
-                            if (!coverUrl && selected.artworkUrl100) coverUrl = selected.artworkUrl100.replace('100x100bb', '600x600bb');
-                            hitTrack = { name: selected.trackName, preview: selected.previewUrl };
-                        }
-                    }
-                } catch (e) { console.log('Artist fallback skipped'); }
+                } catch (e) { console.log('iTunes fetch err'); }
             }
 
             const isFav = existingEntry ? Boolean(existingEntry.isFavorite) : Boolean(albumData.isFavorite);
 
             return {
                 ...albumData,
-                pulls: pullCount,
+                pulls: newPulls,
+                level: newLevel,
+                isLevelUp: isLevelUp,
                 isFavorite: isFav,
                 cover: coverUrl,
                 preview: hitTrack ? hitTrack.preview : '',
@@ -865,6 +688,8 @@
             if (!card) return;
 
             const favClass = data.isFavorite ? 'active' : '';
+            const lvlClass = getLevelColorClass(data.level || 1);
+            const animClass = data.isLevelUp ? 'level-up-trigger' : '';
 
             card.className = `card rarity-${escapeHtml(data.rarity)} flip-reveal`;
             
@@ -875,19 +700,10 @@
             const coverHTML = data.cover ? `
                 <img src="${escapeHtml(data.cover)}" alt="${escTitle}" class="cover-art" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'vinyl-placeholder\\'><div class=\\'ph-title\\'>${escTitle}</div><div class=\\'ph-artist\\'>${escArtist}</div></div>';">
             ` : `
-                <div class="vinyl-placeholder">
-                    <div class="ph-title">${escTitle}</div>
-                    <div class="ph-artist">${escArtist}</div>
-                </div>
+                <div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div><div class="ph-artist">${escArtist}</div></div>
             `;
 
-            const overlayHTML = `
-                <div class="play-overlay">
-                    <div class="play-btn-icon" id="play-icon-${index}">
-                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    </div>
-                </div>
-            `;
+            const overlayHTML = `<div class="play-overlay"><div class="play-btn-icon" id="play-icon-${index}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>`;
 
             let trackDisplay = data.trackName 
                 ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
@@ -896,24 +712,22 @@
             card.innerHTML = `
                 <div>
                     <div class="card-top-bar">
-                        <div class="lvl-badge">LVL ${data.pulls || 1}</div>
+                        <div class="lvl-badge ${lvlClass} ${animClass}">LVL ${data.level || 1}</div>
                         <div class="rarity-badge">${escapeHtml(data.rarity)}</div>
                         <div style="display:flex; gap:4px; align-items:center;">
-                            <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track from album">${SHUFFLE_SVG}</button>
+                            <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track">${SHUFFLE_SVG}</button>
                             <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromPack(${index}, ${data.id}, event)" title="Toggle Favorite">★</button>
                         </div>
                     </div>
                     <div class="cover-wrapper" onclick="togglePlaySlot(${index})">
                         ${coverHTML}
                         ${overlayHTML}
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" id="progress-${index}"></div>
-                        </div>
+                        <div class="progress-bar-container"><div class="progress-bar-fill" id="progress-${index}"></div></div>
                     </div>
                     <div class="album-info-top">
                         <div class="album-title" title="${escTitle}">${escTitle}</div>
                         <div class="artist-name" title="${escArtist}">${escArtist}</div>
-                        ${trackDisplay}
+                        <div class="mini-track-container">${trackDisplay}</div>
                     </div>
                 </div>
                 <div class="album-info-bottom">
@@ -926,18 +740,13 @@
 
         function toggleFavoriteFromPack(slotIndex, albumId, event) {
             if (event) event.stopPropagation();
-            
-            if (currentPackData[slotIndex]) {
-                currentPackData[slotIndex].isFavorite = !currentPackData[slotIndex].isFavorite;
-            }
-
+            if (currentPackData[slotIndex]) currentPackData[slotIndex].isFavorite = !currentPackData[slotIndex].isFavorite;
             const item = collection.get(albumId);
             if (item) {
                 item.isFavorite = !item.isFavorite;
                 saveProgress();
                 renderCollectionUI();
             }
-
             const card = document.getElementById(`pack-card-${slotIndex}`);
             if (card) {
                 const btn = card.querySelector('.fav-btn');
@@ -945,42 +754,28 @@
             }
         }
 
-        // --- PLAYER LOGIC ---
+        // --- УДАЛЕН СИНТЕЗАТОР (Ambient) - Пропускаем нерабочие треки ---
 
         function playBestAlbumInPack() {
             if (currentPackData.length === 0) return;
-
-            let maxScore = -1;
-            let bestSlot = -1;
-
+            let maxScore = -1, bestSlot = -1;
             currentPackData.forEach((item, index) => {
                 if (item.preview) {
                     const scoreNum = parseFloat(item.score) || 0;
-                    if (scoreNum > maxScore) {
-                        maxScore = scoreNum;
-                        bestSlot = index;
-                    }
+                    if (scoreNum > maxScore) { maxScore = scoreNum; bestSlot = index; }
                 }
             });
-
-            if (bestSlot !== -1) {
-                playSlot(bestSlot);
-            } else {
-                playNextSlotInCarousel(0);
-            }
+            if (bestSlot !== -1) playSlot(bestSlot);
+            else playNextSlotInCarousel(0);
         }
 
         function togglePlaySlot(slotIndex) {
-            if (currentPlayingSlot === slotIndex && currentAudio && !currentAudio.paused) {
-                pauseCurrentAudio();
-            } else {
-                playSlot(slotIndex);
-            }
+            if (currentPlayingSlot === slotIndex && currentAudio && !currentAudio.paused) pauseCurrentAudio();
+            else playSlot(slotIndex);
         }
 
         function playSlot(slotIndex) {
             stopCurrentAudio();
-
             const albumData = currentPackData[slotIndex];
 
             if (!albumData || !albumData.preview) {
@@ -996,35 +791,23 @@
             const progressBar = document.getElementById(`progress-${slotIndex}`);
 
             if (card) card.classList.add('playing');
-            if (icon) {
-                icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-            }
+            if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
             currentAudio = new Audio(albumData.preview);
             currentAudio.ontimeupdate = () => {
-                if (currentAudio.duration) {
-                    const pct = (currentAudio.currentTime / currentAudio.duration) * 100;
-                    if (progressBar) progressBar.style.width = `${pct}%`;
-                }
+                if (currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
             };
-
-            currentAudio.onended = () => {
-                resetSlotUI(slotIndex);
-                playNextSlotInCarousel(slotIndex);
-            };
-
+            currentAudio.onended = () => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); };
             currentAudio.play().catch(e => {
                 console.log('Stream playback failed, skipping slot...');
                 resetSlotUI(slotIndex);
                 playNextSlotInCarousel(slotIndex);
             });
-
             renderCollectionUI();
         }
 
         function playNextSlotInCarousel(fromSlotIndex) {
             if (currentPackData.length === 0) return;
-
             for (let i = 1; i <= 5; i++) {
                 const checkSlot = (fromSlotIndex + i) % 5;
                 if (currentPackData[checkSlot] && currentPackData[checkSlot].preview) {
@@ -1036,81 +819,53 @@
 
         async function playCollectionAlbum(albumId, forceNextTrack = false, event = null) {
             if (event) event.stopPropagation();
-
             const trackKey = `col_${albumId}`;
 
             if (!forceNextTrack && currentPlayingId === trackKey && currentAudio && !currentAudio.paused) {
-                pauseCurrentAudio();
-                renderCollectionUI();
-                return;
+                pauseCurrentAudio(); renderCollectionUI(); return;
             }
-
             stopCurrentAudio();
 
             const album = collection.get(albumId);
             if (!album) return;
 
-            loadingCollectionId = albumId;
-            renderCollectionUI();
-
+            loadingCollectionId = albumId; renderCollectionUI();
             const refreshedData = await fetchHitTrackForAlbum(album, forceNextTrack, true);
             loadingCollectionId = null;
 
             if (refreshedData && refreshedData.preview) {
                 collectionTracksCache.set(albumId, refreshedData.trackName || 'Preview Track');
                 currentPlayingId = trackKey;
-
                 currentAudio = new Audio(refreshedData.preview);
-                
                 currentAudio.ontimeupdate = () => {
                     if (currentAudio.duration) {
-                        const pct = (currentAudio.currentTime / currentAudio.duration) * 100;
                         const progressBar = document.getElementById(`col-progress-${albumId}`);
-                        if (progressBar) progressBar.style.width = `${pct}%`;
+                        if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
                     }
                 };
-
-                currentAudio.onended = () => {
-                    currentPlayingId = null;
-                    renderCollectionUI();
-                };
-
+                currentAudio.onended = () => { currentPlayingId = null; renderCollectionUI(); };
                 currentAudio.play().catch(e => {
                     console.log('Direct audio stream failed');
-                    currentPlayingId = null;
-                    renderCollectionUI();
+                    currentPlayingId = null; renderCollectionUI();
                 });
             } else {
                 alert('Audio preview not available for this album right now.');
             }
-
             renderCollectionUI();
         }
 
         function pauseCurrentAudio() {
-            if (currentAudio) {
-                currentAudio.pause();
-            }
-
+            if (currentAudio) currentAudio.pause();
             if (currentPlayingSlot !== null) {
                 const icon = document.getElementById(`play-icon-${currentPlayingSlot}`);
-                if (icon) {
-                    icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-                }
+                if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             }
             currentPlayingId = null;
         }
 
         function stopCurrentAudio() {
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio = null;
-            }
-
-            if (currentPlayingSlot !== null) {
-                resetSlotUI(currentPlayingSlot);
-                currentPlayingSlot = null;
-            }
+            if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+            if (currentPlayingSlot !== null) { resetSlotUI(currentPlayingSlot); currentPlayingSlot = null; }
             currentPlayingId = null;
             loadingCollectionId = null;
         }
@@ -1121,29 +876,21 @@
             const progressBar = document.getElementById(`progress-${slotIndex}`);
 
             if (card) card.classList.remove('playing');
-            if (icon) {
-                icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-            }
+            if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             if (progressBar) progressBar.style.width = '0%';
         }
 
         // --- COLLECTION ---
-
         function addToCollection(albumObj) {
             const existing = collection.get(albumObj.id);
-
             if (!existing) {
-                collection.set(albumObj.id, {
-                    ...albumObj,
-                    pulls: 1,
-                    isFavorite: Boolean(albumObj.isFavorite)
-                });
+                collection.set(albumObj.id, { ...albumObj, isFavorite: Boolean(albumObj.isFavorite) });
             } else {
-                existing.pulls = (existing.pulls || 1) + 1;
+                existing.pulls = albumObj.pulls; // Уже рассчитан в fetchHitTrack
+                existing.level = calculateLevel(existing.pulls);
                 if (albumObj.isFavorite) existing.isFavorite = true;
                 existing.pulledAt = albumObj.pulledAt;
             }
-
             saveProgress();
             renderCollectionUI();
         }
@@ -1151,11 +898,7 @@
         function toggleFavorite(albumId, event) {
             if (event) event.stopPropagation();
             const item = collection.get(albumId);
-            if (item) {
-                item.isFavorite = !item.isFavorite;
-                saveProgress();
-                renderCollectionUI();
-            }
+            if (item) { item.isFavorite = !item.isFavorite; saveProgress(); renderCollectionUI(); }
         }
 
         function setViewMode(mode) {
@@ -1163,7 +906,6 @@
             document.getElementById('btnGridView').classList.toggle('active', mode === 'grid');
             document.getElementById('btnArtistView').classList.toggle('active', mode === 'artist');
             document.getElementById('btnListView').classList.toggle('active', mode === 'list');
-            
             renderCollectionUI();
         }
 
@@ -1173,9 +915,10 @@
             container.innerHTML = '';
 
             let albumsArray = Array.from(collection.values());
-            const sortMode = document.getElementById('sortSelect').value;
+            albumsArray.forEach(item => { if (!item.level) item.level = calculateLevel(item.pulls || 1); });
 
-            const sortWithFavorites = (sortFn) => {
+            const sortMode = document.getElementById('sortSelect').value;
+            const sortWithFavs = (sortFn) => {
                 albumsArray.sort((a, b) => {
                     if (a.isFavorite && !b.isFavorite) return -1;
                     if (!a.isFavorite && b.isFavorite) return 1;
@@ -1183,28 +926,18 @@
                 });
             };
 
-            if (sortMode === 'pulls_desc') {
-                sortWithFavorites((a, b) => (b.pulls || 1) - (a.pulls || 1));
-            } else if (sortMode === 'rarity') {
-                sortWithFavorites((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
-            } else if (sortMode === 'score') {
-                sortWithFavorites((a, b) => parseFloat(b.score) - parseFloat(a.score));
-            } else if (sortMode === 'genre') {
-                sortWithFavorites((a, b) => a.genre.localeCompare(b.genre));
-            } else if (sortMode === 'year') {
-                sortWithFavorites((a, b) => (b.year === 'N/A' ? 0 : b.year) - (a.year === 'N/A' ? 0 : a.year));
-            } else {
-                sortWithFavorites((a, b) => b.pulledAt - a.pulledAt);
-            }
+            if (sortMode === 'pulls_desc') sortWithFavs((a, b) => b.level - a.level || b.pulls - a.pulls);
+            else if (sortMode === 'rarity') sortWithFavs((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
+            else if (sortMode === 'score') sortWithFavs((a, b) => parseFloat(b.score) - parseFloat(a.score));
+            else if (sortMode === 'genre') sortWithFavs((a, b) => a.genre.localeCompare(b.genre));
+            else if (sortMode === 'year') sortWithFavs((a, b) => (b.year === 'N/A' ? 0 : b.year) - (a.year === 'N/A' ? 0 : a.year));
+            else sortWithFavs((a, b) => b.pulledAt - a.pulledAt);
 
             if (currentViewMode === 'artist') {
-                container.className = '';
-                renderArtistGroupView(container, albumsArray);
+                container.className = ''; renderArtistGroupView(container, albumsArray);
             } else {
                 container.className = currentViewMode;
-                albumsArray.forEach(item => {
-                    container.appendChild(createAlbumCardElement(item, currentViewMode));
-                });
+                albumsArray.forEach(item => container.appendChild(createAlbumCardElement(item, currentViewMode)));
             }
         }
 
@@ -1218,14 +951,14 @@
             const escArtist = escapeHtml(item.artist);
             const isPlaying = (currentPlayingId === `col_${item.id}`) && currentAudio && !currentAudio.paused;
             const isLoading = (loadingCollectionId === item.id);
-
             const activeTrackName = collectionTracksCache.get(item.id) || '';
 
             const coverImg = item.cover 
                 ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
-                : `<div style="aspect-ratio:1/1; background:#222; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.7rem; border-radius:6px; padding:4px;">${escTitle}</div>`;
+                : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
 
             const favStarClass = item.isFavorite ? 'active' : '';
+            const lvlClass = getLevelColorClass(item.level || 1);
 
             let playIconSVG = '<path d="M8 5v14l11-7z"/>';
             if (isLoading) playIconSVG = '';
@@ -1235,7 +968,7 @@
             if (isPlaying && activeTrackName) {
                 trackDisplay = `<div class="track-preview-name" title="${escapeHtml(activeTrackName)}">🎵 ${escapeHtml(activeTrackName)}</div>`;
             } else if (isLoading) {
-                trackDisplay = `<div class="track-preview-name" style="color:#eab308;">⏳ Fetching track...</div>`;
+                trackDisplay = `<div class="track-preview-name" style="color:#eab308;">⏳ Fetching...</div>`;
             }
 
             if (mode === 'grid') {
@@ -1246,33 +979,26 @@
                 mini.innerHTML = `
                     <div>
                         <div class="card-top-bar">
-                            <div class="lvl-badge">LVL ${item.pulls || 1}</div>
+                            <div class="lvl-badge ${lvlClass}">LVL ${item.level || 1}</div>
                             <div class="rarity-badge">${escapeHtml(item.rarity)}</div>
                             <div style="display:flex; gap:4px; align-items:center;">
-                                <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track from album">${SHUFFLE_SVG}</button>
+                                <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
                                 <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
                             </div>
                         </div>
                         <div class="mini-cover-wrapper">
                             ${coverImg}
-                            <div class="play-overlay">
-                                <div class="play-btn-icon">
-                                    ${isLoading ? '⏳' : `<svg viewBox="0 0 24 24">${playIconSVG}</svg>`}
-                                </div>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill" id="col-progress-${item.id}"></div>
-                            </div>
+                            <div class="play-overlay"><div class="play-btn-icon">${isLoading ? '⏳' : `<svg viewBox="0 0 24 24">${playIconSVG}</svg>`}</div></div>
+                            <div class="progress-bar-container"><div class="progress-bar-fill" id="col-progress-${item.id}"></div></div>
                         </div>
                         <div class="title" title="${escTitle}">${escTitle}</div>
                         <div class="mini-artist" title="${escArtist}">${escArtist}</div>
-                        ${trackDisplay}
-                        <div class="mini-score">★ ${escapeHtml(item.score)}</div>
+                        <div class="mini-track-container">${trackDisplay}</div>
                     </div>
                     <div>
                         <div class="mini-info">
+                            <span class="mini-score">★ ${escapeHtml(item.score)}</span>
                             <span>📅 ${escapeHtml(item.year)} | 🏷️ ${escapeHtml(item.genre)}</span>
-                            <span>[${escapeHtml(item.type)}]</span>
                         </div>
                     </div>
                 `;
@@ -1284,13 +1010,11 @@
                 listItem.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 listItem.innerHTML = `
                     <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
-                        <div class="list-cover-wrapper">
-                            ${coverImg}
-                        </div>
+                        <div class="list-cover-wrapper">${coverImg}</div>
                         <div class="list-main">
-                            <div class="list-title">${escTitle} <span style="font-size:0.75rem; color:#f59e0b;">(LVL ${item.pulls || 1})</span></div>
+                            <div class="list-title">${escTitle} <span class="${lvlClass}" style="font-size:0.75rem;">(LVL ${item.level || 1})</span></div>
                             <div class="list-artist">${escArtist}</div>
-                            ${trackDisplay}
+                            <div class="mini-track-container" style="justify-content: flex-start; min-height:16px; margin:0;">${trackDisplay}</div>
                         </div>
                     </div>
                     <div class="list-right-group">
@@ -1298,7 +1022,7 @@
                             <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)}</div>
                             <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)} | <b>${escapeHtml(item.rarity)}</b></div>
                         </div>
-                        <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track from album">${SHUFFLE_SVG}</button>
+                        <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
                         <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
                     </div>
                 `;
@@ -1308,30 +1032,18 @@
 
         function renderArtistGroupView(container, albumsArray) {
             const groups = new Map();
-
             albumsArray.forEach(album => {
                 const artist = album.artist || 'Unknown Artist';
                 if (!groups.has(artist)) groups.set(artist, []);
                 groups.get(artist).push(album);
             });
-
             groups.forEach((artistAlbums, artistName) => {
                 const groupEl = document.createElement('div');
                 groupEl.className = 'artist-group';
-
-                groupEl.innerHTML = `
-                    <div class="artist-group-header">
-                        🎤 ${escapeHtml(artistName)} <span style="color:#777; font-size:0.8rem;">(${artistAlbums.length} album${artistAlbums.length > 1 ? 's' : ''})</span>
-                    </div>
-                `;
-
+                groupEl.innerHTML = `<div class="artist-group-header">🎤 ${escapeHtml(artistName)} <span style="color:#777; font-size:0.8rem;">(${artistAlbums.length} album${artistAlbums.length > 1 ? 's' : ''})</span></div>`;
                 const gridEl = document.createElement('div');
                 gridEl.className = 'grid';
-
-                artistAlbums.forEach(album => {
-                    gridEl.appendChild(createAlbumCardElement(album, 'grid'));
-                });
-
+                artistAlbums.forEach(album => gridEl.appendChild(createAlbumCardElement(album, 'grid')));
                 groupEl.appendChild(gridEl);
                 container.appendChild(groupEl);
             });
