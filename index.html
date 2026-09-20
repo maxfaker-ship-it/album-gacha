@@ -101,6 +101,10 @@
             min-height: 380px;
         }
 
+        .card, .mini-card {
+            container-type: inline-size; /* Включаем отслеживание ширины узла */
+        }
+
         .card {
             flex: 1;
             min-width: 0;
@@ -157,6 +161,7 @@
             margin-bottom: 6px;
             width: 100%;
             height: 22px;
+            gap: 4px;
         }
 
         /* ДИНАМИЧЕСКИЕ ЦВЕТА УРОВНЕЙ */
@@ -170,6 +175,7 @@
             line-height: 1;
             white-space: nowrap;
             transition: all 0.3s;
+            flex-shrink: 0;
         }
         
         .lvl-color-1 { color: var(--lvl-1-color); }
@@ -198,6 +204,16 @@
             font-size: 0.65rem;
             text-transform: uppercase;
             line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* СКРЫВАЕМ НАДПИСЬ РЕДКОСТИ ПРИ СЖАТИИ КАРТОЧКИ МЕНЕЕ 160PX */
+        @container (max-width: 160px) {
+            .rarity-badge {
+                display: none !important;
+            }
         }
 
         .rarity-Common .rarity-badge { background: var(--rarity-common); color: #000; }
@@ -220,6 +236,7 @@
             transition: color 0.2s, transform 0.1s;
             padding: 0;
             line-height: 1;
+            flex-shrink: 0;
         }
 
         .shuffle-btn svg { width: 12px; height: 12px; fill: #888; transition: fill 0.2s; }
@@ -277,7 +294,6 @@
         .album-title { font-size: 0.85rem; font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .artist-name { color: #aaa; font-size: 0.75rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* ФИКСИРОВАННЫЙ КОНТЕЙНЕР ДЛЯ НАЗВАНИЯ ТРЕКА (чтобы карточки не прыгали) */
         .mini-track-container {
             min-height: 18px;
             display: flex;
@@ -412,8 +428,6 @@
         let currentViewMode = 'grid';
 
         let currentAudio = null;
-        let synthAudioContext = null;
-        let synthOscillators = [];
         let currentPlayingSlot = null;
         let currentPlayingId = null; 
         let loadingCollectionId = null;
@@ -426,7 +440,6 @@
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
 
-        // --- ЛОГИКА УРОВНЕЙ И СЛИЯНИЯ ---
         function calculateLevel(pulls) {
             if (pulls >= 81) return 5;
             if (pulls >= 27) return 4;
@@ -445,7 +458,7 @@
                     const cleanItem = { ...item };
                     delete cleanItem.preview;
                     delete cleanItem.trackName;
-                    delete cleanItem.isLevelUp; // Не сохраняем флаг анимации
+                    delete cleanItem.isLevelUp;
                     return [id, cleanItem];
                 });
                 localStorage.setItem('album_gacha_collection', JSON.stringify(serializableCol));
@@ -551,7 +564,7 @@
                 currentPackData.push(albumObj);
                 
                 revealCardInPack(albumObj, i);
-                addToCollection(albumObj); // Сохраняем в коллекцию сразу
+                addToCollection(albumObj);
                 
                 await sleep(150);
             }
@@ -597,7 +610,6 @@
             const cleanTitle = cleanQueryString(albumData.title);
             const targetNormArtist = normalizeStr(cleanArtist);
 
-            // СТРОГАЯ ПРОВЕРКА ИСПОЛНИТЕЛЯ (чтобы отсекать ложные подстановки типа русских ремиксов)
             const isStrictMatch = (fetchedArtist) => {
                 const fetchedNorm = normalizeStr(fetchedArtist);
                 return fetchedNorm === targetNormArtist || fetchedNorm.includes(targetNormArtist) || targetNormArtist.includes(fetchedNorm);
@@ -619,7 +631,7 @@
                 const dzData = await jsonpFetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&limit=5&output=jsonp`);
                 if (dzData && dzData.data && dzData.data.length > 0) {
                     let match = dzData.data.find(a => isStrictMatch(a.artist.name));
-                    if (!match) match = dzData.data[0]; // fallback 
+                    if (!match) match = dzData.data[0];
 
                     if (!coverUrl) coverUrl = match.cover_xl || match.cover_big || '';
                     if (match.id) {
@@ -641,7 +653,6 @@
                 try {
                     const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist}${cleanTitle}`)}&entity=song&limit=20`);
                     if (itunesData && itunesData.results && itunesData.results.length > 0) {
-                        // Строгий фильтр iTunes
                         const validSongs = itunesData.results.filter(s => s.previewUrl && isStrictMatch(s.artistName));
                         if (validSongs.length > 0) {
                             const idx = forceRandom ? Math.floor(Math.random() * validSongs.length) : 0;
@@ -753,8 +764,6 @@
                 if (btn) btn.classList.toggle('active', currentPackData[slotIndex].isFavorite);
             }
         }
-
-        // --- УДАЛЕН СИНТЕЗАТОР (Ambient) - Пропускаем нерабочие треки ---
 
         function playBestAlbumInPack() {
             if (currentPackData.length === 0) return;
@@ -886,7 +895,7 @@
             if (!existing) {
                 collection.set(albumObj.id, { ...albumObj, isFavorite: Boolean(albumObj.isFavorite) });
             } else {
-                existing.pulls = albumObj.pulls; // Уже рассчитан в fetchHitTrack
+                existing.pulls = albumObj.pulls;
                 existing.level = calculateLevel(existing.pulls);
                 if (albumObj.isFavorite) existing.isFavorite = true;
                 existing.pulledAt = albumObj.pulledAt;
