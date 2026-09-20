@@ -611,14 +611,17 @@
 
             currentPackData = fetchedPack;
 
-            // МИКРО-ЗАДЕРЖКА В 10ms
+            // 1. Быстро открываем карточки с микрозадержкой 10ms
             for (let i = 0; i < 5; i++) {
                 const albumObj = currentPackData[i];
                 revealCardInPack(albumObj, i);
-                addToCollection(albumObj);
-
+                addToCollectionDataOnly(albumObj); // Только обновляем данные в памяти, БЕЗ тяжелого рендера
                 await sleep(10);
             }
+
+            // 2. Только один раз сохраняем и перерисовываем всю большую коллекцию
+            saveProgress();
+            renderCollectionUI();
 
             btn.disabled = false;
             playBestAlbumInPack();
@@ -942,8 +945,8 @@
             if (progressBar) progressBar.style.width = '0%';
         }
 
-        // --- COLLECTION ---
-        function addToCollection(albumObj) {
+        // --- OPTIMIZED COLLECTION LOGIC ---
+        function addToCollectionDataOnly(albumObj) {
             const existing = collection.get(albumObj.id);
             if (!existing) {
                 collection.set(albumObj.id, { ...albumObj, isFavorite: Boolean(albumObj.isFavorite) });
@@ -953,8 +956,6 @@
                 if (albumObj.isFavorite) existing.isFavorite = true;
                 existing.pulledAt = albumObj.pulledAt;
             }
-            saveProgress();
-            renderCollectionUI();
         }
 
         function toggleFavorite(albumId, event) {
@@ -974,7 +975,9 @@
         function renderCollectionUI() {
             const container = document.getElementById('collectionContainer');
             document.getElementById('colCount').innerText = collection.size;
-            container.innerHTML = '';
+            
+            // Использование DocumentFragment предотвращает массовый пересчет DOM при больших коллекциях
+            const fragment = document.createDocumentFragment();
 
             let albumsArray = Array.from(collection.values());
             albumsArray.forEach(item => { if (!item.level) item.level = calculateLevel(item.pulls || 1); });
@@ -997,11 +1000,15 @@
             else sortWithFavs((a, b) => b.pulledAt - a.pulledAt);
 
             if (currentViewMode === 'artist') {
-                container.className = ''; renderArtistGroupView(container, albumsArray);
+                container.className = ''; 
+                renderArtistGroupView(fragment, albumsArray);
             } else {
                 container.className = currentViewMode;
-                albumsArray.forEach(item => container.appendChild(createAlbumCardElement(item, currentViewMode)));
+                albumsArray.forEach(item => fragment.appendChild(createAlbumCardElement(item, currentViewMode)));
             }
+
+            container.innerHTML = '';
+            container.appendChild(fragment);
         }
 
         function createAlbumCardElement(item, mode) {
