@@ -164,7 +164,6 @@
             gap: 4px;
         }
 
-        /* КОМПАКТНЫЙ ЧИСТЫЙ БЕЙДЖ LVL */
         .lvl-badge {
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid currentColor;
@@ -191,7 +190,6 @@
         .lvl-color-4 { color: var(--lvl-4-color); text-shadow: 0 0 5px rgba(192,132,252,0.4); }
         .lvl-color-5 { color: var(--lvl-5-color); text-shadow: 0 0 5px rgba(250,204,21,0.4); }
 
-        /* АНИМАЦИЯ ПОВЫШЕНИЯ УРОВНЯ */
         @keyframes levelUpAnim {
             0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
             30% { transform: scale(1.4) rotate(5deg); background: currentColor; color: #111; box-shadow: 0 0 15px currentColor; }
@@ -288,7 +286,6 @@
         .play-btn-icon svg { width: 18px; height: 18px; fill: #000; }
         .play-overlay:hover .play-btn-icon { transform: scale(1.1); }
 
-        /* СКРЫВАЕМ ПРОГРЕСС-БАР ПО УМОЛЧАНИЮ (показываем только при .playing) */
         .progress-bar-container { 
             position: absolute; 
             bottom: 0; 
@@ -362,7 +359,6 @@
         .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
         .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: auto; display: flex; flex-direction: column; gap: 2px; align-items: center; padding-top: 6px;}
 
-        /* === РЕЖИМ СПИСКА (LIST) === */
         .list { display: flex; flex-direction: column; gap: 8px; }
         .list-card { 
             background: var(--card-bg); 
@@ -394,7 +390,6 @@
             }
         }
 
-        /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
         @media (max-width: 768px) {
             .pack-container {
                 display: grid;
@@ -473,6 +468,11 @@
         let loadingCollectionId = null;
         let currentPackData = [];
 
+        // ПРЕФЕЧ / ПРЕДЗАГРУЗКА
+        let prefetchedPackData = null;
+        let isPrefetching = false;
+        let prefetchPromise = null;
+
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
         function escapeHtml(str) {
@@ -480,7 +480,6 @@
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
 
-        // --- ЛОГИКА ЭВОЛЮЦИИ И ПОРОГОВ ДУБЛИКАТОВ ---
         function calculateLevel(pulls) {
             if (pulls >= 81) return 5;
             if (pulls >= 27) return 4;
@@ -528,6 +527,7 @@
                 localStorage.removeItem('album_gacha_collection');
                 collection.clear();
                 collectionTracksCache.clear();
+                prefetchedPackData = null;
                 renderCollectionUI();
             }
         }
@@ -545,6 +545,9 @@
                 loadProgress();
                 renderCollectionUI();
                 document.getElementById('pullBtn').disabled = false;
+
+                // Запускаем фоновую подгрузку первого пака
+                prefetchNextPack();
             } catch (err) {
                 alert('Error loading albums.json!');
                 console.error(err);
@@ -562,6 +565,26 @@
         function getRandomAlbumByRarity(targetRarity) {
             const pool = allAlbums.filter(a => a.rarity === targetRarity);
             return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : allAlbums[Math.floor(Math.random() * allAlbums.length)];
+        }
+
+        // --- ЛОГИКА ФОНОВОГО ПРЕФЕЧА СЛЕДУЮЩЕГО ПАКА ---
+        async function prefetchNextPack() {
+            if (isPrefetching || allAlbums.length === 0) return;
+            isPrefetching = true;
+
+            prefetchPromise = (async () => {
+                const tempPack = [];
+                for (let i = 0; i < 5; i++) {
+                    const targetRarity = rollRarity();
+                    const rawAlbum = getRandomAlbumByRarity(targetRarity);
+                    const albumObj = await fetchHitTrackForAlbum(rawAlbum, false, false);
+                    tempPack.push(albumObj);
+                }
+                prefetchedPackData = tempPack;
+                isPrefetching = false;
+            })();
+
+            await prefetchPromise;
         }
 
         function createInitialPackSkeletons() {
@@ -603,23 +626,47 @@
             const btn = document.getElementById('pullBtn');
             btn.disabled = true;
 
-            createInitialPackSkeletons();
+            // Если префеч еще идет, дожидаемся его завершения
+            if (isPrefetching && prefetchPromise) {
+                createInitialPackSkeletons();
+                await prefetchPromise;
+            }
+
+            // Если готового префеча нет (крайний случай), создаем на лету
+            if (!prefetchedPackData) {
+                createInitialPackSkeletons();
+                prefetchedPackData = [];
+                for (let i = 0; i < 5; i++) {
+                    const targetRarity = rollRarity();
+                    const rawAlbum = getRandomAlbumByRarity(targetRarity);
+                    const albumObj = await fetchHitTrackForAlbum(rawAlbum, false, false);
+                    prefetchedPackData.push(albumObj);
+                }
+            }
+
+            // Мгновенно отображаем предзагруженный пак
+            currentPackData = prefetchedPackData;
+            prefetchedPackData = null; 
+
+            const packContainer = document.getElementById('packContainer');
+            packContainer.className = 'pack-container';
+            packContainer.innerHTML = '';
 
             for (let i = 0; i < 5; i++) {
-                const targetRarity = rollRarity();
-                const rawAlbum = getRandomAlbumByRarity(targetRarity);
+                const albumObj = currentPackData[i];
+                const card = document.createElement('div');
+                card.id = `pack-card-${i}`;
+                packContainer.appendChild(card);
 
-                const albumObj = await fetchHitTrackForAlbum(rawAlbum, false, false);
-                currentPackData.push(albumObj);
-                
                 revealCardInPack(albumObj, i);
                 addToCollection(albumObj);
-                
-                await sleep(150);
             }
 
             btn.disabled = false;
             playBestAlbumInPack();
+
+            // Сразу в фоновом режиме подгружаем Следующий Пак!
+            prefetchNextPack();
         }
 
         function normalizeStr(str) {
