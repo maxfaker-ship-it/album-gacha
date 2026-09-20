@@ -489,7 +489,7 @@
             if (pulls >= 81) return 'MAX';
             if (pulls >= 27) return `${pulls}/81`;
             if (pulls >= 9) return `${pulls}/27`;
-            if (pulls >= 3) return `${pulls}/9`;
+            if (pulls >= 3) return `${pulls}/3`;
             return `${pulls}/3`;
         }
 
@@ -594,7 +594,6 @@
             }
         }
 
-        // КЛАССИЧЕСКОЕ ПРЯМОЕ ОТКРЫТИЕ БЕЗ ФОНОВОЙ ПРЕДЗАГРУЗКИ
         async function pull5Pack() {
             if (allAlbums.length === 0) return;
             const btn = document.getElementById('pullBtn');
@@ -612,12 +611,13 @@
 
             currentPackData = fetchedPack;
 
+            // МИКРО-ЗАДЕРЖКА В 10ms
             for (let i = 0; i < 5; i++) {
                 const albumObj = currentPackData[i];
                 revealCardInPack(albumObj, i);
                 addToCollection(albumObj);
 
-                await sleep(25); // Быстрый динамичный переворот
+                await sleep(10);
             }
 
             btn.disabled = false;
