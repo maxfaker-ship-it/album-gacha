@@ -140,13 +140,12 @@
         }
 
         .card.flip-reveal {
-            animation: flip 0.6s ease-in-out forwards;
+            animation: flip 0.5s ease-in-out forwards;
         }
 
         @keyframes flip {
-            0% { transform: rotateY(0deg) scale(0.95); }
-            50% { transform: rotateY(90deg) scale(1.05); }
-            100% { transform: rotateY(0deg) scale(1); }
+            0% { transform: rotateY(90deg) scale(0.9); opacity: 0; }
+            100% { transform: rotateY(0deg) scale(1); opacity: 1; }
         }
 
         .card.rarity-Common { border-color: var(--rarity-common); }
@@ -546,7 +545,6 @@
                 renderCollectionUI();
                 document.getElementById('pullBtn').disabled = false;
 
-                // Запускаем фоновую подгрузку первого пака
                 prefetchNextPack();
             } catch (err) {
                 alert('Error loading albums.json!');
@@ -567,7 +565,6 @@
             return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : allAlbums[Math.floor(Math.random() * allAlbums.length)];
         }
 
-        // --- ЛОГИКА ФОНОВОГО ПРЕФЕЧА СЛЕДУЮЩЕГО ПАКА ---
         async function prefetchNextPack() {
             if (isPrefetching || allAlbums.length === 0) return;
             isPrefetching = true;
@@ -626,13 +623,11 @@
             const btn = document.getElementById('pullBtn');
             btn.disabled = true;
 
-            // Если префеч еще идет, дожидаемся его завершения
             if (isPrefetching && prefetchPromise) {
                 createInitialPackSkeletons();
                 await prefetchPromise;
             }
 
-            // Если готового префеча нет (крайний случай), создаем на лету
             if (!prefetchedPackData) {
                 createInitialPackSkeletons();
                 prefetchedPackData = [];
@@ -644,7 +639,6 @@
                 }
             }
 
-            // Мгновенно отображаем предзагруженный пак
             currentPackData = prefetchedPackData;
             prefetchedPackData = null; 
 
@@ -652,6 +646,7 @@
             packContainer.className = 'pack-container';
             packContainer.innerHTML = '';
 
+            // ПОСЛЕДОВАТЕЛЬНОЕ ПОЯВЛЕНИЕ КАРТ СЛЕВА НАПРАВО
             for (let i = 0; i < 5; i++) {
                 const albumObj = currentPackData[i];
                 const card = document.createElement('div');
@@ -660,12 +655,13 @@
 
                 revealCardInPack(albumObj, i);
                 addToCollection(albumObj);
+
+                await sleep(180); // Пауза между открытием карт
             }
 
             btn.disabled = false;
             playBestAlbumInPack();
 
-            // Сразу в фоновом режиме подгружаем Следующий Пак!
             prefetchNextPack();
         }
 
