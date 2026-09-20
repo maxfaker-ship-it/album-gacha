@@ -139,8 +139,9 @@
             opacity: 0.6;
         }
 
+        /* УСКОРЕННАЯ АНИМАЦИЯ ПЕРЕВОРОТА (0.25s) */
         .card.flip-reveal {
-            animation: flip 0.5s ease-in-out forwards;
+            animation: flip 0.25s ease-in-out forwards;
         }
 
         @keyframes flip {
@@ -357,6 +358,9 @@
         .mini-card .mini-artist { color: #bbb; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
         .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: auto; display: flex; flex-direction: column; gap: 2px; align-items: center; padding-top: 6px;}
+
+        .artist-group { background: #18181c; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #2e2e38; }
+        .artist-group-header { font-size: 1.1rem; font-weight: bold; color: #a855f7; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2e2e38; padding-bottom: 6px; }
 
         .list { display: flex; flex-direction: column; gap: 8px; }
         .list-card { 
@@ -623,10 +627,8 @@
             const btn = document.getElementById('pullBtn');
             btn.disabled = true;
 
-            // 1. Мгновенно создаем все 5 скелетонов, чтобы сразу зафиксировать сетку
             createInitialPackSkeletons();
 
-            // 2. Ждем предзагруженных данных, если они еще не готовы
             if (isPrefetching && prefetchPromise) {
                 await prefetchPromise;
             }
@@ -644,19 +646,18 @@
             currentPackData = prefetchedPackData;
             prefetchedPackData = null; 
 
-            // 3. Последовательно открываем карты слева направо в уже готовых слотах
+            // УСКОРЕННЫЙ ПЕРЕВОРОТ КАРТ (80ms задержки)
             for (let i = 0; i < 5; i++) {
                 const albumObj = currentPackData[i];
                 revealCardInPack(albumObj, i);
                 addToCollection(albumObj);
 
-                await sleep(180); // Пауза для эффекта очереди
+                await sleep(80); 
             }
 
             btn.disabled = false;
             playBestAlbumInPack();
 
-            // Запускаем фоновую подгрузку следующего пака
             prefetchNextPack();
         }
 
@@ -1131,6 +1132,7 @@
             }
         }
 
+        // РЕЖИМ ОТОБРАЖЕНИЯ ПО АРТИСТАМ
         function renderArtistGroupView(container, albumsArray) {
             const groups = new Map();
             albumsArray.forEach(album => {
@@ -1138,12 +1140,20 @@
                 if (!groups.has(artist)) groups.set(artist, []);
                 groups.get(artist).push(album);
             });
-            groups.forEach((artistAlbums, artistName) => {
+
+            // Сортировка артистов по алфавиту
+            const sortedArtists = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b));
+
+            sortedArtists.forEach(artistName => {
+                const artistAlbums = groups.get(artistName);
                 const groupEl = document.createElement('div');
                 groupEl.className = 'artist-group';
                 groupEl.innerHTML = `<div class="artist-group-header">🎤 ${escapeHtml(artistName)} <span style="color:#777; font-size:0.8rem;">(${artistAlbums.length} album${artistAlbums.length > 1 ? 's' : ''})</span></div>`;
+                
+                // ВАЖНО: Явно задаем класс grid для корректной верстки карточек
                 const gridEl = document.createElement('div');
                 gridEl.className = 'grid';
+                
                 artistAlbums.forEach(album => gridEl.appendChild(createAlbumCardElement(album, 'grid')));
                 groupEl.appendChild(gridEl);
                 container.appendChild(groupEl);
