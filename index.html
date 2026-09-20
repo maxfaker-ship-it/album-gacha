@@ -21,7 +21,6 @@
             --lvl-4-color: #c084fc;
             --lvl-5-color: #facc15;
 
-            /* Красный цвет для победителя раунда */
             --winner-color: #ef4444;
         }
 
@@ -485,7 +484,6 @@
             position: relative;
         }
 
-        /* 2. Красноватый цвет свечения победителя раунда */
         .tourn-card.winner-glow {
             border-color: var(--winner-color) !important;
             box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), 0 0 15px rgba(239, 68, 68, 0.5) !important;
@@ -583,7 +581,6 @@
             border-color: var(--accent-color);
         }
 
-        /* 1. Индикатор прогресса загрузки сетки */
         .tourn-progress-overlay {
             margin-top: 6px;
             width: 100%;
@@ -959,6 +956,18 @@
             });
         }
 
+        // Двойная проверка доступности прямых аудио-ссылок
+        async function verifyAudioUrl(url) {
+            if (!url) return false;
+            return new Promise((resolve) => {
+                const audio = new Audio();
+                const timer = setTimeout(() => { audio.src = ''; resolve(false); }, 2500);
+                audio.oncanplaythrough = () => { clearTimeout(timer); audio.src = ''; resolve(true); };
+                audio.onerror = () => { clearTimeout(timer); audio.src = ''; resolve(false); };
+                audio.src = url;
+            });
+        }
+
         async function fetchHitTrackForAlbum(albumData, forceRandom = false, preserveLevel = false) {
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
@@ -992,9 +1001,16 @@
                         if (tracksData && tracksData.data && tracksData.data.length > 0) {
                             const validTracks = tracksData.data.filter(s => s.preview);
                             if (validTracks.length > 0) {
-                                const idx = forceRandom ? Math.floor(Math.random() * validTracks.length) : 0;
-                                const selected = validTracks[idx];
-                                hitTrack = { name: selected.title, preview: selected.preview };
+                                if (forceRandom) {
+                                    validTracks.sort(() => Math.random() - 0.5);
+                                }
+                                for (const selected of validTracks) {
+                                    const isOk = await verifyAudioUrl(selected.preview);
+                                    if (isOk) {
+                                        hitTrack = { name: selected.title, preview: selected.preview };
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
@@ -1007,10 +1023,17 @@
                     if (itunesData && itunesData.results && itunesData.results.length > 0) {
                         const validSongs = itunesData.results.filter(s => s.previewUrl && isStrictMatch(s.artistName));
                         if (validSongs.length > 0) {
-                            const idx = forceRandom ? Math.floor(Math.random() * validSongs.length) : 0;
-                            const selected = validSongs[idx];
-                            if (!coverUrl && selected.artworkUrl100) coverUrl = selected.artworkUrl100.replace('100x100bb', '600x600bb');
-                            hitTrack = { name: selected.trackName, preview: selected.previewUrl };
+                            if (forceRandom) {
+                                validSongs.sort(() => Math.random() - 0.5);
+                            }
+                            for (const selected of validSongs) {
+                                if (!coverUrl && selected.artworkUrl100) coverUrl = selected.artworkUrl100.replace('100x100bb', '600x600bb');
+                                const isOk = await verifyAudioUrl(selected.previewUrl);
+                                if (isOk) {
+                                    hitTrack = { name: selected.trackName, preview: selected.previewUrl };
+                                    break;
+                                }
+                            }
                         }
                     }
                 } catch (e) { console.log('iTunes fetch err'); }
@@ -1228,7 +1251,12 @@
         }
 
         function stopCurrentAudio() {
-            if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+            if (currentAudio) { 
+                currentAudio.pause(); 
+                currentAudio.onended = null;
+                currentAudio.onerror = null;
+                currentAudio = null; 
+            }
             if (currentPlayingSlot !== null) { 
                 resetSlotUI(currentPlayingSlot); 
                 resetTournamentSlotUI(currentPlayingSlot);
@@ -1432,7 +1460,6 @@
         // --- PRO TOURNAMENT LOGIC ---
         const SEGMENT_COLORS = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6'];
 
-        // 3. Вычисление названий стадий турнира (1/64, 1/32, Semi-Final, Final)
         function getPlayoffStageTitle(remainingCount) {
             if (remainingCount <= 2) return "🏆 ФИНАЛ";
             if (remainingCount <= 4) return "🔥 1/2 Финала (Полуфинал)";
@@ -1444,7 +1471,6 @@
             return `⚔️ 1/${Math.pow(2, Math.ceil(Math.log2(remainingCount)))} Финала`;
         }
 
-        // 1. Оптимизированная запуск турнира с прогресс-баром загрузки
         async function startTournament() {
             const source = document.getElementById('tournSource').value;
             const targetSize = parseInt(document.getElementById('tournSize').value, 10);
@@ -1566,8 +1592,6 @@
 
         function renderBattleMatchUI() {
             const totalRemaining = tournBracket.length + currentMatchAlbums.length + tournNextRound.length;
-            
-            // 3. Футбольная система названий стадии (1/64, 1/32, и т.д.)
             const stageTitle = getPlayoffStageTitle(totalRemaining);
             document.getElementById('tournRoundTitle').innerText = `${stageTitle} | Матч ${currentMatchNumber}`;
             document.getElementById('tournRemainingText').innerText = `Осталось участников: ${totalRemaining}`;
@@ -1702,12 +1726,17 @@
             if (card) card.classList.add('playing');
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
-            currentAudio = new Audio(album.preview);
-            currentAudio.ontimeupdate = () => {
-                if (currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+            const newAudio = new Audio(album.preview);
+            currentAudio = newAudio;
+
+            newAudio.ontimeupdate = () => {
+                if (currentAudio === newAudio && newAudio.duration && progressBar) {
+                    progressBar.style.width = `${(newAudio.currentTime / newAudio.duration) * 100}%`;
+                }
             };
             
-            currentAudio.onended = async () => {
+            newAudio.onended = async () => {
+                if (currentAudio !== newAudio) return;
                 resetTournamentSlotUI(idx);
                 const nextIdx = (idx + 1) % currentMatchAlbums.length;
                 
@@ -1721,7 +1750,17 @@
                 playTournamentCarouselTrack(nextIdx);
             };
 
-            currentAudio.play().catch(e => {
+            newAudio.onerror = async () => {
+                if (currentAudio !== newAudio) return;
+                resetTournamentSlotUI(idx);
+                // Авто-подмена трека при ошибке
+                currentMatchAlbums[idx] = await fetchHitTrackForAlbum(currentMatchAlbums[idx], true, true);
+                renderBattleMatchUI();
+                playNextMatchTrackInCarousel(idx);
+            };
+
+            newAudio.play().catch(e => {
+                if (currentAudio !== newAudio) return;
                 resetTournamentSlotUI(idx);
                 playNextMatchTrackInCarousel(idx);
             });
@@ -1827,7 +1866,6 @@
             loadNextMatch();
         }
 
-        // 4. Полноценная интерактивная карточка Чемпиона с проигрывателем и прогресс-баром
         function renderChampionCardUI(champion) {
             championAlbumObj = champion;
             const container = document.getElementById('championCardContainer');
@@ -1933,7 +1971,6 @@
                 }
             };
 
-            // Автоматическое переключение на следующий трек альбома по кругу
             currentAudio.onended = () => {
                 if (card) card.classList.remove('playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
