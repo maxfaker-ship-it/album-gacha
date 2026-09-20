@@ -27,7 +27,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 10px 15px;
+            padding: 6px 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -40,38 +40,38 @@
             position: relative;
             width: 100%;
             max-width: 1300px;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
-        h1 { margin: 0 0 2px 0; font-size: 1.35rem; }
+        h1 { margin: 0 0 1px 0; font-size: 1.2rem; }
         
         p.sub { 
             color: #888; 
             margin-top: 0; 
-            margin-bottom: 8px; 
-            font-size: 0.7rem; 
+            margin-bottom: 4px; 
+            font-size: 0.65rem; 
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             opacity: 0.75;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-            padding: 2px 0;
+            padding: 1px 0;
         }
 
         .mode-tabs {
             display: flex;
             justify-content: center;
-            gap: 8px;
-            margin-bottom: 8px;
+            gap: 6px;
+            margin-bottom: 4px;
         }
 
         .tab-btn {
             background: #1e1e24;
             color: #888;
             border: 1px solid #333;
-            padding: 5px 16px;
-            font-size: 0.85rem;
+            padding: 4px 14px;
+            font-size: 0.8rem;
             font-weight: bold;
-            border-radius: 16px;
+            border-radius: 14px;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -80,7 +80,7 @@
             background: var(--accent-color);
             color: #fff;
             border-color: var(--accent-color);
-            box-shadow: 0 3px 10px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
         }
 
         .view-section {
@@ -93,24 +93,24 @@
 
         .hidden { display: none !important; }
 
-        .controls { margin-bottom: 12px; display: flex; gap: 15px; align-items: center; }
+        .controls { margin-bottom: 8px; display: flex; gap: 10px; align-items: center; }
 
         button.pull-btn, button.action-btn {
             background: linear-gradient(135deg, #6366f1, #a855f7);
             color: white;
             border: none;
-            padding: 10px 24px;
-            font-size: 0.95rem;
+            padding: 8px 20px;
+            font-size: 0.9rem;
             font-weight: bold;
-            border-radius: 24px;
+            border-radius: 20px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
             transition: transform 0.1s, box-shadow 0.2s;
         }
 
         button.pull-btn:hover, button.action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.6);
         }
 
         button.pull-btn:disabled, button.action-btn:disabled {
@@ -123,9 +123,9 @@
             background: #2a2a35;
             color: #888;
             border: 1px solid #333;
-            padding: 5px 10px;
-            font-size: 0.75rem;
-            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            border-radius: 5px;
             cursor: pointer;
             transition: background 0.2s, color 0.2s;
         }
@@ -139,14 +139,14 @@
         .pack-container {
             display: flex;
             flex-direction: row;
-            gap: 12px;
+            gap: 10px;
             justify-content: space-between;
             align-items: stretch;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             width: 100%;
             max-width: 1300px;
             box-sizing: border-box;
-            min-height: 380px;
+            min-height: 330px;
         }
 
         .card, .mini-card, .list-card, .tourn-card {
@@ -157,12 +157,12 @@
             flex: 1;
             min-width: 0;
             background: var(--card-bg);
-            border-radius: 12px;
-            padding: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
             text-align: center;
             border: 2px solid var(--rarity-common);
-            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -172,14 +172,14 @@
         }
 
         .card.playing, .tourn-card.playing {
-            transform: translateY(-6px) scale(1.02);
+            transform: translateY(-4px) scale(1.01);
             z-index: 5;
         }
 
-        .card.playing.rarity-Common, .mini-card.playing.rarity-Common, .list-card.playing.rarity-Common, .tourn-card.playing.rarity-Common { box-shadow: 0 10px 30px rgba(160, 160, 160, 0.6), 0 0 15px var(--rarity-common); }
-        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare, .list-card.playing.rarity-Rare, .tourn-card.playing.rarity-Rare { box-shadow: 0 10px 35px rgba(59, 130, 246, 0.8), 0 0 20px var(--rarity-rare); }
-        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic, .list-card.playing.rarity-Epic, .tourn-card.playing.rarity-Epic { box-shadow: 0 10px 40px rgba(168, 85, 247, 0.9), 0 0 25px var(--rarity-epic); }
-        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary, .list-card.playing.rarity-Legendary, .tourn-card.playing.rarity-Legendary { box-shadow: 0 10px 50px rgba(234, 179, 8, 1), 0 0 30px var(--rarity-legend); }
+        .card.playing.rarity-Common, .mini-card.playing.rarity-Common, .list-card.playing.rarity-Common, .tourn-card.playing.rarity-Common { box-shadow: 0 8px 25px rgba(160, 160, 160, 0.6), 0 0 12px var(--rarity-common); }
+        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare, .list-card.playing.rarity-Rare, .tourn-card.playing.rarity-Rare { box-shadow: 0 8px 30px rgba(59, 130, 246, 0.8), 0 0 16px var(--rarity-rare); }
+        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic, .list-card.playing.rarity-Epic, .tourn-card.playing.rarity-Epic { box-shadow: 0 8px 32px rgba(168, 85, 247, 0.9), 0 0 20px var(--rarity-epic); }
+        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary, .list-card.playing.rarity-Legendary, .tourn-card.playing.rarity-Legendary { box-shadow: 0 8px 38px rgba(234, 179, 8, 1), 0 0 24px var(--rarity-legend); }
 
         .card.skeleton {
             border-color: #333;
@@ -205,19 +205,19 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             width: 100%;
-            height: 22px;
+            height: 18px;
             gap: 4px;
         }
 
         .lvl-badge {
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid currentColor;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 8px;
+            padding: 1px 5px;
+            border-radius: 6px;
             line-height: 1;
             white-space: nowrap;
             transition: all 0.3s;
@@ -225,7 +225,7 @@
         }
 
         .copies-tag {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: #888;
             margin-top: 1px;
             white-space: nowrap;
@@ -239,10 +239,10 @@
 
         .rarity-badge {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 1px 6px;
+            border-radius: 8px;
             font-weight: bold;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             text-transform: uppercase;
             line-height: 1;
             white-space: nowrap;
@@ -250,7 +250,7 @@
             text-overflow: ellipsis;
         }
 
-        @container (max-width: 160px) {
+        @container (max-width: 150px) {
             .rarity-badge { display: none !important; }
         }
 
@@ -263,9 +263,9 @@
             background: rgba(0, 0, 0, 0.6);
             border: none;
             color: #888;
-            font-size: 0.85rem;
-            width: 22px;
-            height: 22px;
+            font-size: 0.75rem;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             cursor: pointer;
             display: inline-flex;
@@ -277,8 +277,8 @@
             flex-shrink: 0;
         }
 
-        .shuffle-btn svg { width: 12px; height: 12px; fill: #888; transition: fill 0.2s; }
-        .fav-btn.active { color: #eab308; text-shadow: 0 0 6px rgba(234, 179, 8, 0.8); }
+        .shuffle-btn svg { width: 10px; height: 10px; fill: #888; transition: fill 0.2s; }
+        .fav-btn.active { color: #eab308; text-shadow: 0 0 5px rgba(234, 179, 8, 0.8); }
         .shuffle-btn:hover svg { fill: #fff; }
         .shuffle-btn:hover, .fav-btn:hover { transform: scale(1.15); }
 
@@ -286,7 +286,7 @@
             position: relative;
             width: 100%;
             aspect-ratio: 1/1;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             border-radius: 6px;
             overflow: hidden;
             background: #18181c;
@@ -300,10 +300,10 @@
 
         .vinyl-placeholder {
             width: 100%; height: 100%; background: radial-gradient(circle, #2a2a35 0%, #111115 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; border: 1px solid #333;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; box-sizing: border-box; border: 1px solid #333;
         }
-        .vinyl-placeholder .ph-title { font-size: 0.85rem; font-weight: bold; color: #fff; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .vinyl-placeholder .ph-artist { font-size: 0.7rem; color: #888; }
+        .vinyl-placeholder .ph-title { font-size: 0.75rem; font-weight: bold; color: #fff; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .vinyl-placeholder .ph-artist { font-size: 0.65rem; color: #888; }
 
         .play-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
@@ -313,11 +313,11 @@
         .cover-wrapper:hover .play-overlay, .mini-cover-wrapper:hover .play-overlay, .list-cover-wrapper:hover .play-overlay { opacity: 1; }
 
         .play-btn-icon {
-            width: 40px; height: 40px; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); transition: transform 0.15s ease; box-sizing: border-box;
+            width: 32px; height: 32px; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5); transition: transform 0.15s ease; box-sizing: border-box;
         }
 
-        .play-btn-icon svg { width: 16px; height: 16px; fill: #000; }
+        .play-btn-icon svg { width: 12px; height: 12px; fill: #000; }
         .play-overlay:hover .play-btn-icon { transform: scale(1.1); }
 
         .progress-bar-container { 
@@ -325,7 +325,7 @@
             bottom: 0; 
             left: 0; 
             width: 100%; 
-            height: 4px; 
+            height: 3px; 
             background: rgba(255, 255, 255, 0.2); 
             z-index: 4; 
             display: none; 
@@ -339,23 +339,23 @@
         .rarity-Epic .progress-bar-fill { background: var(--rarity-epic); }
         .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
 
-        .album-info-top { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
-        .album-title { font-size: 0.85rem; font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .artist-name { color: #aaa; font-size: 0.75rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .album-info-top { display: flex; flex-direction: column; gap: 1px; margin-bottom: 2px; }
+        .album-title { font-size: 0.8rem; font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .artist-name { color: #aaa; font-size: 0.7rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .mini-track-container {
-            min-height: 18px;
+            min-height: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 2px;
+            margin-top: 1px;
             width: 100%;
             overflow: hidden;
         }
 
         .track-preview-name {
             color: var(--accent-color);
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: bold;
             white-space: nowrap;
             overflow: hidden;
@@ -363,75 +363,84 @@
             width: 100%;
         }
 
-        .album-info-bottom { display: flex; flex-direction: column; gap: 2px; margin-top: auto; }
-        .type-badge { display: inline-block; align-self: center; background: #2a2a32; color: var(--accent-color); padding: 1px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
-        .score-badge { color: #eab308; font-weight: bold; font-size: 0.8rem; margin: 1px 0; }
-        .genre-badge { color: #888; font-size: 0.7rem; margin: 0; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .album-info-bottom { display: flex; flex-direction: column; gap: 1px; margin-top: auto; }
+        .type-badge { display: inline-block; align-self: center; background: #2a2a32; color: var(--accent-color); padding: 1px 5px; border-radius: 3px; font-size: 0.6rem; font-weight: bold; }
+        .score-badge { color: #eab308; font-weight: bold; font-size: 0.75rem; margin: 1px 0; }
+        .genre-badge { color: #888; font-size: 0.65rem; margin: 0; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .collection-section { width: 100%; max-width: 1300px; }
-        .collection-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
-        .filter-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        /* Отделение коллекции в Gacha Pull ниже по странице */
+        .collection-section { 
+            width: 100%; 
+            max-width: 1300px; 
+            margin-top: 50px; 
+            border-top: 1px solid #282832;
+            padding-top: 20px;
+        }
+        
+        .collection-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        .filter-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-        select, button.view-btn { background: #1e1e24; color: #fff; border: 1px solid #333; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+        select, button.view-btn { background: #1e1e24; color: #fff; border: 1px solid #333; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
         button.view-btn.active { background: var(--accent-color); border-color: var(--accent-color); }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 
         .mini-card {
-            background: var(--card-bg); border-radius: 10px; padding: 10px; text-align: center; border: 2px solid var(--rarity-common);
-            font-size: 0.8rem; transition: transform 0.2s, box-shadow 0.2s; position: relative; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer;
+            background: var(--card-bg); border-radius: 8px; padding: 8px; text-align: center; border: 2px solid var(--rarity-common);
+            font-size: 0.75rem; transition: transform 0.2s, box-shadow 0.2s; position: relative; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer;
         }
 
-        .mini-card:hover { transform: translateY(-4px); }
-        .mini-cover-wrapper { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 6px; overflow: hidden; background: #18181c; margin-bottom: 6px; }
+        .mini-card:hover { transform: translateY(-3px); }
+        .mini-cover-wrapper { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 5px; overflow: hidden; background: #18181c; margin-bottom: 4px; }
         .mini-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .mini-card .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; font-weight: bold; }
-        .mini-card .mini-artist { color: #bbb; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .mini-card .mini-score { color: #eab308; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
-        .mini-card .mini-info { color: #777; font-size: 0.7rem; margin-top: auto; display: flex; flex-direction: column; gap: 2px; align-items: center; padding-top: 6px;}
+        .mini-card .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; font-weight: bold; }
+        .mini-card .mini-artist { color: #bbb; font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mini-card .mini-score { color: #eab308; font-size: 0.7rem; font-weight: bold; margin-top: 1px; }
+        .mini-card .mini-info { color: #777; font-size: 0.65rem; margin-top: auto; display: flex; flex-direction: column; gap: 1px; align-items: center; padding-top: 4px;}
 
-        .artist-group { background: #18181c; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #2e2e38; }
-        .artist-group-header { font-size: 1.1rem; font-weight: bold; color: #a855f7; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2e2e38; padding-bottom: 6px; }
+        .artist-group { background: #18181c; border-radius: 10px; padding: 12px; margin-bottom: 15px; border: 1px solid #2e2e38; }
+        .artist-group-header { font-size: 1rem; font-weight: bold; color: #a855f7; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #2e2e38; padding-bottom: 4px; }
 
-        .list { display: flex; flex-direction: column; gap: 8px; }
+        .list { display: flex; flex-direction: column; gap: 6px; }
         .list-card { 
-            background: var(--card-bg); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; 
-            justify-content: space-between; gap: 12px; border-left: 4px solid var(--rarity-common); transition: background 0.2s; 
+            background: var(--card-bg); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; 
+            justify-content: space-between; gap: 10px; border-left: 4px solid var(--rarity-common); transition: background 0.2s; 
             position: relative; cursor: pointer; box-sizing: border-box; width: 100%;
         }
         .list-card.playing { background: #282832; }
-        .list-cover-wrapper { position: relative; width: 46px; height: 46px; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
+        .list-cover-wrapper { position: relative; width: 40px; height: 40px; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
         .list-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-        .list-card .list-main { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
-        .list-card .list-title { font-weight: bold; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .list-card .list-artist { color: #aaa; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .list-card .list-right-group { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        .list-card .list-meta { color: #777; font-size: 0.7rem; text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; white-space: nowrap; }
+        .list-card .list-main { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; gap: 1px; }
+        .list-card .list-title { font-weight: bold; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-card .list-artist { color: #aaa; font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-card .list-right-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .list-card .list-meta { color: #777; font-size: 0.65rem; text-align: right; display: flex; flex-direction: column; gap: 1px; align-items: flex-end; white-space: nowrap; }
 
         .tournament-setup {
             background: #1e1e24;
-            border-radius: 16px;
-            padding: 20px;
-            max-width: 550px;
+            border-radius: 12px;
+            padding: 16px;
+            max-width: 500px;
             width: 100%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 10px;
             box-sizing: border-box;
             border: 1px solid #2e2e38;
         }
 
-        .setup-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
-        .setup-group label { font-size: 0.85rem; color: #aaa; font-weight: bold; }
-        .setup-group select { padding: 8px; font-size: 0.9rem; background: #121214; border-color: #3e3e4a; }
+        .setup-group { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+        .setup-group label { font-size: 0.78rem; color: #aaa; font-weight: bold; }
+        .setup-group select { padding: 6px; font-size: 0.85rem; background: #121214; border-color: #3e3e4a; }
 
+        /* Компактный турнамент без вертикального скролла */
         .battle-arena {
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
         }
 
         .tournament-info-bar {
@@ -441,16 +450,16 @@
             width: 100%;
             max-width: 1100px;
             background: #1e1e24;
-            padding: 6px 14px;
-            border-radius: 8px;
+            padding: 4px 10px;
+            border-radius: 6px;
             box-sizing: border-box;
             border: 1px solid #333;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
         .match-cards-container {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             justify-content: center;
             width: 100%;
             max-width: 1100px;
@@ -459,15 +468,15 @@
 
         .tourn-card {
             flex: 1;
-            max-width: 250px;
+            max-width: 230px;
             min-width: 0;
             background: var(--card-bg);
-            border-radius: 10px;
-            padding: 8px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            border-radius: 8px;
+            padding: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             text-align: center;
             border: 2px solid var(--rarity-common);
-            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease, border-color 0.2s;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, border-color 0.2s;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -478,7 +487,7 @@
         .tourn-card.winner-glow {
             border-color: #eab308 !important;
             box-shadow: 0 0 35px rgba(234, 179, 8, 0.95) !important;
-            transform: scale(1.05) !important;
+            transform: scale(1.04) !important;
             z-index: 10;
         }
 
@@ -488,30 +497,31 @@
             justify-content: space-between;
             background: #121214;
             border: 1px solid #333;
-            border-radius: 6px;
-            padding: 3px 6px;
-            margin-top: 6px;
+            border-radius: 5px;
+            padding: 2px 4px;
+            margin-top: 4px;
         }
 
         .vote-btn-step {
             background: #2a2a35;
             color: #fff;
             border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             line-height: 1;
+            font-size: 0.75rem;
         }
 
         .vote-btn-step:hover { background: var(--accent-color); }
 
         .vote-score-val {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             font-weight: bold;
             color: #eab308;
         }
@@ -519,12 +529,12 @@
         .probability-bar-container {
             width: 100%;
             max-width: 800px;
-            height: 10px;
+            height: 8px;
             background: #121214;
-            border-radius: 5px;
+            border-radius: 4px;
             overflow: hidden;
             display: flex;
-            margin-top: 4px;
+            margin-top: 2px;
             border: 1px solid #333;
         }
 
@@ -533,36 +543,37 @@
             transition: width 0.3s ease;
         }
 
-        .roll-btn-container { margin-top: 4px; display: flex; gap: 10px; }
+        .roll-btn-container { margin-top: 2px; display: flex; gap: 8px; }
 
         .trophy-badge {
             display: inline-block;
             background: #eab308;
             color: #000;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 6px;
-            margin-left: 4px;
+            padding: 1px 5px;
+            border-radius: 5px;
+            margin-left: 3px;
         }
 
         .end-options-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         .end-option-btn {
             background: #2a2a35;
             color: #fff;
             border: 1px solid #3d3d4e;
-            padding: 10px 16px;
-            border-radius: 8px;
+            padding: 8px 14px;
+            border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
             transition: background 0.2s, border-color 0.2s;
+            font-size: 0.85rem;
         }
 
         .end-option-btn:hover {
@@ -593,7 +604,7 @@
 
         <div class="collection-section">
             <div class="collection-header">
-                <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
                     <h2>Collection (<span id="colCount">0</span>)</h2>
                     <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑️ Clear Save</button>
                 </div>
@@ -621,7 +632,7 @@
     <!-- Вкладка TOURNAMENT -->
     <div class="view-section hidden" id="tournamentSection">
         <div class="tournament-setup" id="tournamentSetup">
-            <h2 style="margin: 0;">🏆 Tournament Setup</h2>
+            <h2 style="margin: 0; font-size: 1.2rem;">🏆 Tournament Setup</h2>
             
             <div class="setup-group">
                 <label>Card Source Pool:</label>
@@ -640,6 +651,8 @@
                     <option value="64">64 Albums</option>
                     <option value="128">128 Albums</option>
                     <option value="256">256 Albums</option>
+                    <option value="512">512 Albums</option>
+                    <option value="1024">1024 Albums</option>
                 </select>
             </div>
 
@@ -665,7 +678,7 @@
             <div class="match-cards-container" id="matchCardsContainer"></div>
 
             <div style="width: 100%; max-width: 800px; text-align: center;">
-                <div style="font-size: 0.75rem; color: #aaa;">🎲 Win Probability (Score + Votes):</div>
+                <div style="font-size: 0.7rem; color: #aaa;">🎲 Win Probability (Score + Votes):</div>
                 <div class="probability-bar-container" id="probabilityBar"></div>
             </div>
 
@@ -675,8 +688,8 @@
         </div>
 
         <div class="tournament-setup hidden" id="winnerScreen" style="text-align: center; max-width: 320px;">
-            <h2 style="color: #eab308; font-size: 1.8rem; margin: 0;">🏆 CHAMPION 🏆</h2>
-            <div id="championCardContainer" style="margin: 12px auto; width: 100%;"></div>
+            <h2 style="color: #eab308; font-size: 1.5rem; margin: 0;">🏆 CHAMPION 🏆</h2>
+            <div id="championCardContainer" style="margin: 10px auto; width: 100%;"></div>
             
             <div class="end-options-container">
                 <button class="end-option-btn" onclick="startTournamentWithSameRules()">🔄 Play Again (Same Rules)</button>
@@ -940,7 +953,6 @@
                         if (tracksData && tracksData.data && tracksData.data.length > 0) {
                             const validTracks = tracksData.data.filter(s => s.preview);
                             if (validTracks.length > 0) {
-                                // 1. ПРОВЕРКА ПОПУЛЯРНОСТИ: По умолчанию берем самый первый (главный) трек с аудио (validTracks[0])
                                 const idx = forceRandom ? Math.floor(Math.random() * validTracks.length) : 0;
                                 const selected = validTracks[idx];
                                 hitTrack = { name: selected.title, preview: selected.preview };
@@ -1106,7 +1118,6 @@
                 if (currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
             };
             
-            // 2. В GACHA PULL: по окончании трека автопереход дальше, а после 5-го - подгрузка новой песни первого альбома по кругу
             currentAudio.onended = async () => {
                 resetSlotUI(slotIndex);
                 const nextSlot = (slotIndex + 1) % 5;
@@ -1333,17 +1344,17 @@
                 listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                 listItem.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 listItem.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; overflow:hidden;">
+                    <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0; overflow:hidden;">
                         <div class="list-cover-wrapper">${coverImg}</div>
                         <div class="list-main">
-                            <div class="list-title">${escTitle} ${trophyTag} <span class="${lvlClass}" style="font-size:0.75rem;">(LVL ${item.level || 1})</span></div>
+                            <div class="list-title">${escTitle} ${trophyTag} <span class="${lvlClass}" style="font-size:0.7rem;">(LVL ${item.level || 1})</span></div>
                             <div class="list-artist">${escArtist}</div>
-                            <div class="mini-track-container" style="justify-content: flex-start; min-height:16px; margin:0;">${trackDisplay}</div>
+                            <div class="mini-track-container" style="justify-content: flex-start; min-height:14px; margin:0;">${trackDisplay}</div>
                         </div>
                     </div>
                     <div class="list-right-group">
                         <div class="list-meta">
-                            <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)} <span class="copies-tag" style="margin-left:4px;">(🃏 ${progressText})</span></div>
+                            <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)} <span class="copies-tag" style="margin-left:3px;">(🃏 ${progressText})</span></div>
                             <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)}</div>
                         </div>
                         <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
@@ -1368,7 +1379,7 @@
                 const artistAlbums = groups.get(artistName);
                 const groupEl = document.createElement('div');
                 groupEl.className = 'artist-group';
-                groupEl.innerHTML = `<div class="artist-group-header">🎤 ${escapeHtml(artistName)} <span style="color:#777; font-size:0.8rem;">(${artistAlbums.length} album${artistAlbums.length > 1 ? 's' : ''})</span></div>`;
+                groupEl.innerHTML = `<div class="artist-group-header">🎤 ${escapeHtml(artistName)} <span style="color:#777; font-size:0.75rem;">(${artistAlbums.length} album${artistAlbums.length > 1 ? 's' : ''})</span></div>`;
                 
                 const gridEl = document.createElement('div');
                 gridEl.className = 'grid';
@@ -1697,7 +1708,6 @@
             const btn = document.getElementById('btnRollDice');
             btn.disabled = true;
 
-            // 3. Убираем свечение играющего альбома при запуске рулетки
             if (currentPlayingSlot !== null) {
                 resetTournamentSlotUI(currentPlayingSlot);
             }
@@ -1735,7 +1745,8 @@
                 if (c) c.classList.toggle('winner-glow', i === winnerIdx);
             });
 
-            await sleep(600);
+            // 1. Увеличенная задержка (2.2 секунды), чтобы отчетливо видеть победителя
+            await sleep(2200);
 
             const winnerAlbum = currentMatchAlbums[winnerIdx];
             tournNextRound.push(winnerAlbum);
