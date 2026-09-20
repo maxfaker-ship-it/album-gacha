@@ -139,9 +139,8 @@
             opacity: 0.6;
         }
 
-        /* ДИНАМИЧНЫЙ БЫСТРЫЙ ПЕРЕВОРОТ (0.18s) */
         .card.flip-reveal {
-            animation: flip 0.18s ease-out forwards;
+            animation: flip 0.25s ease-out forwards;
         }
 
         @keyframes flip {
@@ -471,11 +470,6 @@
         let loadingCollectionId = null;
         let currentPackData = [];
 
-        // ПРЕФЕЧ / ПРЕДЗАГРУЗКА
-        let prefetchedPackData = null;
-        let isPrefetching = false;
-        let prefetchPromise = null;
-
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
         function escapeHtml(str) {
@@ -530,7 +524,6 @@
                 localStorage.removeItem('album_gacha_collection');
                 collection.clear();
                 collectionTracksCache.clear();
-                prefetchedPackData = null;
                 renderCollectionUI();
             }
         }
@@ -548,8 +541,6 @@
                 loadProgress();
                 renderCollectionUI();
                 document.getElementById('pullBtn').disabled = false;
-
-                prefetchNextPack();
             } catch (err) {
                 alert('Error loading albums.json!');
                 console.error(err);
@@ -567,25 +558,6 @@
         function getRandomAlbumByRarity(targetRarity) {
             const pool = allAlbums.filter(a => a.rarity === targetRarity);
             return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : allAlbums[Math.floor(Math.random() * allAlbums.length)];
-        }
-
-        async function prefetchNextPack() {
-            if (isPrefetching || allAlbums.length === 0) return;
-            isPrefetching = true;
-
-            prefetchPromise = (async () => {
-                const tempPack = [];
-                for (let i = 0; i < 5; i++) {
-                    const targetRarity = rollRarity();
-                    const rawAlbum = getRandomAlbumByRarity(targetRarity);
-                    const albumObj = await fetchHitTrackForAlbum(rawAlbum, false, false);
-                    tempPack.push(albumObj);
-                }
-                prefetchedPackData = tempPack;
-                isPrefetching = false;
-            })();
-
-            await prefetchPromise;
         }
 
         function createInitialPackSkeletons() {
@@ -622,6 +594,7 @@
             }
         }
 
+        // КЛАССИЧЕСКОЕ ПРЯМОЕ ОТКРЫТИЕ БЕЗ ФОНОВОЙ ПРЕДЗАГРУЗКИ
         async function pull5Pack() {
             if (allAlbums.length === 0) return;
             const btn = document.getElementById('pullBtn');
@@ -629,36 +602,26 @@
 
             createInitialPackSkeletons();
 
-            if (isPrefetching && prefetchPromise) {
-                await prefetchPromise;
+            const fetchedPack = [];
+            for (let i = 0; i < 5; i++) {
+                const targetRarity = rollRarity();
+                const rawAlbum = getRandomAlbumByRarity(targetRarity);
+                const albumObj = await fetchHitTrackForAlbum(rawAlbum, false, false);
+                fetchedPack.push(albumObj);
             }
 
-            if (!prefetchedPackData) {
-                prefetchedPackData = [];
-                for (let i = 0; i < 5; i++) {
-                    const targetRarity = rollRarity();
-                    const rawAlbum = getRandomAlbumByRarity(targetRarity);
-                    const albumObj = await fetchHitTrackForAlbum(rawAlbum, false, false);
-                    prefetchedPackData.push(albumObj);
-                }
-            }
+            currentPackData = fetchedPack;
 
-            currentPackData = prefetchedPackData;
-            prefetchedPackData = null; 
-
-            // ОЧЕНЬ БЫСТРЫЙ ДИНАМИЧНЫЙ ПЕРЕХОД (25ms задержка)
             for (let i = 0; i < 5; i++) {
                 const albumObj = currentPackData[i];
                 revealCardInPack(albumObj, i);
                 addToCollection(albumObj);
 
-                await sleep(25); 
+                await sleep(25); // Быстрый динамичный переворот
             }
 
             btn.disabled = false;
             playBestAlbumInPack();
-
-            prefetchNextPack();
         }
 
         function normalizeStr(str) {
