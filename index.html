@@ -137,7 +137,7 @@
             min-height: 380px;
         }
 
-        .card, .mini-card, .list-card {
+        .card, .mini-card, .list-card, .tourn-card {
             container-type: inline-size;
         }
 
@@ -159,15 +159,15 @@
             position: relative;
         }
 
-        .card.playing {
+        .card.playing, .tourn-card.playing {
             transform: translateY(-6px) scale(1.02);
             z-index: 5;
         }
 
-        .card.playing.rarity-Common, .mini-card.playing.rarity-Common, .list-card.playing.rarity-Common { box-shadow: 0 10px 30px rgba(160, 160, 160, 0.6), 0 0 15px var(--rarity-common); }
-        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare, .list-card.playing.rarity-Rare { box-shadow: 0 10px 35px rgba(59, 130, 246, 0.8), 0 0 20px var(--rarity-rare); }
-        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic, .list-card.playing.rarity-Epic { box-shadow: 0 10px 40px rgba(168, 85, 247, 0.9), 0 0 25px var(--rarity-epic); }
-        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary, .list-card.playing.rarity-Legendary { box-shadow: 0 10px 50px rgba(234, 179, 8, 1), 0 0 30px var(--rarity-legend); }
+        .card.playing.rarity-Common, .mini-card.playing.rarity-Common, .list-card.playing.rarity-Common, .tourn-card.playing.rarity-Common { box-shadow: 0 10px 30px rgba(160, 160, 160, 0.6), 0 0 15px var(--rarity-common); }
+        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare, .list-card.playing.rarity-Rare, .tourn-card.playing.rarity-Rare { box-shadow: 0 10px 35px rgba(59, 130, 246, 0.8), 0 0 20px var(--rarity-rare); }
+        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic, .list-card.playing.rarity-Epic, .tourn-card.playing.rarity-Epic { box-shadow: 0 10px 40px rgba(168, 85, 247, 0.9), 0 0 25px var(--rarity-epic); }
+        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary, .list-card.playing.rarity-Legendary, .tourn-card.playing.rarity-Legendary { box-shadow: 0 10px 50px rgba(234, 179, 8, 1), 0 0 30px var(--rarity-legend); }
 
         .card.skeleton {
             border-color: #333;
@@ -322,6 +322,11 @@
         .playing .progress-bar-container { display: block; }
         .progress-bar-fill { height: 100%; width: 0%; background: var(--rarity-common); transition: width 0.1s linear; }
 
+        .rarity-Common .progress-bar-fill { background: var(--rarity-common); }
+        .rarity-Rare .progress-bar-fill { background: var(--rarity-rare); }
+        .rarity-Epic .progress-bar-fill { background: var(--rarity-epic); }
+        .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
+
         .album-info-top { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
         .album-title { font-size: 0.85rem; font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .artist-name { color: #aaa; font-size: 0.75rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -391,7 +396,6 @@
         .list-card .list-right-group { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .list-card .list-meta { color: #777; font-size: 0.7rem; text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; white-space: nowrap; }
 
-        /* --- ОПТИМИЗИРОВАННЫЙ ОДНОЭКРАННЫЙ ТУРНИР --- */
         .tournament-setup {
             background: #1e1e24;
             border-radius: 16px;
@@ -451,7 +455,7 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.4);
             text-align: center;
             border: 2px solid var(--rarity-common);
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease, border-color 0.2s;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -461,8 +465,8 @@
 
         .tourn-card.winner-glow {
             border-color: #eab308 !important;
-            box-shadow: 0 0 25px rgba(234, 179, 8, 0.9);
-            transform: scale(1.04);
+            box-shadow: 0 0 35px rgba(234, 179, 8, 0.95) !important;
+            transform: scale(1.05) !important;
             z-index: 10;
         }
 
@@ -604,7 +608,6 @@
 
     <!-- Вкладка TOURNAMENT -->
     <div class="view-section hidden" id="tournamentSection">
-        <!-- Настройки перед стартом -->
         <div class="tournament-setup" id="tournamentSetup">
             <h2 style="margin: 0;">🏆 Tournament Setup</h2>
             
@@ -640,7 +643,6 @@
             <button class="action-btn" onclick="startTournament()">🚀 START TOURNAMENT</button>
         </div>
 
-        <!-- Одноэкранная Арена Матча -->
         <div class="battle-arena hidden" id="battleArena">
             <div class="tournament-info-bar">
                 <span id="tournRoundTitle" style="font-weight: bold; color: #a855f7;">Round 1 | Match 1</span>
@@ -660,7 +662,6 @@
             </div>
         </div>
 
-        <!-- Финальный Экран Победителя с опциями -->
         <div class="tournament-setup hidden" id="winnerScreen" style="text-align: center; max-width: 320px;">
             <h2 style="color: #eab308; font-size: 1.8rem; margin: 0;">🏆 CHAMPION 🏆</h2>
             <div id="championCardContainer" style="margin: 12px auto; width: 100%;"></div>
@@ -1149,7 +1150,11 @@
 
         function stopCurrentAudio() {
             if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-            if (currentPlayingSlot !== null) { resetSlotUI(currentPlayingSlot); currentPlayingSlot = null; }
+            if (currentPlayingSlot !== null) { 
+                resetSlotUI(currentPlayingSlot); 
+                resetTournamentSlotUI(currentPlayingSlot);
+                currentPlayingSlot = null; 
+            }
             currentPlayingId = null;
             loadingCollectionId = null;
         }
@@ -1403,14 +1408,17 @@
             currentMatchAlbums = [];
             currentMatchVotes = [];
 
-            for (let i = 0; i < matchSize; i++) {
-                if (tournBracket.length > 0) {
-                    const raw = tournBracket.shift();
-                    const fullObj = await fetchHitTrackForAlbum(raw, false, true);
+            // 3. Отфильтровываем и берем ТОЛЬКО альбомы с доступным аудио-превью
+            while (currentMatchAlbums.length < matchSize && (tournBracket.length > 0 || allAlbums.length > 0)) {
+                let raw = tournBracket.shift();
+                if (!raw) {
+                    raw = allAlbums[Math.floor(Math.random() * allAlbums.length)];
+                }
+                
+                const fullObj = await fetchHitTrackForAlbum(raw, false, true);
+                if (fullObj && fullObj.preview) {
                     currentMatchAlbums.push(fullObj);
                     currentMatchVotes.push(0);
-
-                    // 9. Автоматически добавляем вытянутый альбом в коллекцию
                     addToCollectionDataOnly(fullObj);
                 }
             }
@@ -1419,7 +1427,7 @@
             renderCollectionUI();
             renderBattleMatchUI();
 
-            // 1. Автозапуск первого трека при загрузке матча
+            // 1. Автозапуск первого превью
             playTournamentCarouselTrack(0);
         }
 
@@ -1438,7 +1446,10 @@
                 else if (album.rarity === 'Epic') borderVar = 'epic';
                 else if (album.rarity === 'Rare') borderVar = 'rare';
 
-                card.className = `tourn-card rarity-${escapeHtml(album.rarity)}`;
+                const isPlaying = (currentPlayingSlot === idx) && currentAudio && !currentAudio.paused;
+                const favClass = album.isFavorite ? 'active' : '';
+
+                card.className = `tourn-card rarity-${escapeHtml(album.rarity)} ${isPlaying ? 'playing' : ''}`;
                 card.style.borderColor = `var(--rarity-${borderVar})`;
                 card.id = `tcard-${idx}`;
 
@@ -1454,17 +1465,24 @@
                     ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
                     : `<div class="track-preview-name" style="color: #666;">🔇 No Audio</div>`;
 
+                let playIconSVG = isPlaying ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+
                 card.innerHTML = `
                     <div>
+                        <!-- 1. Добавлена кнопка Добавить в Избранное (★) -->
                         <div class="card-top-bar">
                             <div class="lvl-badge ${lvlClass}">LVL ${album.level || 1}</div>
                             <div class="rarity-badge">${escapeHtml(album.rarity)}</div>
-                            <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                            <div style="display:flex; gap:4px; align-items:center;">
+                                <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                                <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</button>
+                            </div>
                         </div>
 
-                        <div class="cover-wrapper" onclick="playTournamentCarouselTrack(${idx})">
+                        <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
                             ${coverHTML}
-                            <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+                            <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
+                            <!-- 2. Прогресс-бар цвета редкости -->
                             <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
                         </div>
 
@@ -1483,9 +1501,10 @@
                             <div class="genre-badge">🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}</div>
                         </div>
 
+                        <!-- 6. Кнопки + и - для коррекции голосов -->
                         <div class="vote-control-bar">
                             <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
-                            <span class="vote-score-val" id="tvote-val-${idx}">0 votes</span>
+                            <span class="vote-score-val" id="tvote-val-${idx}">${currentMatchVotes[idx]} votes</span>
                             <button class="vote-btn-step" onclick="changeVote(${idx}, 1)">+</button>
                         </div>
                     </div>
@@ -1494,6 +1513,18 @@
             });
 
             updateProbabilityBar();
+        }
+
+        function toggleFavoriteFromTournament(slotIndex, albumId, event) {
+            if (event) event.stopPropagation();
+            if (currentMatchAlbums[slotIndex]) currentMatchAlbums[slotIndex].isFavorite = !currentMatchAlbums[slotIndex].isFavorite;
+            const item = collection.get(albumId);
+            if (item) {
+                item.isFavorite = !item.isFavorite;
+                saveProgress();
+                renderCollectionUI();
+            }
+            renderBattleMatchUI();
         }
 
         async function shuffleTrackInTournament(slotIndex, event) {
@@ -1511,11 +1542,19 @@
             playTournamentCarouselTrack(slotIndex);
         }
 
+        function togglePlayTournamentSlot(idx) {
+            if (currentPlayingSlot === idx && currentAudio && !currentAudio.paused) {
+                pauseCurrentAudio();
+                renderBattleMatchUI();
+            } else {
+                playTournamentCarouselTrack(idx);
+            }
+        }
+
         function playTournamentCarouselTrack(idx) {
             stopCurrentAudio();
             const album = currentMatchAlbums[idx];
             if (!album || !album.preview) {
-                // 3. Если у первого нет превью, пробывать следующий
                 playNextMatchTrackInCarousel(idx);
                 return;
             }
@@ -1527,6 +1566,7 @@
             const icon = document.getElementById(`tplay-icon-${idx}`);
             const progressBar = document.getElementById(`tprogress-${idx}`);
 
+            // 4. Свечение карточки играющего альбома
             if (card) card.classList.add('playing');
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
@@ -1535,10 +1575,20 @@
                 if (currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
             };
             
-            // 3. По окончании воспроизведения автоматически переходит к следующему претенденту
-            currentAudio.onended = () => {
+            // 6. Ротация треков по кругу с авто-подгрузкой следующих песен
+            currentAudio.onended = async () => {
                 resetTournamentSlotUI(idx);
-                playNextMatchTrackInCarousel(idx);
+                const nextIdx = (idx + 1) % currentMatchAlbums.length;
+                
+                // Если сделали полный круг, меняем треки у всех на новые
+                if (nextIdx === 0) {
+                    for (let i = 0; i < currentMatchAlbums.length; i++) {
+                        currentMatchAlbums[i] = await fetchHitTrackForAlbum(currentMatchAlbums[i], true, true);
+                    }
+                    renderBattleMatchUI();
+                }
+                
+                playTournamentCarouselTrack(nextIdx);
             };
 
             currentAudio.play().catch(e => {
@@ -1550,9 +1600,7 @@
         function playNextMatchTrackInCarousel(fromIdx) {
             if (currentMatchAlbums.length === 0) return;
             const nextIdx = (fromIdx + 1) % currentMatchAlbums.length;
-            if (nextIdx !== 0 || fromIdx !== currentMatchAlbums.length - 1) {
-                playTournamentCarouselTrack(nextIdx);
-            }
+            playTournamentCarouselTrack(nextIdx);
         }
 
         function resetTournamentSlotUI(idx) {
@@ -1565,7 +1613,6 @@
             if (progressBar) progressBar.style.width = '0%';
         }
 
-        // 6. Кнопки + и - для корректировки голосов
         function changeVote(idx, delta) {
             currentMatchVotes[idx] = Math.max(0, currentMatchVotes[idx] + delta);
             const valSpan = document.getElementById(`tvote-val-${idx}`);
@@ -1600,9 +1647,8 @@
             });
         }
 
-        // 10. Динамическая длительность анимации рулетки в зависимости от стадии
+        // 5. Музыка играет во время анимации рулетки
         async function rollDiceAndDetermineWinner() {
-            stopCurrentAudio();
             const btn = document.getElementById('btnRollDice');
             btn.disabled = true;
 
@@ -1621,9 +1667,8 @@
             }
 
             const remainingInBracket = tournBracket.length + tournNextRound.length;
-            // Динамические шаги: Чем меньше альбомов остается, тем больше тиков рулетки
             let totalTicks = 8;
-            if (remainingInBracket <= 4) totalTicks = 22; // Полуфинал и Финал
+            if (remainingInBracket <= 4) totalTicks = 22;
             else if (remainingInBracket <= 12) totalTicks = 14;
 
             for (let t = 0; t < totalTicks; t++) {
@@ -1649,7 +1694,6 @@
             loadNextMatch();
         }
 
-        // 8. Финальный экран с опциями
         function showChampionScreen(champion) {
             stopCurrentAudio();
 
