@@ -138,7 +138,13 @@
             border-color: #ff5555;
         }
 
-        /* Симметричные отступы сверху и снизу для карточного пака */
+        .pack-area {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .pack-container {
             display: flex;
             flex-direction: row;
@@ -210,7 +216,7 @@
             justify-content: space-between;
             margin-bottom: 4px;
             width: 100%;
-            height: 18px;
+            height: 24px;
             gap: 4px;
         }
 
@@ -219,7 +225,7 @@
             border: 1px solid currentColor;
             font-size: 0.6rem;
             font-weight: bold;
-            padding: 1px 5px;
+            padding: 2px 6px;
             border-radius: 6px;
             line-height: 1;
             white-space: nowrap;
@@ -242,7 +248,7 @@
 
         .rarity-badge {
             display: inline-block;
-            padding: 1px 6px;
+            padding: 2px 6px;
             border-radius: 8px;
             font-weight: bold;
             font-size: 0.6rem;
@@ -262,28 +268,29 @@
         .rarity-Epic .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Legendary .rarity-badge { background: var(--rarity-legend); color: #000; }
 
+        /* 3. Увеличение кнопок Shuffle и Избранное для легкого попадания пальцем */
         .fav-btn, .shuffle-btn {
-            background: rgba(0, 0, 0, 0.6);
-            border: none;
-            color: #888;
-            font-size: 0.75rem;
-            width: 18px;
-            height: 18px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #444;
+            color: #aaa;
+            font-size: 0.85rem;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: color 0.2s, transform 0.1s;
+            transition: color 0.2s, transform 0.1s, background 0.2s;
             padding: 0;
             line-height: 1;
             flex-shrink: 0;
         }
 
-        .shuffle-btn svg { width: 10px; height: 10px; fill: #888; transition: fill 0.2s; }
-        .fav-btn.active { color: #eab308; text-shadow: 0 0 5px rgba(234, 179, 8, 0.8); }
+        .shuffle-btn svg { width: 14px; height: 14px; fill: #aaa; transition: fill 0.2s; }
+        .fav-btn.active { color: #eab308; border-color: #eab308; text-shadow: 0 0 5px rgba(234, 179, 8, 0.8); }
         .shuffle-btn:hover svg { fill: #fff; }
-        .shuffle-btn:hover, .fav-btn:hover { transform: scale(1.15); }
+        .shuffle-btn:hover, .fav-btn:hover { transform: scale(1.1); background: rgba(0, 0, 0, 0.9); }
 
         .cover-wrapper {
             position: relative;
@@ -308,20 +315,26 @@
         .vinyl-placeholder .ph-title { font-size: 0.75rem; font-weight: bold; color: #fff; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .vinyl-placeholder .ph-artist { font-size: 0.65rem; color: #888; }
 
+        /* 2. Поведение кнопки паузы и оверлея без застревания */
         .play-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
             display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
         }
 
-        .cover-wrapper:hover .play-overlay, .mini-cover-wrapper:hover .play-overlay, .list-cover-wrapper:hover .play-overlay { opacity: 1; }
+        @media (hover: hover) {
+            .cover-wrapper:hover .play-overlay, .mini-cover-wrapper:hover .play-overlay, .list-cover-wrapper:hover .play-overlay { opacity: 1; }
+        }
+
+        .is-playing .play-overlay {
+            opacity: 1 !important;
+        }
 
         .play-btn-icon {
-            width: 32px; height: 32px; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 50%;
+            width: 34px; height: 34px; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5); transition: transform 0.15s ease; box-sizing: border-box;
         }
 
-        .play-btn-icon svg { width: 12px; height: 12px; fill: #000; }
-        .play-overlay:hover .play-btn-icon { transform: scale(1.1); }
+        .play-btn-icon svg { width: 14px; height: 14px; fill: #000; }
 
         .progress-bar-container { 
             position: absolute; 
@@ -374,16 +387,40 @@
         .collection-section { 
             width: 100%; 
             max-width: 1300px; 
-            margin-top: 30px; 
+            margin-top: 20px; 
             border-top: 1px solid #282832;
-            padding-top: 20px;
+            padding-top: 15px;
         }
         
         .collection-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
         .filter-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-        select, button.view-btn { background: #1e1e24; color: #fff; border: 1px solid #333; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
+        /* 8. Индикатор процента и прогресса коллекции */
+        .collection-stats-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #1e1e24;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            font-size: 0.75rem;
+            color: #bbb;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: rgba(255,255,255,0.05);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        select, button.view-btn, button.toggle-col-btn { background: #1e1e24; color: #fff; border: 1px solid #333; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
         button.view-btn.active { background: var(--accent-color); border-color: var(--accent-color); }
+        button.toggle-col-btn { background: #2a2a35; font-weight: bold; border-color: var(--accent-color); }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 
@@ -615,6 +652,15 @@
             width: 100%;
         }
 
+        /* 4. Центрирование экрана победителя */
+        #championCardContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin: 8px auto;
+        }
+
         /* Адаптация под мобильные устройства */
         @media (max-width: 600px) {
             .pack-container {
@@ -650,24 +696,29 @@
 
     <!-- Вкладка GACHA -->
     <div class="view-section" id="gachaSection">
-        <div class="controls">
-            <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
-        </div>
+        
+        <!-- Область открытия пака (скрывается при разворачивании коллекции) -->
+        <div class="pack-area" id="packArea">
+            <div class="controls">
+                <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
+            </div>
 
-        <div class="pack-container" id="packContainer"></div>
+            <div class="pack-container" id="packContainer"></div>
 
-        <!-- Нижняя кнопка Open Pack с симметричным отступом -->
-        <div class="bottom-pack-control">
-            <button class="pull-btn" id="pullBtnBottom" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
+            <div class="bottom-pack-control">
+                <button class="pull-btn" id="pullBtnBottom" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
+            </div>
         </div>
 
         <div class="collection-section">
             <div class="collection-header">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <h2>Collection (<span id="colCount">0</span>)</h2>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h2>Collection</h2>
+                    <!-- 7. Кнопка подката/спойлера коллекции -->
+                    <button class="toggle-col-btn" id="btnToggleCollection" onclick="toggleCollectionArea()">📦 Show Collection</button>
                     <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑️ Clear Save</button>
                 </div>
-                <div class="filter-controls">
+                <div class="filter-controls hidden" id="collectionControls">
                     <select id="sortSelect" onchange="renderCollectionUI()">
                         <option value="default">Newest First</option>
                         <option value="pulls_desc">By Level (Max → Min)</option>
@@ -684,7 +735,10 @@
                 </div>
             </div>
 
-            <div class="grid" id="collectionContainer"></div>
+            <!-- 8. Расширенный процент заполненности коллекции -->
+            <div class="collection-stats-bar hidden" id="collectionStatsBar"></div>
+
+            <div class="grid hidden" id="collectionContainer"></div>
         </div>
     </div>
 
@@ -726,6 +780,7 @@
 
             <button class="action-btn" id="btnStartTourn" onclick="startTournament()">🚀 START TOURNAMENT</button>
 
+            <!-- 5. Визуализированный прогресс-бар загрузки сетки -->
             <div class="tourn-progress-overlay hidden" id="tournProgressOverlay">
                 <div class="tourn-progress-bar"><div class="tourn-progress-fill" id="tournProgressFill"></div></div>
                 <div class="tourn-progress-text" id="tournProgressText">Preparing bracket... (0%)</div>
@@ -751,9 +806,9 @@
             </div>
         </div>
 
-        <div class="tournament-setup hidden" id="winnerScreen" style="text-align: center; max-width: 280px;">
+        <div class="tournament-setup hidden" id="winnerScreen" style="text-align: center; max-width: 320px;">
             <h2 style="color: #eab308; font-size: 1.4rem; margin: 0;">🏆 CHAMPION 🏆</h2>
-            <div id="championCardContainer" style="margin: 8px auto; width: 100%;"></div>
+            <div id="championCardContainer"></div>
             
             <div class="end-options-container">
                 <button class="end-option-btn" onclick="startTournamentWithSameRules()">🔄 Play Again (Same Rules)</button>
@@ -779,6 +834,7 @@
         let collection = new Map();
         let collectionTracksCache = new Map();
         let currentViewMode = 'grid';
+        let isCollectionExpanded = false;
 
         let currentAudio = null;
         let currentPlayingSlot = null;
@@ -876,6 +932,30 @@
             document.getElementById('tournamentSection').classList.toggle('hidden', mode !== 'tournament');
         }
 
+        // 7. Переключение подката коллекции
+        function toggleCollectionArea() {
+            isCollectionExpanded = !isCollectionExpanded;
+            const packArea = document.getElementById('packArea');
+            const colContainer = document.getElementById('collectionContainer');
+            const colControls = document.getElementById('collectionControls');
+            const colStats = document.getElementById('collectionStatsBar');
+            const btn = document.getElementById('btnToggleCollection');
+
+            if (isCollectionExpanded) {
+                packArea.classList.add('hidden');
+                colContainer.classList.remove('hidden');
+                colControls.classList.remove('hidden');
+                colStats.classList.remove('hidden');
+                btn.innerText = '🙈 Hide Collection Area';
+            } else {
+                packArea.classList.remove('hidden');
+                colContainer.classList.add('hidden');
+                colControls.classList.add('hidden');
+                colStats.classList.add('hidden');
+                btn.innerText = '📦 Show Collection';
+            }
+        }
+
         // --- GACHA PACK LOGIC ---
         function rollRarity() {
             const rand = Math.random() * 100;
@@ -927,7 +1007,6 @@
         async function pull5Pack() {
             if (allAlbums.length === 0) return;
 
-            // Плавный скролл к началу первой карточки
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             const btnTop = document.getElementById('pullBtn');
@@ -1208,7 +1287,13 @@
             const icon = document.getElementById(`play-icon-${slotIndex}`);
             const progressBar = document.getElementById(`progress-${slotIndex}`);
 
-            if (card) card.classList.add('playing');
+            if (card) {
+                card.classList.add('playing', 'is-playing');
+                // 1. Автоматический скролл к проигрываемой карте на мобильных
+                if (window.innerWidth <= 600) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
             currentAudio = new Audio(albumData.preview);
@@ -1282,6 +1367,8 @@
             if (currentPlayingSlot !== null) {
                 const icon = document.getElementById(`play-icon-${currentPlayingSlot}`);
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                const card = document.getElementById(`pack-card-${currentPlayingSlot}`);
+                if (card) card.classList.remove('is-playing');
             }
             currentPlayingId = null;
         }
@@ -1307,7 +1394,7 @@
             const icon = document.getElementById(`play-icon-${slotIndex}`);
             const progressBar = document.getElementById(`progress-${slotIndex}`);
 
-            if (card) card.classList.remove('playing');
+            if (card) card.classList.remove('playing', 'is-playing');
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             if (progressBar) progressBar.style.width = '0%';
         }
@@ -1339,10 +1426,35 @@
             renderCollectionUI();
         }
 
+        // 8. Визуализация процента заполненности коллекции
+        function renderCollectionStats() {
+            const statsBar = document.getElementById('collectionStatsBar');
+            if (!statsBar) return;
+
+            const totalInDb = allAlbums.length || 1;
+            const collectedCount = collection.size;
+            const percentage = ((collectedCount / totalInDb) * 100).toFixed(1);
+
+            let counts = { Legendary: 0, Epic: 0, Rare: 0, Common: 0 };
+            collection.forEach(item => {
+                if (counts[item.rarity] !== undefined) counts[item.rarity]++;
+            });
+
+            statsBar.innerHTML = `
+                <div>Completion: <span class="stat-badge">${collectedCount} / ${totalInDb} (${percentage}%)</span></div>
+                <div style="display:flex; gap:6px;">
+                    <span style="color:var(--rarity-legend);">🟡 ${counts.Legendary}</span>
+                    <span style="color:var(--rarity-epic);">🟣 ${counts.Epic}</span>
+                    <span style="color:var(--rarity-rare);">🔵 ${counts.Rare}</span>
+                    <span style="color:var(--rarity-common);">⚪ ${counts.Common}</span>
+                </div>
+            `;
+        }
+
         function renderCollectionUI() {
+            renderCollectionStats();
+
             const container = document.getElementById('collectionContainer');
-            document.getElementById('colCount').innerText = collection.size;
-            
             const fragment = document.createDocumentFragment();
             let albumsArray = Array.from(collection.values());
             albumsArray.forEach(item => { if (!item.level) item.level = calculateLevel(item.pulls || 1); });
@@ -1365,7 +1477,7 @@
             else sortWithFavs((a, b) => b.pulledAt - a.pulledAt);
 
             if (currentViewMode === 'artist') {
-                container.className = ''; renderArtistGroupView(fragment, albumsArray);
+                container.className = 'grid'; renderArtistGroupView(fragment, albumsArray);
             } else {
                 container.className = currentViewMode;
                 albumsArray.forEach(item => fragment.appendChild(createAlbumCardElement(item, currentViewMode)));
@@ -1408,7 +1520,7 @@
 
             if (mode === 'grid') {
                 const mini = document.createElement('div');
-                mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing' : ''}`;
+                mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing is-playing' : ''}`;
                 mini.style.borderColor = `var(--rarity-${borderVar})`;
                 mini.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 mini.innerHTML = `
@@ -1441,7 +1553,7 @@
                 return mini;
             } else {
                 const listItem = document.createElement('div');
-                listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing' : ''}`;
+                listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing is-playing' : ''}`;
                 listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                 listItem.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 listItem.innerHTML = `
@@ -1526,6 +1638,10 @@
                 return;
             }
 
+            // 5. Переключаем экраны на панель загрузки турнира
+            document.getElementById('winnerScreen').classList.add('hidden');
+            document.getElementById('tournamentSetup').classList.remove('hidden');
+
             btn.disabled = true;
             progressOverlay.classList.remove('hidden');
             progressFill.style.width = '0%';
@@ -1577,6 +1693,7 @@
             loadNextMatch();
         }
 
+        // 5. Запуск с теми же правилами с показом прогресс-бара
         function startTournamentWithSameRules() {
             startTournament();
         }
@@ -1643,7 +1760,7 @@
                 const isPlaying = (currentPlayingSlot === idx) && currentAudio && !currentAudio.paused;
                 const favClass = album.isFavorite ? 'active' : '';
 
-                card.className = `tourn-card rarity-${escapeHtml(album.rarity)} ${isPlaying ? 'playing' : ''}`;
+                card.className = `tourn-card rarity-${escapeHtml(album.rarity)} ${isPlaying ? 'playing is-playing' : ''}`;
                 card.style.borderColor = `var(--rarity-${borderVar})`;
                 card.id = `tcard-${idx}`;
 
@@ -1757,7 +1874,13 @@
             const icon = document.getElementById(`tplay-icon-${idx}`);
             const progressBar = document.getElementById(`tprogress-${idx}`);
 
-            if (card) card.classList.add('playing');
+            if (card) {
+                card.classList.add('playing', 'is-playing');
+                // 1. Автоматический скролл на мобильных
+                if (window.innerWidth <= 600) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
             const newAudio = new Audio(album.preview);
@@ -1810,7 +1933,7 @@
             const icon = document.getElementById(`tplay-icon-${idx}`);
             const progressBar = document.getElementById(`tprogress-${idx}`);
 
-            if (card) card.classList.remove('playing');
+            if (card) card.classList.remove('playing', 'is-playing');
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             if (progressBar) progressBar.style.width = '0%';
         }
@@ -1910,6 +2033,7 @@
             loadNextMatch();
         }
 
+        // 6. Добавлен значок Избранное на карточке победителя
         function renderChampionCardUI(champion) {
             championAlbumObj = champion;
             const container = document.getElementById('championCardContainer');
@@ -1930,6 +2054,7 @@
             const escTrack = escapeHtml(champion.trackName || 'Main Hit Track');
             const lvlClass = getLevelColorClass(champion.level || 1);
             const progressText = getCopiesProgressText(champion.pulls || 1);
+            const favClass = champion.isFavorite ? 'active' : '';
 
             const coverHTML = champion.cover ? `<img src="${escapeHtml(champion.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
 
@@ -1940,6 +2065,7 @@
                         <div class="rarity-badge">${escapeHtml(champion.rarity)}</div>
                         <div style="display:flex; gap:4px; align-items:center;">
                             <button class="shuffle-btn" onclick="playChampionNextTrack(true, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                            <button class="fav-btn ${favClass}" id="champFavBtn" onclick="toggleFavoriteChampion(event)" title="Toggle Favorite">★</button>
                         </div>
                     </div>
 
@@ -1970,12 +2096,27 @@
             playChampionTrack();
         }
 
+        function toggleFavoriteChampion(event) {
+            if (event) event.stopPropagation();
+            if (!championAlbumObj) return;
+
+            championAlbumObj.isFavorite = !championAlbumObj.isFavorite;
+            const item = collection.get(championAlbumObj.id);
+            if (item) item.isFavorite = championAlbumObj.isFavorite;
+
+            const btn = document.getElementById('champFavBtn');
+            if (btn) btn.classList.toggle('active', championAlbumObj.isFavorite);
+
+            saveProgress();
+            renderCollectionUI();
+        }
+
         function togglePlayChampionTrack() {
             if (currentAudio && !currentAudio.paused) {
                 pauseCurrentAudio();
                 const card = document.getElementById('champion-card-el');
                 const icon = document.getElementById('champ-play-icon');
-                if (card) card.classList.remove('playing');
+                if (card) card.classList.remove('playing', 'is-playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             } else {
                 playChampionTrack();
@@ -2005,7 +2146,12 @@
             const icon = document.getElementById('champ-play-icon');
             const progressBar = document.getElementById('champ-progress-fill');
 
-            if (card) card.classList.add('playing');
+            if (card) {
+                card.classList.add('playing', 'is-playing');
+                if (window.innerWidth <= 600) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
             currentAudio = new Audio(championAlbumObj.preview);
@@ -2016,13 +2162,13 @@
             };
 
             currentAudio.onended = () => {
-                if (card) card.classList.remove('playing');
+                if (card) card.classList.remove('playing', 'is-playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
                 playChampionNextTrack(true);
             };
 
             currentAudio.play().catch(e => {
-                if (card) card.classList.remove('playing');
+                if (card) card.classList.remove('playing', 'is-playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             });
         }
