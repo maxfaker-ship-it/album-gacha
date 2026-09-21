@@ -268,7 +268,6 @@
         .rarity-Epic .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Legendary .rarity-badge { background: var(--rarity-legend); color: #000; }
 
-        /* 3. Увеличение кнопок Shuffle и Избранное для легкого попадания пальцем */
         .fav-btn, .shuffle-btn {
             background: rgba(0, 0, 0, 0.7);
             border: 1px solid #444;
@@ -315,18 +314,26 @@
         .vinyl-placeholder .ph-title { font-size: 0.75rem; font-weight: bold; color: #fff; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .vinyl-placeholder .ph-artist { font-size: 0.65rem; color: #888; }
 
-        /* 2. Поведение кнопки паузы и оверлея без застревания */
+        /* Оверлей кнопки плеера */
         .play-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
             display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
         }
 
+        /* На десктопе с поддержкой мыши оверлей виден ТОЛЬКО при наведении */
         @media (hover: hover) {
-            .cover-wrapper:hover .play-overlay, .mini-cover-wrapper:hover .play-overlay, .list-cover-wrapper:hover .play-overlay { opacity: 1; }
+            .cover-wrapper:hover .play-overlay, 
+            .mini-cover-wrapper:hover .play-overlay, 
+            .list-cover-wrapper:hover .play-overlay { 
+                opacity: 1 !important; 
+            }
         }
 
-        .is-playing .play-overlay {
-            opacity: 1 !important;
+        /* На тач-устройствах оверлей удерживается во время проигрывания */
+        @media (hover: none) {
+            .is-playing .play-overlay {
+                opacity: 1 !important;
+            }
         }
 
         .play-btn-icon {
@@ -395,13 +402,12 @@
         .collection-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
         .filter-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-        /* 8. Индикатор процента и прогресса коллекции */
         .collection-stats-bar {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             background: #1e1e24;
-            padding: 6px 12px;
+            padding: 8px 14px;
             border-radius: 20px;
             border: 1px solid #333;
             font-size: 0.75rem;
@@ -652,7 +658,6 @@
             width: 100%;
         }
 
-        /* 4. Центрирование экрана победителя */
         #championCardContainer {
             display: flex;
             justify-content: center;
@@ -661,7 +666,6 @@
             margin: 8px auto;
         }
 
-        /* Адаптация под мобильные устройства */
         @media (max-width: 600px) {
             .pack-container {
                 flex-direction: column;
@@ -697,7 +701,6 @@
     <!-- Вкладка GACHA -->
     <div class="view-section" id="gachaSection">
         
-        <!-- Область открытия пака (скрывается при разворачивании коллекции) -->
         <div class="pack-area" id="packArea">
             <div class="controls">
                 <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
@@ -714,7 +717,6 @@
             <div class="collection-header">
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <h2>Collection</h2>
-                    <!-- 7. Кнопка подката/спойлера коллекции -->
                     <button class="toggle-col-btn" id="btnToggleCollection" onclick="toggleCollectionArea()">📦 Show Collection</button>
                     <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑️ Clear Save</button>
                 </div>
@@ -735,7 +737,6 @@
                 </div>
             </div>
 
-            <!-- 8. Расширенный процент заполненности коллекции -->
             <div class="collection-stats-bar hidden" id="collectionStatsBar"></div>
 
             <div class="grid hidden" id="collectionContainer"></div>
@@ -780,7 +781,6 @@
 
             <button class="action-btn" id="btnStartTourn" onclick="startTournament()">🚀 START TOURNAMENT</button>
 
-            <!-- 5. Визуализированный прогресс-бар загрузки сетки -->
             <div class="tourn-progress-overlay hidden" id="tournProgressOverlay">
                 <div class="tourn-progress-bar"><div class="tourn-progress-fill" id="tournProgressFill"></div></div>
                 <div class="tourn-progress-text" id="tournProgressText">Preparing bracket... (0%)</div>
@@ -842,7 +842,6 @@
         let loadingCollectionId = null;
         let currentPackData = [];
 
-        // Переменные Турнира
         let tournBracket = [];
         let tournNextRound = [];
         let currentMatchAlbums = [];
@@ -932,7 +931,6 @@
             document.getElementById('tournamentSection').classList.toggle('hidden', mode !== 'tournament');
         }
 
-        // 7. Переключение подката коллекции
         function toggleCollectionArea() {
             isCollectionExpanded = !isCollectionExpanded;
             const packArea = document.getElementById('packArea');
@@ -956,7 +954,6 @@
             }
         }
 
-        // --- GACHA PACK LOGIC ---
         function rollRarity() {
             const rand = Math.random() * 100;
             if (rand < DROP_RATES['Legendary']) return 'Legendary';
@@ -1289,7 +1286,6 @@
 
             if (card) {
                 card.classList.add('playing', 'is-playing');
-                // 1. Автоматический скролл к проигрываемой карте на мобильных
                 if (window.innerWidth <= 600) {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
@@ -1399,7 +1395,6 @@
             if (progressBar) progressBar.style.width = '0%';
         }
 
-        // --- COLLECTION LOGIC ---
         function addToCollectionDataOnly(albumObj) {
             const existing = collection.get(albumObj.id);
             if (!existing) {
@@ -1426,7 +1421,7 @@
             renderCollectionUI();
         }
 
-        // 8. Визуализация процента заполненности коллекции
+        /* Вычисление и выведение процентов для каждой редкости */
         function renderCollectionStats() {
             const statsBar = document.getElementById('collectionStatsBar');
             if (!statsBar) return;
@@ -1440,13 +1435,18 @@
                 if (counts[item.rarity] !== undefined) counts[item.rarity]++;
             });
 
+            const legPct = ((counts.Legendary / totalInDb) * 100).toFixed(1);
+            const epicPct = ((counts.Epic / totalInDb) * 100).toFixed(1);
+            const rarePct = ((counts.Rare / totalInDb) * 100).toFixed(1);
+            const commPct = ((counts.Common / totalInDb) * 100).toFixed(1);
+
             statsBar.innerHTML = `
-                <div>Completion: <span class="stat-badge">${collectedCount} / ${totalInDb} (${percentage}%)</span></div>
-                <div style="display:flex; gap:6px;">
-                    <span style="color:var(--rarity-legend);">🟡 ${counts.Legendary}</span>
-                    <span style="color:var(--rarity-epic);">🟣 ${counts.Epic}</span>
-                    <span style="color:var(--rarity-rare);">🔵 ${counts.Rare}</span>
-                    <span style="color:var(--rarity-common);">⚪ ${counts.Common}</span>
+                <div>Total Completion: <span class="stat-badge">${collectedCount} / ${totalInDb} (${percentage}%)</span></div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <span style="color:var(--rarity-legend);">🟡 ${counts.Legendary} (${legPct}%)</span>
+                    <span style="color:var(--rarity-epic);">🟣 ${counts.Epic} (${epicPct}%)</span>
+                    <span style="color:var(--rarity-rare);">🔵 ${counts.Rare} (${rarePct}%)</span>
+                    <span style="color:var(--rarity-common);">⚪ ${counts.Common} (${commPct}%)</span>
                 </div>
             `;
         }
@@ -1603,7 +1603,6 @@
             });
         }
 
-        // --- PRO TOURNAMENT LOGIC ---
         const SEGMENT_COLORS = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6'];
 
         function getPlayoffStageTitle(remainingCount) {
@@ -1638,7 +1637,6 @@
                 return;
             }
 
-            // 5. Переключаем экраны на панель загрузки турнира
             document.getElementById('winnerScreen').classList.add('hidden');
             document.getElementById('tournamentSetup').classList.remove('hidden');
 
@@ -1693,7 +1691,6 @@
             loadNextMatch();
         }
 
-        // 5. Запуск с теми же правилами с показом прогресс-бара
         function startTournamentWithSameRules() {
             startTournament();
         }
@@ -1876,7 +1873,6 @@
 
             if (card) {
                 card.classList.add('playing', 'is-playing');
-                // 1. Автоматический скролл на мобильных
                 if (window.innerWidth <= 600) {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
@@ -2033,7 +2029,6 @@
             loadNextMatch();
         }
 
-        // 6. Добавлен значок Избранное на карточке победителя
         function renderChampionCardUI(champion) {
             championAlbumObj = champion;
             const container = document.getElementById('championCardContainer');
