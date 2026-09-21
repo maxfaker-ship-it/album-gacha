@@ -216,7 +216,7 @@
             justify-content: space-between;
             margin-bottom: 4px;
             width: 100%;
-            height: 24px;
+            height: 28px;
             gap: 4px;
         }
 
@@ -268,25 +268,39 @@
         .rarity-Epic .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Legendary .rarity-badge { background: var(--rarity-legend); color: #000; }
 
+        /* Единый стиль и размеры для кнопок Shuffle и Избранное */
         .fav-btn, .shuffle-btn {
             background: rgba(0, 0, 0, 0.7);
             border: 1px solid #444;
             color: #aaa;
             font-size: 0.85rem;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
+            width: 28px !important;
+            height: 28px !important;
+            min-width: 28px !important;
+            min-height: 28px !important;
+            max-width: 28px !important;
+            max-height: 28px !important;
+            border-radius: 50% !important;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             transition: color 0.2s, transform 0.1s, background 0.2s;
-            padding: 0;
-            line-height: 1;
-            flex-shrink: 0;
+            padding: 0 !important;
+            line-height: 1 !important;
+            flex-shrink: 0 !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
         }
 
-        .shuffle-btn svg { width: 14px; height: 14px; fill: #aaa; transition: fill 0.2s; }
+        .shuffle-btn svg { 
+            width: 14px !important; 
+            height: 14px !important; 
+            fill: #aaa; 
+            transition: fill 0.2s; 
+            display: block;
+        }
+
         .fav-btn.active { color: #eab308; border-color: #eab308; text-shadow: 0 0 5px rgba(234, 179, 8, 0.8); }
         .shuffle-btn:hover svg { fill: #fff; }
         .shuffle-btn:hover, .fav-btn:hover { transform: scale(1.1); background: rgba(0, 0, 0, 0.9); }
@@ -314,13 +328,11 @@
         .vinyl-placeholder .ph-title { font-size: 0.75rem; font-weight: bold; color: #fff; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .vinyl-placeholder .ph-artist { font-size: 0.65rem; color: #888; }
 
-        /* Оверлей кнопки плеера */
         .play-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
             display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
         }
 
-        /* На десктопе с поддержкой мыши оверлей виден ТОЛЬКО при наведении */
         @media (hover: hover) {
             .cover-wrapper:hover .play-overlay, 
             .mini-cover-wrapper:hover .play-overlay, 
@@ -329,7 +341,6 @@
             }
         }
 
-        /* На тач-устройствах оверлей удерживается во время проигрывания */
         @media (hover: none) {
             .is-playing .play-overlay {
                 opacity: 1 !important;
@@ -701,6 +712,7 @@
     <!-- Вкладка GACHA -->
     <div class="view-section" id="gachaSection">
         
+        <!-- Паки открыты по умолчанию -->
         <div class="pack-area" id="packArea">
             <div class="controls">
                 <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
@@ -737,6 +749,7 @@
                 </div>
             </div>
 
+            <!-- Коллекция и статистика скрыты по умолчанию при запуске -->
             <div class="collection-stats-bar hidden" id="collectionStatsBar"></div>
 
             <div class="grid hidden" id="collectionContainer"></div>
@@ -834,7 +847,7 @@
         let collection = new Map();
         let collectionTracksCache = new Map();
         let currentViewMode = 'grid';
-        let isCollectionExpanded = false;
+        let isCollectionExpanded = false; // По умолчанию коллекция свернута
 
         let currentAudio = null;
         let currentPlayingSlot = null;
@@ -1421,7 +1434,6 @@
             renderCollectionUI();
         }
 
-        /* Вычисление и выведение процентов для каждой редкости */
         function renderCollectionStats() {
             const statsBar = document.getElementById('collectionStatsBar');
             if (!statsBar) return;
