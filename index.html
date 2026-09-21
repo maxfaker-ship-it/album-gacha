@@ -164,7 +164,7 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.5);
             text-align: center;
             border: 2px solid var(--rarity-common);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, opacity 0.3s ease, filter 0.3s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -476,7 +476,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             text-align: center;
             border: 2px solid var(--rarity-common);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, border-color 0.2s;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, border-color 0.2s, opacity 0.3s ease, filter 0.3s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -484,11 +484,19 @@
             position: relative;
         }
 
+        /* Подсветка победителя */
         .tourn-card.winner-glow {
             border-color: var(--winner-color) !important;
             box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), 0 0 15px rgba(239, 68, 68, 0.5) !important;
             transform: scale(1.04) !important;
             z-index: 10;
+        }
+
+        /* 2. Затемнение проигравших в дуэли */
+        .tourn-card.loser-dimmed {
+            opacity: 0.35 !important;
+            filter: grayscale(80%) !important;
+            transform: scale(0.95) !important;
         }
 
         .vote-control-bar {
@@ -609,6 +617,26 @@
             font-size: 0.7rem;
             color: #aaa;
             text-align: center;
+        }
+
+        /* 1. Мобильная адаптация паков для смартфонов в портретной ориентации */
+        @media (max-width: 600px) {
+            .pack-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+            .card {
+                width: 100%;
+                max-width: 280px;
+                min-height: 340px;
+            }
+            .match-cards-container {
+                flex-wrap: wrap;
+            }
+            .tourn-card {
+                max-width: 48%;
+            }
         }
     </style>
 </head>
@@ -956,7 +984,6 @@
             });
         }
 
-        // Двойная проверка доступности прямых аудио-ссылок
         async function verifyAudioUrl(url) {
             if (!url) return false;
             return new Promise((resolve) => {
@@ -1753,7 +1780,6 @@
             newAudio.onerror = async () => {
                 if (currentAudio !== newAudio) return;
                 resetTournamentSlotUI(idx);
-                // Авто-подмена трека при ошибке
                 currentMatchAlbums[idx] = await fetchHitTrackForAlbum(currentMatchAlbums[idx], true, true);
                 renderBattleMatchUI();
                 playNextMatchTrackInCarousel(idx);
@@ -1843,6 +1869,7 @@
             if (remainingInBracket <= 4) totalTicks = 22;
             else if (remainingInBracket <= 12) totalTicks = 14;
 
+            // Рулетка выбора
             for (let t = 0; t < totalTicks; t++) {
                 const flashIdx = t % currentMatchAlbums.length;
                 currentMatchAlbums.forEach((_, i) => {
@@ -1852,9 +1879,18 @@
                 await sleep(80 + t * 15);
             }
 
+            // 2. Затемнение проигравших и яркое выделение победителя
             currentMatchAlbums.forEach((_, i) => {
                 const c = document.getElementById(`tcard-${i}`);
-                if (c) c.classList.toggle('winner-glow', i === winnerIdx);
+                if (c) {
+                    if (i === winnerIdx) {
+                        c.classList.add('winner-glow');
+                        c.classList.remove('loser-dimmed');
+                    } else {
+                        c.classList.remove('winner-glow');
+                        c.classList.add('loser-dimmed');
+                    }
+                }
             });
 
             await sleep(2200);
