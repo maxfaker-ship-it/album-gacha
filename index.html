@@ -95,7 +95,7 @@
 
         .hidden { display: none !important; }
 
-        .controls { margin-bottom: 8px; display: flex; gap: 10px; align-items: center; }
+        .controls { margin-bottom: 0; display: flex; gap: 10px; align-items: center; justify-content: center; }
 
         button.pull-btn, button.action-btn {
             background: linear-gradient(135deg, #6366f1, #a855f7);
@@ -138,13 +138,14 @@
             border-color: #ff5555;
         }
 
+        /* Симметричные отступы сверху и снизу для карточного пака */
         .pack-container {
             display: flex;
             flex-direction: row;
             gap: 10px;
             justify-content: space-between;
             align-items: stretch;
-            margin-bottom: 10px;
+            margin: 15px 0;
             width: 100%;
             max-width: 1300px;
             box-sizing: border-box;
@@ -484,7 +485,6 @@
             position: relative;
         }
 
-        /* 1. Очень заметное выделение победителя и затемнение проигравших */
         .tourn-card.winner-glow {
             border-color: var(--winner-color) !important;
             box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), 0 0 15px rgba(239, 68, 68, 0.5) !important;
@@ -610,13 +610,12 @@
         }
 
         .bottom-pack-control {
-            margin-top: 12px;
             display: flex;
             justify-content: center;
             width: 100%;
         }
 
-        /* Адаптация паков под телефоны в портретной ориентации */
+        /* Адаптация под мобильные устройства */
         @media (max-width: 600px) {
             .pack-container {
                 flex-direction: column;
@@ -657,7 +656,7 @@
 
         <div class="pack-container" id="packContainer"></div>
 
-        <!-- 2. Вторая кнопка Open Pack внизу для мобильной версии -->
+        <!-- Нижняя кнопка Open Pack с симметричным отступом -->
         <div class="bottom-pack-control">
             <button class="pull-btn" id="pullBtnBottom" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
         </div>
@@ -689,7 +688,7 @@
         </div>
     </div>
 
-    <!-- Вкладка TOURNAMENT (5. Полный перевод на английский язык) -->
+    <!-- Вкладка TOURNAMENT -->
     <div class="view-section hidden" id="tournamentSection">
         <div class="tournament-setup" id="tournamentSetup">
             <h2 style="margin: 0; font-size: 1.2rem;">🏆 Tournament Setup</h2>
@@ -927,6 +926,10 @@
 
         async function pull5Pack() {
             if (allAlbums.length === 0) return;
+
+            // Плавный скролл к началу первой карточки
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
             const btnTop = document.getElementById('pullBtn');
             const btnBottom = document.getElementById('pullBtnBottom');
             btnTop.disabled = true;
@@ -1372,7 +1375,6 @@
             container.appendChild(fragment);
         }
 
-        // 4. Плашка Winner убрана полностью
         function createAlbumCardElement(item, mode) {
             let borderVar = 'common';
             if (item.rarity === 'Legendary') borderVar = 'legend';
@@ -1492,7 +1494,6 @@
         // --- PRO TOURNAMENT LOGIC ---
         const SEGMENT_COLORS = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6'];
 
-        // 5. Английская номенклатура стадий турнира
         function getPlayoffStageTitle(remainingCount) {
             if (remainingCount <= 2) return "🏆 FINAL";
             if (remainingCount <= 4) return "🔥 Semi-Finals";
@@ -1532,7 +1533,6 @@
 
             pool.sort(() => Math.random() - 0.5);
 
-            // 3. Карты НЕ добавляются в коллекцию на стадии генерации сетки!
             const validBracket = [];
             const chunkSize = 4;
 
@@ -1608,7 +1608,6 @@
             currentMatchAlbums = [];
             currentMatchVotes = [];
 
-            // 3. Добавление в основную коллекцию СТРОГО во время вывода первого матча
             for (let i = 0; i < matchSize; i++) {
                 if (tournBracket.length > 0) {
                     const participant = tournBracket.shift();
@@ -1877,7 +1876,6 @@
             if (remainingInBracket <= 4) totalTicks = 22;
             else if (remainingInBracket <= 12) totalTicks = 14;
 
-            // Рулетка мигания
             for (let t = 0; t < totalTicks; t++) {
                 const flashIdx = t % currentMatchAlbums.length;
                 currentMatchAlbums.forEach((_, i) => {
@@ -1890,7 +1888,6 @@
                 await sleep(80 + t * 15);
             }
 
-            // 1. Сильное затемнение проигравших карт
             currentMatchAlbums.forEach((_, i) => {
                 const c = document.getElementById(`tcard-${i}`);
                 if (c) {
