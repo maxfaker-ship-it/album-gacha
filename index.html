@@ -121,6 +121,22 @@
             transform: none;
         }
 
+        /* Большой стиль кнопки для первого запуска по центру */
+        button.pull-btn-large {
+            padding: 14px 36px;
+            font-size: 1.1rem;
+            border-radius: 28px;
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+        }
+
+        .initial-start-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 260px;
+            width: 100%;
+        }
+
         button.reset-btn {
             background: #2a2a35;
             color: #888;
@@ -268,7 +284,6 @@
         .rarity-Epic .rarity-badge { background: var(--rarity-epic); color: #fff; }
         .rarity-Legendary .rarity-badge { background: var(--rarity-legend); color: #000; }
 
-        /* Единый стиль и размеры для кнопок Shuffle и Избранное */
         .fav-btn, .shuffle-btn {
             background: rgba(0, 0, 0, 0.7);
             border: 1px solid #444;
@@ -712,15 +727,20 @@
     <!-- Вкладка GACHA -->
     <div class="view-section" id="gachaSection">
         
-        <!-- Паки открыты по умолчанию -->
         <div class="pack-area" id="packArea">
-            <div class="controls">
+            <!-- Начальное состояние: 1 большая кнопка по центру -->
+            <div class="initial-start-box" id="initialStartBox">
+                <button class="pull-btn pull-btn-large" id="btnInitialPull" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
+            </div>
+
+            <!-- Внешние кнопки и сам пак (скрыты до первого нажатия) -->
+            <div class="controls hidden" id="topControls">
                 <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
             </div>
 
-            <div class="pack-container" id="packContainer"></div>
+            <div class="pack-container hidden" id="packContainer"></div>
 
-            <div class="bottom-pack-control">
+            <div class="bottom-pack-control hidden" id="bottomControls">
                 <button class="pull-btn" id="pullBtnBottom" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
             </div>
         </div>
@@ -749,7 +769,7 @@
                 </div>
             </div>
 
-            <!-- Коллекция и статистика скрыты по умолчанию при запуске -->
+            <!-- Статистика и сама коллекция скрыты при загрузке -->
             <div class="collection-stats-bar hidden" id="collectionStatsBar"></div>
 
             <div class="grid hidden" id="collectionContainer"></div>
@@ -847,7 +867,8 @@
         let collection = new Map();
         let collectionTracksCache = new Map();
         let currentViewMode = 'grid';
-        let isCollectionExpanded = false; // По умолчанию коллекция свернута
+        let isCollectionExpanded = false;
+        let isFirstPackOpened = false;
 
         let currentAudio = null;
         let currentPlayingSlot = null;
@@ -928,8 +949,10 @@
                 }));
                 loadProgress();
                 renderCollectionUI();
+                
                 document.getElementById('pullBtn').disabled = false;
                 document.getElementById('pullBtnBottom').disabled = false;
+                document.getElementById('btnInitialPull').disabled = false;
             } catch (err) {
                 alert('Error loading albums.json!');
                 console.error(err);
@@ -965,6 +988,7 @@
                 colStats.classList.add('hidden');
                 btn.innerText = '📦 Show Collection';
             }
+            renderCollectionUI();
         }
 
         function rollRarity() {
@@ -1016,6 +1040,15 @@
 
         async function pull5Pack() {
             if (allAlbums.length === 0) return;
+
+            // Переключаем интерфейс с центральной кнопки на 2 кнопки сверху/снизу
+            if (!isFirstPackOpened) {
+                isFirstPackOpened = true;
+                document.getElementById('initialStartBox').classList.add('hidden');
+                document.getElementById('topControls').classList.remove('hidden');
+                document.getElementById('packContainer').classList.remove('hidden');
+                document.getElementById('bottomControls').classList.remove('hidden');
+            }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -1467,6 +1500,11 @@
             renderCollectionStats();
 
             const container = document.getElementById('collectionContainer');
+            if (!isCollectionExpanded) {
+                container.innerHTML = '';
+                return;
+            }
+
             const fragment = document.createDocumentFragment();
             let albumsArray = Array.from(collection.values());
             albumsArray.forEach(item => { if (!item.level) item.level = calculateLevel(item.pulls || 1); });
