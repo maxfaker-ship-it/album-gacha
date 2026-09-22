@@ -110,7 +110,6 @@
             flex-wrap: wrap;
         }
 
-        /* Автооткрытие паков тумблер */
         .auto-pull-toggle {
             display: flex;
             align-items: center;
@@ -375,22 +374,19 @@
         .vinyl-placeholder .ph-title { font-size: 0.75rem; font-weight: bold; color: #fff; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .vinyl-placeholder .ph-artist { font-size: 0.65rem; color: #888; }
 
+        /* Настройка оверлея кнопки воспроизведения */
         .play-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
             display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
+            pointer-events: none;
         }
 
+        /* На десктопе кнопка видна ИСКЛЮЧИТЕЛЬНО при навежении мыши */
         @media (hover: hover) {
             .cover-wrapper:hover .play-overlay, 
             .mini-cover-wrapper:hover .play-overlay, 
             .list-cover-wrapper:hover .play-overlay { 
                 opacity: 1 !important; 
-            }
-        }
-
-        @media (hover: none) {
-            .is-playing .play-overlay {
-                opacity: 1 !important;
             }
         }
 
@@ -448,7 +444,6 @@
         .type-badge { display: inline-block; align-self: center; background: #2a2a32; color: var(--accent-color); padding: 1px 5px; border-radius: 3px; font-size: 0.6rem; font-weight: bold; }
         .score-badge { color: #eab308; font-weight: bold; font-size: 0.75rem; margin: 1px 0; }
         
-        /* Исправление верстки длинных жанров и года */
         .genre-badge { 
             color: #888; 
             font-size: 0.65rem; 
@@ -942,7 +937,6 @@
         let currentMatchNumber = 1;
         let championAlbumObj = null;
 
-        // Переменные для свайпа
         let touchStartX = 0;
         let touchEndX = 0;
 
@@ -1022,7 +1016,6 @@
             }
         }
 
-        // Поддержка свайпов для переключения карточек в мобильной версии
         function initSwipeListeners() {
             const packContainer = document.getElementById('packContainer');
             const matchContainer = document.getElementById('matchCardsContainer');
@@ -1042,7 +1035,7 @@
 
         function handleSwipeGesture(container) {
             const diffX = touchEndX - touchStartX;
-            if (Math.abs(diffX) < 40) return; // Порог чувствительности свайпа
+            if (Math.abs(diffX) < 40) return;
 
             if (container.id === 'packContainer' && currentPackData.length > 0) {
                 let currentSlot = currentPlayingSlot !== null ? currentPlayingSlot : 0;
@@ -1185,8 +1178,6 @@
             renderCollectionUI();
             btnTop.disabled = false;
             btnBottom.disabled = false;
-            
-            // Воспроизведение всегда с 1-й карточки (индекс 0) слева направо
             playSlot(0);
         }
 
@@ -1266,7 +1257,6 @@
                         if (tracksData && tracksData.data && tracksData.data.length > 0) {
                             let validTracks = tracksData.data.filter(s => s.preview);
                             if (validTracks.length > 0) {
-                                // Исключаем повтор текущего трека при смене
                                 if (forceRandom && albumData.trackName && validTracks.length > 1) {
                                     validTracks = validTracks.filter(t => t.title !== albumData.trackName);
                                 }
@@ -1433,7 +1423,7 @@
             const progressBar = document.getElementById(`progress-${slotIndex}`);
 
             if (card) {
-                card.classList.add('playing', 'is-playing');
+                card.classList.add('playing');
                 if (window.innerWidth <= 600) {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
@@ -1449,7 +1439,6 @@
                 resetSlotUI(slotIndex);
                 const nextSlot = (slotIndex + 1) % 5;
                 
-                // Проверка автооткрытия след пака после завершения 5-й карточки
                 const isAutoPullEnabled = document.getElementById('autoPullCheck') ? document.getElementById('autoPullCheck').checked : false;
 
                 if (nextSlot === 0 && isAutoPullEnabled) {
@@ -1519,7 +1508,7 @@
                 const icon = document.getElementById(`play-icon-${currentPlayingSlot}`);
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
                 const card = document.getElementById(`pack-card-${currentPlayingSlot}`);
-                if (card) card.classList.remove('is-playing');
+                if (card) card.classList.remove('playing');
             }
             currentPlayingId = null;
         }
@@ -1545,7 +1534,7 @@
             const icon = document.getElementById(`play-icon-${slotIndex}`);
             const progressBar = document.getElementById(`progress-${slotIndex}`);
 
-            if (card) card.classList.remove('playing', 'is-playing');
+            if (card) card.classList.remove('playing');
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             if (progressBar) progressBar.style.width = '0%';
         }
@@ -1679,7 +1668,7 @@
 
             if (mode === 'grid') {
                 const mini = document.createElement('div');
-                mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing is-playing' : ''}`;
+                mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing' : ''}`;
                 mini.style.borderColor = `var(--rarity-${borderVar})`;
                 mini.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 mini.innerHTML = `
@@ -1712,7 +1701,7 @@
                 return mini;
             } else {
                 const listItem = document.createElement('div');
-                listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing is-playing' : ''}`;
+                listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing' : ''}`;
                 listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                 listItem.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 listItem.innerHTML = `
@@ -1916,7 +1905,7 @@
                 const isPlaying = (currentPlayingSlot === idx) && currentAudio && !currentAudio.paused;
                 const favClass = album.isFavorite ? 'active' : '';
 
-                card.className = `tourn-card rarity-${escapeHtml(album.rarity)} ${isPlaying ? 'playing is-playing' : ''}`;
+                card.className = `tourn-card rarity-${escapeHtml(album.rarity)} ${isPlaying ? 'playing' : ''}`;
                 card.style.borderColor = `var(--rarity-${borderVar})`;
                 card.id = `tcard-${idx}`;
 
@@ -2034,7 +2023,7 @@
             const progressBar = document.getElementById(`tprogress-${idx}`);
 
             if (card) {
-                card.classList.add('playing', 'is-playing');
+                card.classList.add('playing');
                 if (window.innerWidth <= 600) {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
@@ -2091,7 +2080,7 @@
             const icon = document.getElementById(`tplay-icon-${idx}`);
             const progressBar = document.getElementById(`tprogress-${idx}`);
 
-            if (card) card.classList.remove('playing', 'is-playing');
+            if (card) card.classList.remove('playing');
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             if (progressBar) progressBar.style.width = '0%';
         }
@@ -2276,7 +2265,7 @@
                 pauseCurrentAudio();
                 const card = document.getElementById('champion-card-el');
                 const icon = document.getElementById('champ-play-icon');
-                if (card) card.classList.remove('playing', 'is-playing');
+                if (card) card.classList.remove('playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             } else {
                 playChampionTrack();
@@ -2307,7 +2296,7 @@
             const progressBar = document.getElementById('champ-progress-fill');
 
             if (card) {
-                card.classList.add('playing', 'is-playing');
+                card.classList.add('playing');
                 if (window.innerWidth <= 600) {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
@@ -2322,13 +2311,13 @@
             };
 
             currentAudio.onended = () => {
-                if (card) card.classList.remove('playing', 'is-playing');
+                if (card) card.classList.remove('playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
                 playChampionNextTrack(true);
             };
 
             currentAudio.play().catch(e => {
-                if (card) card.classList.remove('playing', 'is-playing');
+                if (card) card.classList.remove('playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             });
         }
