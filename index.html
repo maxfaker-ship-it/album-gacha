@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Album Gacha 5x Pack Pro & Tournament Pro</title>
     <style>
         :root {
@@ -24,11 +24,17 @@
             --winner-color: #ef4444;
         }
 
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            margin: 0;
             padding: 6px 12px;
             display: flex;
             flex-direction: column;
@@ -95,7 +101,34 @@
 
         .hidden { display: none !important; }
 
-        .controls { margin-bottom: 0; display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .controls { 
+            margin-bottom: 0; 
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            justify-content: center; 
+            flex-wrap: wrap;
+        }
+
+        /* Автооткрытие паков тумблер */
+        .auto-pull-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1e1e24;
+            border: 1px solid #333;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            color: #aaa;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .auto-pull-toggle input {
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
 
         button.pull-btn, button.action-btn {
             background: linear-gradient(135deg, #6366f1, #a855f7);
@@ -121,7 +154,6 @@
             transform: none;
         }
 
-        /* Большой стиль кнопки для первого запуска по центру */
         button.pull-btn-large {
             padding: 14px 36px;
             font-size: 1.1rem;
@@ -415,7 +447,32 @@
         .album-info-bottom { display: flex; flex-direction: column; gap: 1px; margin-top: auto; }
         .type-badge { display: inline-block; align-self: center; background: #2a2a32; color: var(--accent-color); padding: 1px 5px; border-radius: 3px; font-size: 0.6rem; font-weight: bold; }
         .score-badge { color: #eab308; font-weight: bold; font-size: 0.75rem; margin: 1px 0; }
-        .genre-badge { color: #888; font-size: 0.65rem; margin: 0; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* Исправление верстки длинных жанров и года */
+        .genre-badge { 
+            color: #888; 
+            font-size: 0.65rem; 
+            margin: 0; 
+            font-style: italic; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .genre-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        .year-text {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
 
         .collection-section { 
             width: 100%; 
@@ -728,14 +785,15 @@
     <div class="view-section" id="gachaSection">
         
         <div class="pack-area" id="packArea">
-            <!-- Начальное состояние: 1 большая кнопка по центру -->
             <div class="initial-start-box" id="initialStartBox">
                 <button class="pull-btn pull-btn-large" id="btnInitialPull" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
             </div>
 
-            <!-- Внешние кнопки и сам пак (скрыты до первого нажатия) -->
             <div class="controls hidden" id="topControls">
                 <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
+                <label class="auto-pull-toggle">
+                    <input type="checkbox" id="autoPullCheck"> ⚡ Auto-Open
+                </label>
             </div>
 
             <div class="pack-container hidden" id="packContainer"></div>
@@ -769,7 +827,6 @@
                 </div>
             </div>
 
-            <!-- Статистика и сама коллекция скрыты при загрузке -->
             <div class="collection-stats-bar hidden" id="collectionStatsBar"></div>
 
             <div class="grid hidden" id="collectionContainer"></div>
@@ -885,6 +942,10 @@
         let currentMatchNumber = 1;
         let championAlbumObj = null;
 
+        // Переменные для свайпа
+        let touchStartX = 0;
+        let touchEndX = 0;
+
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
         function escapeHtml(str) {
@@ -953,9 +1014,54 @@
                 document.getElementById('pullBtn').disabled = false;
                 document.getElementById('pullBtnBottom').disabled = false;
                 document.getElementById('btnInitialPull').disabled = false;
+                
+                initSwipeListeners();
             } catch (err) {
                 alert('Error loading albums.json!');
                 console.error(err);
+            }
+        }
+
+        // Поддержка свайпов для переключения карточек в мобильной версии
+        function initSwipeListeners() {
+            const packContainer = document.getElementById('packContainer');
+            const matchContainer = document.getElementById('matchCardsContainer');
+
+            [packContainer, matchContainer].forEach(container => {
+                if (!container) return;
+                container.addEventListener('touchstart', e => {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, { passive: true });
+
+                container.addEventListener('touchend', e => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipeGesture(container);
+                }, { passive: true });
+            });
+        }
+
+        function handleSwipeGesture(container) {
+            const diffX = touchEndX - touchStartX;
+            if (Math.abs(diffX) < 40) return; // Порог чувствительности свайпа
+
+            if (container.id === 'packContainer' && currentPackData.length > 0) {
+                let currentSlot = currentPlayingSlot !== null ? currentPlayingSlot : 0;
+                if (diffX < 0) {
+                    let next = (currentSlot + 1) % 5;
+                    playSlot(next);
+                } else {
+                    let prev = (currentSlot - 1 + 5) % 5;
+                    playSlot(prev);
+                }
+            } else if (container.id === 'matchCardsContainer' && currentMatchAlbums.length > 0) {
+                let currentSlot = currentPlayingSlot !== null ? currentPlayingSlot : 0;
+                if (diffX < 0) {
+                    let next = (currentSlot + 1) % currentMatchAlbums.length;
+                    playTournamentCarouselTrack(next);
+                } else {
+                    let prev = (currentSlot - 1 + currentMatchAlbums.length) % currentMatchAlbums.length;
+                    playTournamentCarouselTrack(prev);
+                }
             }
         }
 
@@ -1041,7 +1147,6 @@
         async function pull5Pack() {
             if (allAlbums.length === 0) return;
 
-            // Переключаем интерфейс с центральной кнопки на 2 кнопки сверху/снизу
             if (!isFirstPackOpened) {
                 isFirstPackOpened = true;
                 document.getElementById('initialStartBox').classList.add('hidden');
@@ -1080,7 +1185,9 @@
             renderCollectionUI();
             btnTop.disabled = false;
             btnBottom.disabled = false;
-            playBestAlbumInPack();
+            
+            // Воспроизведение всегда с 1-й карточки (индекс 0) слева направо
+            playSlot(0);
         }
 
         function normalizeStr(str) {
@@ -1153,15 +1260,18 @@
                     let match = dzData.data.find(a => isStrictMatch(a.artist.name));
                     if (!match) match = dzData.data[0];
 
-                    if (!coverUrl) coverUrl = match.cover_xl || match.cover_big || '';
+                    if (!coverUrl && match.cover_xl) coverUrl = match.cover_xl || match.cover_big;
                     if (match.id) {
                         const tracksData = await jsonpFetch(`https://api.deezer.com/album/${match.id}/tracks?output=jsonp`);
                         if (tracksData && tracksData.data && tracksData.data.length > 0) {
-                            const validTracks = tracksData.data.filter(s => s.preview);
+                            let validTracks = tracksData.data.filter(s => s.preview);
                             if (validTracks.length > 0) {
-                                if (forceRandom) {
-                                    validTracks.sort(() => Math.random() - 0.5);
+                                // Исключаем повтор текущего трека при смене
+                                if (forceRandom && albumData.trackName && validTracks.length > 1) {
+                                    validTracks = validTracks.filter(t => t.title !== albumData.trackName);
                                 }
+                                if (forceRandom) validTracks.sort(() => Math.random() - 0.5);
+
                                 for (const selected of validTracks) {
                                     const isOk = await verifyAudioUrl(selected.preview);
                                     if (isOk) {
@@ -1179,11 +1289,13 @@
                 try {
                     const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist} ${cleanTitle}`)}&entity=song&limit=20`);
                     if (itunesData && itunesData.results && itunesData.results.length > 0) {
-                        const validSongs = itunesData.results.filter(s => s.previewUrl && isStrictMatch(s.artistName));
+                        let validSongs = itunesData.results.filter(s => s.previewUrl && isStrictMatch(s.artistName));
                         if (validSongs.length > 0) {
-                            if (forceRandom) {
-                                validSongs.sort(() => Math.random() - 0.5);
+                            if (forceRandom && albumData.trackName && validSongs.length > 1) {
+                                validSongs = validSongs.filter(s => s.trackName !== albumData.trackName);
                             }
+                            if (forceRandom) validSongs.sort(() => Math.random() - 0.5);
+
                             for (const selected of validSongs) {
                                 if (!coverUrl && selected.artworkUrl100) coverUrl = selected.artworkUrl100.replace('100x100bb', '600x600bb');
                                 const isOk = await verifyAudioUrl(selected.previewUrl);
@@ -1279,7 +1391,10 @@
                     <div class="type-badge">${escapeHtml(data.type)}</div>
                     <div class="score-badge">★ ${escapeHtml(data.score)}</div>
                     <div class="copies-tag">🃏 ${progressText} copies</div>
-                    <div class="genre-badge">🏷️ ${escapeHtml(data.genre)} | 📅 ${escapeHtml(data.year)}</div>
+                    <div class="genre-badge">
+                        <span class="genre-text" title="${escapeHtml(data.genre)}">🏷️ ${escapeHtml(data.genre)}</span>
+                        <span class="year-text">| 📅 ${escapeHtml(data.year)}</span>
+                    </div>
                 </div>
             `;
         }
@@ -1298,19 +1413,6 @@
                 const btn = card.querySelector('.fav-btn');
                 if (btn) btn.classList.toggle('active', currentPackData[slotIndex].isFavorite);
             }
-        }
-
-        function playBestAlbumInPack() {
-            if (currentPackData.length === 0) return;
-            let maxScore = -1, bestSlot = -1;
-            currentPackData.forEach((item, index) => {
-                if (item.preview) {
-                    const scoreNum = parseFloat(item.score) || 0;
-                    if (scoreNum > maxScore) { maxScore = scoreNum; bestSlot = index; }
-                }
-            });
-            if (bestSlot !== -1) playSlot(bestSlot);
-            else playNextSlotInCarousel(0);
         }
 
         function togglePlaySlot(slotIndex) {
@@ -1347,15 +1449,22 @@
                 resetSlotUI(slotIndex);
                 const nextSlot = (slotIndex + 1) % 5;
                 
-                if (nextSlot === 0) {
-                    for (let i = 0; i < 5; i++) {
-                        if (currentPackData[i]) {
-                            currentPackData[i] = await fetchHitTrackForAlbum(currentPackData[i], true, true);
-                            revealCardInPack(currentPackData[i], i);
+                // Проверка автооткрытия след пака после завершения 5-й карточки
+                const isAutoPullEnabled = document.getElementById('autoPullCheck') ? document.getElementById('autoPullCheck').checked : false;
+
+                if (nextSlot === 0 && isAutoPullEnabled) {
+                    pull5Pack();
+                } else {
+                    if (nextSlot === 0) {
+                        for (let i = 0; i < 5; i++) {
+                            if (currentPackData[i]) {
+                                currentPackData[i] = await fetchHitTrackForAlbum(currentPackData[i], true, true);
+                                revealCardInPack(currentPackData[i], i);
+                            }
                         }
                     }
+                    playSlot(nextSlot);
                 }
-                playSlot(nextSlot);
             };
 
             currentAudio.play().catch(e => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); });
@@ -1854,7 +1963,10 @@
                             <div class="type-badge">${escapeHtml(album.type)}</div>
                             <div class="score-badge">★ ${escapeHtml(album.score)}</div>
                             <div class="copies-tag">🃏 ${progressText} copies</div>
-                            <div class="genre-badge">🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}</div>
+                            <div class="genre-badge">
+                                <span class="genre-text" title="${escapeHtml(album.genre)}">🏷️ ${escapeHtml(album.genre)}</span>
+                                <span class="year-text">| 📅 ${escapeHtml(album.year)}</span>
+                            </div>
                         </div>
 
                         <div class="vote-control-bar">
@@ -2132,7 +2244,10 @@
                         <div class="type-badge">${escapeHtml(champion.type)}</div>
                         <div class="score-badge">★ ${escapeHtml(champion.score)}</div>
                         <div class="copies-tag">🃏 ${progressText} copies</div>
-                        <div class="genre-badge">🏷️ ${escapeHtml(champion.genre)} | 📅 ${escapeHtml(champion.year)}</div>
+                        <div class="genre-badge">
+                            <span class="genre-text" title="${escapeHtml(champion.genre)}">🏷️ ${escapeHtml(champion.genre)}</span>
+                            <span class="year-text">| 📅 ${escapeHtml(champion.year)}</span>
+                        </div>
                     </div>
                 </div>
             `;
