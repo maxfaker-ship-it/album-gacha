@@ -380,6 +380,42 @@
         .vinyl-placeholder .ph-title { font-size: 0.75rem; font-weight: bold; color: #fff; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .vinyl-placeholder .ph-artist { font-size: 0.65rem; color: #888; }
 
+        .blind-cover-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        .blind-center-shuffle {
+            margin: 12px 0 6px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .blind-center-shuffle .shuffle-btn {
+            width: 38px !important;
+            height: 38px !important;
+            min-width: 38px !important;
+            min-height: 38px !important;
+            background: rgba(99, 102, 241, 0.25);
+            border-color: var(--accent-color);
+        }
+
+        .blind-center-shuffle .shuffle-btn svg {
+            width: 18px !important;
+            height: 18px !important;
+            fill: #fff;
+        }
+
         .play-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
             display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
@@ -641,9 +677,10 @@
         }
 
         .tourn-card.loser-dimmed {
-            opacity: 0.15 !important;
-            filter: grayscale(100%) blur(1px) !important;
+            opacity: 0.3 !important;
+            filter: grayscale(100%) blur(0.5px) !important;
             transform: scale(0.92) !important;
+            border-color: #ef4444 !important;
         }
 
         .vote-control-bar {
@@ -769,6 +806,34 @@
             margin: 8px auto;
         }
 
+        .tournament-standings-section {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+            border-top: 1px solid #333;
+            padding-top: 15px;
+            text-align: left;
+        }
+
+        .tournament-standings-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 1rem;
+            color: #a855f7;
+            text-align: center;
+        }
+
+        .stage-group-badge {
+            background: #2a2a35;
+            color: #eab308;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin: 10px 0 6px 0;
+            display: inline-block;
+            border: 1px solid #444;
+        }
+
         @media (max-width: 600px) {
             .pack-container {
                 flex-direction: column;
@@ -885,9 +950,13 @@
                 <label>Match Format:</label>
                 <select id="tournFormat">
                     <option value="1v1">1v1 Classic Duel</option>
-                    <option value="3way">Triple Threat (3-Way)</option>
                     <option value="4way">Fatal 4-Way (4-Way)</option>
                 </select>
+            </div>
+
+            <div class="setup-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 4px;">
+                <input type="checkbox" id="tournBlindCheck" style="width: 16px; height: 16px; accent-color: var(--accent-color); cursor: pointer;">
+                <label for="tournBlindCheck" style="cursor: pointer; color: #fff;">🙈 Blind Mode (Audio-only duel)</label>
             </div>
 
             <button class="action-btn" id="btnStartTourn" onclick="startTournament()">🚀 START TOURNAMENT</button>
@@ -917,7 +986,7 @@
             </div>
         </div>
 
-        <div class="tournament-setup hidden" id="winnerScreen" style="text-align: center; max-width: 320px;">
+        <div class="tournament-setup hidden" id="winnerScreen" style="text-align: center; max-width: 700px;">
             <h2 style="color: #eab308; font-size: 1.4rem; margin: 0;">🏆 CHAMPION 🏆</h2>
             <div id="championCardContainer"></div>
             
@@ -925,6 +994,11 @@
                 <button class="end-option-btn" onclick="startTournamentWithSameRules()">🔄 Play Again (Same Rules)</button>
                 <button class="end-option-btn" onclick="resetTournamentUI()">⚙️ Change Rules</button>
                 <button class="end-option-btn" onclick="switchMode('gacha')">🎰 Switch to Gacha Mode</button>
+            </div>
+
+            <div class="tournament-standings-section" id="tournamentStandingsSection">
+                <h3>📊 Tournament Final Standings</h3>
+                <div class="list" id="tournamentStandingsList"></div>
             </div>
         </div>
     </div>
@@ -959,9 +1033,14 @@
         let currentMatchAlbums = [];
         let currentMatchVotes = [];
         let matchSize = 2;
+        let isBlindMode = false;
+        let revealedSlots = []; // Список индексов карточек, которые уже нужно деблиндировать
         let currentRoundNumber = 1;
         let currentMatchNumber = 1;
         let championAlbumObj = null;
+
+        let tournamentEliminationLog = []; 
+        let totalTournParticipants = 0;
 
         let touchStartX = 0;
         let touchStartY = 0;
@@ -1448,7 +1527,6 @@
             else playSlot(slotIndex);
         }
 
-        /* Мягкое нарастание громкости (Fade-in) */
         async function fadeInAudio(audioObj, targetVolume = 1.0, duration = 250) {
             if (!audioObj) return;
             audioObj.volume = 0.0;
@@ -1558,7 +1636,6 @@
             renderCollectionUI();
         }
 
-        /* Мягкое плавное затухание (Fade-out) */
         async function fadeAndStopAudio() {
             if (currentAudio) {
                 const aud = currentAudio;
@@ -1836,12 +1913,14 @@
             const source = document.getElementById('tournSource').value;
             const targetSize = parseInt(document.getElementById('tournSize').value, 10);
             const format = document.getElementById('tournFormat').value;
+            isBlindMode = document.getElementById('tournBlindCheck').checked;
+
             const btn = document.getElementById('btnStartTourn');
             const progressOverlay = document.getElementById('tournProgressOverlay');
             const progressFill = document.getElementById('tournProgressFill');
             const progressText = document.getElementById('tournProgressText');
 
-            matchSize = (format === '3way') ? 3 : (format === '4way') ? 4 : 2;
+            matchSize = (format === '4way') ? 4 : 2;
 
             let pool = [];
             if (source === 'collection') pool = Array.from(collection.values());
@@ -1895,6 +1974,9 @@
 
             tournBracket = validBracket;
             tournNextRound = [];
+            tournamentEliminationLog = [];
+            totalTournParticipants = validBracket.length;
+
             currentRoundNumber = 1;
             currentMatchNumber = 1;
 
@@ -1913,6 +1995,7 @@
 
         async function loadNextMatch() {
             stopCurrentAudio();
+            revealedSlots = []; // Сброс раскрывшейся карточки для следующей дуэли
             document.getElementById('btnRollDice').disabled = false;
 
             if (tournBracket.length === 1 && tournNextRound.length === 0) {
@@ -1957,7 +2040,7 @@
         function renderBattleMatchUI() {
             const totalRemaining = tournBracket.length + currentMatchAlbums.length + tournNextRound.length;
             const stageTitle = getPlayoffStageTitle(totalRemaining);
-            document.getElementById('tournRoundTitle').innerText = `${stageTitle} | Match ${currentMatchNumber}`;
+            document.getElementById('tournRoundTitle').innerText = `${stageTitle} | Match ${currentMatchNumber}${isBlindMode ? ' 🙈 Blind' : ''}`;
             document.getElementById('tournRemainingText').innerText = `Remaining: ${totalRemaining}`;
 
             const container = document.getElementById('matchCardsContainer');
@@ -1973,8 +2056,10 @@
                 const isPlaying = (currentPlayingSlot === idx) && currentAudio && !currentAudio.paused;
                 const favClass = album.isFavorite ? 'active' : '';
 
+                const isSlotBlind = isBlindMode && !revealedSlots.includes(idx);
+
                 card.className = `tourn-card rarity-${escapeHtml(album.rarity)} ${isPlaying ? 'playing' : ''}`;
-                card.style.borderColor = `var(--rarity-${borderVar})`;
+                card.style.borderColor = isSlotBlind ? '#444' : `var(--rarity-${borderVar})`;
                 card.id = `tcard-${idx}`;
 
                 const escTitle = escapeHtml(album.title);
@@ -1983,52 +2068,92 @@
                 const lvlClass = getLevelColorClass(album.level || 1);
                 const progressText = getCopiesProgressText(album.pulls || 1);
 
-                const coverHTML = album.cover ? `<img src="${escapeHtml(album.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
-
-                let trackDisplay = album.trackName 
-                    ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
-                    : `<div class="track-preview-name" style="visibility: hidden;">🎵 Placeholder</div>`;
-
                 let playIconSVG = isPlaying ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
 
-                card.innerHTML = `
-                    <div>
-                        <div class="card-top-bar">
-                            <div class="lvl-badge ${lvlClass}">LVL ${album.level || 1}</div>
-                            <div class="rarity-badge">${escapeHtml(album.rarity)}</div>
-                            <div style="display:flex; gap:4px; align-items:center;">
-                                <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
-                                <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</button>
+                // Если активирован Blind Mode и слот еще НЕ открыт (не проигравший после рулетки)
+                if (isSlotBlind) {
+                    card.innerHTML = `
+                        <div>
+                            <div class="card-top-bar">
+                                <div class="lvl-badge" style="color:#aaa;">LVL ?</div>
+                                <div class="rarity-badge" style="background:#333; color:#aaa;">BLIND</div>
+                                <div class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</div>
+                            </div>
+
+                            <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
+                                <div class="blind-cover-placeholder">❓</div>
+                                <div class="play-overlay" style="opacity: 0.95;"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
+                                <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
+                            </div>
+
+                            <div class="blind-center-shuffle">
+                                <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Shuffle Preview Track">${SHUFFLE_SVG}</button>
+                            </div>
+
+                            <div class="card-details-box" style="filter: blur(4px); opacity: 0.25; pointer-events: none;">
+                                <div class="mini-track-container"><div class="track-preview-name">🎵 Hidden Track</div></div>
+                                <div class="artist-name">Hidden Artist</div>
+                                <div class="album-title">Hidden Album</div>
+                                <div class="type-badge">ALBUM</div>
+                                <div class="score-badge">★ 0.0</div>
                             </div>
                         </div>
 
-                        <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
-                            ${coverHTML}
-                            <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
-                            <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
-                        </div>
-
-                        <div class="card-details-box">
-                            <div class="mini-track-container">${trackDisplay}</div>
-                            <div class="artist-name" title="${escArtist}">${escArtist}</div>
-                            <div class="album-title" title="${escTitle}">${escTitle}</div>
-                            <div class="type-badge">${escapeHtml(album.type)}</div>
-                            <div class="score-badge">★ ${escapeHtml(album.score)}</div>
-                            <div class="copies-tag">🃏 ${progressText} copies</div>
-                            <div class="genre-badge" title="${escapeHtml(album.genre)} | ${escapeHtml(album.year)}">
-                                🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}
+                        <div style="margin-top: 4px;">
+                            <div class="vote-control-bar">
+                                <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
+                                <span class="vote-score-val" id="tvote-val-${idx}">${currentMatchVotes[idx]} votes</span>
+                                <button class="vote-btn-step" onclick="changeVote(${idx}, 1)">+</button>
                             </div>
                         </div>
-                    </div>
+                    `;
+                } else {
+                    const coverHTML = album.cover ? `<img src="${escapeHtml(album.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
 
-                    <div style="margin-top: 4px;">
-                        <div class="vote-control-bar">
-                            <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
-                            <span class="vote-score-val" id="tvote-val-${idx}">${currentMatchVotes[idx]} votes</span>
-                            <button class="vote-btn-step" onclick="changeVote(${idx}, 1)">+</button>
+                    let trackDisplay = album.trackName 
+                        ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
+                        : `<div class="track-preview-name" style="visibility: hidden;">🎵 Placeholder</div>`;
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="card-top-bar">
+                                <div class="lvl-badge ${lvlClass}">LVL ${album.level || 1}</div>
+                                <div class="rarity-badge">${escapeHtml(album.rarity)}</div>
+                                <div style="display:flex; gap:4px; align-items:center;">
+                                    <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                                    <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</button>
+                                </div>
+                            </div>
+
+                            <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
+                                ${coverHTML}
+                                <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
+                                <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
+                            </div>
+
+                            <div class="card-details-box">
+                                <div class="mini-track-container">${trackDisplay}</div>
+                                <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                                <div class="album-title" title="${escTitle}">${escTitle}</div>
+                                <div class="type-badge">${escapeHtml(album.type)}</div>
+                                <div class="score-badge">★ ${escapeHtml(album.score)}</div>
+                                <div class="copies-tag">🃏 ${progressText} copies</div>
+                                <div class="genre-badge" title="${escapeHtml(album.genre)} | ${escapeHtml(album.year)}">
+                                    🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                `;
+
+                        <div style="margin-top: 4px;">
+                            <div class="vote-control-bar">
+                                <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
+                                <span class="vote-score-val" id="tvote-val-${idx}">${currentMatchVotes[idx]} votes</span>
+                                <button class="vote-btn-step" onclick="changeVote(${idx}, 1)">+</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 container.appendChild(card);
             });
 
@@ -2207,6 +2332,9 @@
                 }
             }
 
+            const totalRemaining = tournBracket.length + currentMatchAlbums.length + tournNextRound.length;
+
+            // 1. Анимация ролла (мигание)
             const remainingInBracket = tournBracket.length + tournNextRound.length;
             let totalTicks = 8;
             if (remainingInBracket <= 4) totalTicks = 22;
@@ -2224,6 +2352,17 @@
                 await sleep(80 + t * 15);
             }
 
+            // 2. Раскрываем ТОЛЬКО ПРОИГРАВШИХ участников в Blind Mode
+            if (isBlindMode) {
+                currentMatchAlbums.forEach((_, i) => {
+                    if (i !== winnerIdx && !revealedSlots.includes(i)) {
+                        revealedSlots.push(i);
+                    }
+                });
+                renderBattleMatchUI();
+            }
+
+            // 3. Подсветка победителя и явное визуальное затемнение/выделение проигравшего
             currentMatchAlbums.forEach((_, i) => {
                 const c = document.getElementById(`tcard-${i}`);
                 if (c) {
@@ -2237,7 +2376,19 @@
                 }
             });
 
-            await sleep(2200);
+            // Логирование выбывших участников
+            const stageName = getPlayoffStageTitle(totalRemaining);
+            currentMatchAlbums.forEach((album, idx) => {
+                if (idx !== winnerIdx) {
+                    tournamentEliminationLog.push({
+                        album: album,
+                        eliminatedAtStage: stageName,
+                        remainingAtElimination: totalRemaining
+                    });
+                }
+            });
+
+            await sleep(2400);
 
             const winnerAlbum = currentMatchAlbums[winnerIdx];
             tournNextRound.push(winnerAlbum);
@@ -2303,6 +2454,38 @@
 
             container.appendChild(card);
             playChampionTrack();
+        }
+
+        function renderTournamentStandingsUI(champion) {
+            const listContainer = document.getElementById('tournamentStandingsList');
+            listContainer.innerHTML = '';
+
+            const sortedLog = [...tournamentEliminationLog].sort((a, b) => a.remainingAtElimination - b.remainingAtElimination);
+            
+            const champGroup = document.createElement('div');
+            champGroup.innerHTML = `<div class="stage-group-badge" style="color:#eab308; border-color:#eab308;">🥇 CHAMPION</div>`;
+            champGroup.appendChild(createAlbumCardElement(champion, 'list'));
+            listContainer.appendChild(champGroup);
+
+            let currentStage = '';
+            let currentGroupContainer = null;
+
+            sortedLog.forEach(entry => {
+                if (entry.eliminatedAtStage !== currentStage) {
+                    currentStage = entry.eliminatedAtStage;
+                    currentGroupContainer = document.createElement('div');
+                    
+                    let badgeLabel = currentStage;
+                    if (currentStage === "🏆 FINAL") badgeLabel = "🥈 RUNNER-UP (Finalist)";
+
+                    currentGroupContainer.innerHTML = `<div class="stage-group-badge">${badgeLabel}</div>`;
+                    listContainer.appendChild(currentGroupContainer);
+                }
+
+                if (currentGroupContainer) {
+                    currentGroupContainer.appendChild(createAlbumCardElement(entry.album, 'list'));
+                }
+            });
         }
 
         function toggleFavoriteChampion(event) {
@@ -2394,6 +2577,7 @@
             document.getElementById('winnerScreen').classList.remove('hidden');
 
             renderChampionCardUI(champion);
+            renderTournamentStandingsUI(champion);
         }
 
         function abortTournament() {
@@ -2405,6 +2589,8 @@
         function resetTournamentUI() {
             stopCurrentAudio();
             championAlbumObj = null;
+            tournamentEliminationLog = [];
+            revealedSlots = [];
             document.getElementById('battleArena').classList.add('hidden');
             document.getElementById('winnerScreen').classList.add('hidden');
             document.getElementById('tournamentSetup').classList.remove('hidden');
