@@ -29,6 +29,7 @@
             overflow-x: hidden;
             margin: 0;
             padding: 0;
+            touch-action: pan-y;
         }
 
         body {
@@ -264,7 +265,7 @@
             margin-bottom: 4px;
             width: 100%;
             height: 28px;
-            gap: 4px;
+            position: relative;
         }
 
         .lvl-badge {
@@ -278,6 +279,7 @@
             white-space: nowrap;
             transition: all 0.3s;
             flex-shrink: 0;
+            z-index: 2;
         }
 
         .copies-tag {
@@ -294,8 +296,10 @@
         .lvl-color-5 { color: var(--lvl-5-color); text-shadow: 0 0 5px rgba(250,204,21,0.4); }
 
         .rarity-badge {
-            display: inline-block;
-            padding: 2px 6px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 2px 8px;
             border-radius: 8px;
             font-weight: bold;
             font-size: 0.6rem;
@@ -304,6 +308,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            z-index: 1;
         }
 
         @container (max-width: 150px) {
@@ -337,6 +342,7 @@
             flex-shrink: 0 !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
+            z-index: 2;
         }
 
         .shuffle-btn svg { 
@@ -355,7 +361,7 @@
             position: relative;
             width: 100%;
             aspect-ratio: 1/1;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             border-radius: 6px;
             overflow: hidden;
             background: #18181c;
@@ -374,14 +380,12 @@
         .vinyl-placeholder .ph-title { font-size: 0.75rem; font-weight: bold; color: #fff; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .vinyl-placeholder .ph-artist { font-size: 0.65rem; color: #888; }
 
-        /* Настройка оверлея кнопки воспроизведения */
         .play-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
             display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
             pointer-events: none;
         }
 
-        /* На десктопе кнопка видна ИСКЛЮЧИТЕЛЬНО при навежении мыши */
         @media (hover: hover) {
             .cover-wrapper:hover .play-overlay, 
             .mini-cover-wrapper:hover .play-overlay, 
@@ -416,23 +420,28 @@
         .rarity-Epic .progress-bar-fill { background: var(--rarity-epic); }
         .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
 
-        .album-info-top { display: flex; flex-direction: column; gap: 1px; margin-bottom: 2px; }
-        .album-title { font-size: 0.8rem; font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .artist-name { color: #aaa; font-size: 0.7rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-details-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 2px;
+        }
 
         .mini-track-container {
-            min-height: 15px;
+            min-height: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 1px;
             width: 100%;
             overflow: hidden;
         }
 
         .track-preview-name {
             color: var(--accent-color);
-            font-size: 0.65rem;
+            font-size: 0.68rem;
             font-weight: bold;
             white-space: nowrap;
             overflow: hidden;
@@ -440,8 +449,38 @@
             width: 100%;
         }
 
-        .album-info-bottom { display: flex; flex-direction: column; gap: 1px; margin-top: auto; }
-        .type-badge { display: inline-block; align-self: center; background: #2a2a32; color: var(--accent-color); padding: 1px 5px; border-radius: 3px; font-size: 0.6rem; font-weight: bold; }
+        .album-title { 
+            font-size: 0.85rem; 
+            font-weight: bold; 
+            margin: 0; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            width: 100%; 
+        }
+
+        .artist-name { 
+            color: #aaa; 
+            font-size: 0.72rem; 
+            margin: 0; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            width: 100%; 
+        }
+
+        .type-badge { 
+            display: inline-block; 
+            align-self: center; 
+            background: #2a2a32; 
+            color: var(--accent-color); 
+            padding: 1px 6px; 
+            border-radius: 4px; 
+            font-size: 0.6rem; 
+            font-weight: bold; 
+            margin-top: 2px;
+        }
+
         .score-badge { color: #eab308; font-weight: bold; font-size: 0.75rem; margin: 1px 0; }
         
         .genre-badge { 
@@ -453,20 +492,10 @@
             align-items: center;
             justify-content: center;
             gap: 4px;
-            flex-wrap: wrap;
-            width: 100%;
-        }
-
-        .genre-text {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 120px;
-        }
-
-        .year-text {
-            white-space: nowrap;
-            flex-shrink: 0;
+            width: 100%;
         }
 
         .collection-section { 
@@ -516,10 +545,6 @@
         .mini-card:hover { transform: translateY(-3px); }
         .mini-cover-wrapper { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 5px; overflow: hidden; background: #18181c; margin-bottom: 4px; }
         .mini-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .mini-card .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; font-weight: bold; }
-        .mini-card .mini-artist { color: #bbb; font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .mini-card .mini-score { color: #eab308; font-size: 0.7rem; font-weight: bold; margin-top: 1px; }
-        .mini-card .mini-info { color: #777; font-size: 0.65rem; margin-top: auto; display: flex; flex-direction: column; gap: 1px; align-items: center; padding-top: 4px;}
 
         .artist-group { background: #18181c; border-radius: 10px; padding: 12px; margin-bottom: 15px; border: 1px solid #2e2e38; }
         .artist-group-header { font-size: 1rem; font-weight: bold; color: #a855f7; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #2e2e38; padding-bottom: 4px; }
@@ -752,8 +777,9 @@
             }
             .card {
                 width: 100%;
-                max-width: 280px;
+                max-width: 320px;
                 min-height: 340px;
+                margin: 0 auto;
             }
             .match-cards-container {
                 flex-wrap: wrap;
@@ -938,7 +964,7 @@
         let championAlbumObj = null;
 
         let touchStartX = 0;
-        let touchEndX = 0;
+        let touchStartY = 0;
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -1023,37 +1049,42 @@
             [packContainer, matchContainer].forEach(container => {
                 if (!container) return;
                 container.addEventListener('touchstart', e => {
-                    touchStartX = e.changedTouches[0].screenX;
+                    touchStartX = e.changedTouches[0].clientX;
+                    touchStartY = e.changedTouches[0].clientY;
                 }, { passive: true });
 
+                container.addEventListener('touchmove', e => {
+                    const currentX = e.changedTouches[0].clientX;
+                    const currentY = e.changedTouches[0].clientY;
+                    const diffX = Math.abs(currentX - touchStartX);
+                    const diffY = Math.abs(currentY - touchStartY);
+
+                    if (diffX > diffY && diffX > 10) {
+                        if (e.cancelable) e.preventDefault();
+                    }
+                }, { passive: false });
+
                 container.addEventListener('touchend', e => {
-                    touchEndX = e.changedTouches[0].screenX;
-                    handleSwipeGesture(container);
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const touchEndY = e.changedTouches[0].clientY;
+                    handleSwipeGesture(container, touchStartX, touchEndX, touchStartY, touchEndY);
                 }, { passive: true });
             });
         }
 
-        function handleSwipeGesture(container) {
-            const diffX = touchEndX - touchStartX;
-            if (Math.abs(diffX) < 40) return;
+        function handleSwipeGesture(container, startX, endX, startY, endY) {
+            const diffX = endX - startX;
+            const diffY = endY - startY;
 
-            if (container.id === 'packContainer' && currentPackData.length > 0) {
-                let currentSlot = currentPlayingSlot !== null ? currentPlayingSlot : 0;
-                if (diffX < 0) {
-                    let next = (currentSlot + 1) % 5;
-                    playSlot(next);
-                } else {
-                    let prev = (currentSlot - 1 + 5) % 5;
-                    playSlot(prev);
-                }
-            } else if (container.id === 'matchCardsContainer' && currentMatchAlbums.length > 0) {
-                let currentSlot = currentPlayingSlot !== null ? currentPlayingSlot : 0;
-                if (diffX < 0) {
-                    let next = (currentSlot + 1) % currentMatchAlbums.length;
-                    playTournamentCarouselTrack(next);
-                } else {
-                    let prev = (currentSlot - 1 + currentMatchAlbums.length) % currentMatchAlbums.length;
-                    playTournamentCarouselTrack(prev);
+            if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+                if (container.id === 'packContainer' && currentPackData.length > 0) {
+                    let currentSlot = currentPlayingSlot !== null ? currentPlayingSlot : 0;
+                    if (diffX < 0) playSlot((currentSlot + 1) % 5);
+                    else playSlot((currentSlot - 1 + 5) % 5);
+                } else if (container.id === 'matchCardsContainer' && currentMatchAlbums.length > 0) {
+                    let currentSlot = currentPlayingSlot !== null ? currentPlayingSlot : 0;
+                    if (diffX < 0) playTournamentCarouselTrack((currentSlot + 1) % currentMatchAlbums.length);
+                    else playTournamentCarouselTrack((currentSlot - 1 + currentMatchAlbums.length) % currentMatchAlbums.length);
                 }
             }
         }
@@ -1122,15 +1153,15 @@
                             <div class="fav-btn">★</div>
                         </div>
                         <div class="cover-wrapper"></div>
-                        <div class="album-info-top">
-                            <div class="album-title">Opening...</div>
+                        <div class="card-details-box">
+                            <div class="mini-track-container"><div class="track-preview-name">...</div></div>
                             <div class="artist-name">...</div>
+                            <div class="album-title">Opening...</div>
+                            <div class="type-badge">...</div>
+                            <div class="score-badge">★ -.-</div>
+                            <div class="copies-tag">🃏 ...</div>
+                            <div class="genre-badge">🏷️ ...</div>
                         </div>
-                    </div>
-                    <div class="album-info-bottom">
-                        <div class="type-badge">...</div>
-                        <div class="score-badge">★ -.-</div>
-                        <div class="genre-badge">🏷️ ...</div>
                     </div>
                 `;
                 packContainer.appendChild(card);
@@ -1256,6 +1287,11 @@
                         const tracksData = await jsonpFetch(`https://api.deezer.com/album/${match.id}/tracks?output=jsonp`);
                         if (tracksData && tracksData.data && tracksData.data.length > 0) {
                             let validTracks = tracksData.data.filter(s => s.preview);
+                            
+                            if (validTracks.length > 1) {
+                                validTracks = validTracks.filter((t, index) => index > 0 && t.track_position !== 1);
+                            }
+
                             if (validTracks.length > 0) {
                                 if (forceRandom && albumData.trackName && validTracks.length > 1) {
                                     validTracks = validTracks.filter(t => t.title !== albumData.trackName);
@@ -1280,6 +1316,11 @@
                     const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist} ${cleanTitle}`)}&entity=song&limit=20`);
                     if (itunesData && itunesData.results && itunesData.results.length > 0) {
                         let validSongs = itunesData.results.filter(s => s.previewUrl && isStrictMatch(s.artistName));
+                        
+                        if (validSongs.length > 1) {
+                            validSongs = validSongs.filter(s => s.trackNumber !== 1);
+                        }
+
                         if (validSongs.length > 0) {
                             if (forceRandom && albumData.trackName && validSongs.length > 1) {
                                 validSongs = validSongs.filter(s => s.trackName !== albumData.trackName);
@@ -1354,7 +1395,7 @@
 
             let trackDisplay = data.trackName 
                 ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
-                : `<div class="track-preview-name" style="color: #666;">🔇 No Audio</div>`;
+                : `<div class="track-preview-name" style="visibility: hidden;">🎵 Placeholder</div>`;
 
             card.innerHTML = `
                 <div>
@@ -1371,19 +1412,16 @@
                         ${overlayHTML}
                         <div class="progress-bar-container"><div class="progress-bar-fill" id="progress-${index}"></div></div>
                     </div>
-                    <div class="album-info-top">
-                        <div class="album-title" title="${escTitle}">${escTitle}</div>
-                        <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                    <div class="card-details-box">
                         <div class="mini-track-container">${trackDisplay}</div>
-                    </div>
-                </div>
-                <div class="album-info-bottom">
-                    <div class="type-badge">${escapeHtml(data.type)}</div>
-                    <div class="score-badge">★ ${escapeHtml(data.score)}</div>
-                    <div class="copies-tag">🃏 ${progressText} copies</div>
-                    <div class="genre-badge">
-                        <span class="genre-text" title="${escapeHtml(data.genre)}">🏷️ ${escapeHtml(data.genre)}</span>
-                        <span class="year-text">| 📅 ${escapeHtml(data.year)}</span>
+                        <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                        <div class="album-title" title="${escTitle}">${escTitle}</div>
+                        <div class="type-badge">${escapeHtml(data.type)}</div>
+                        <div class="score-badge">★ ${escapeHtml(data.score)}</div>
+                        <div class="copies-tag">🃏 ${progressText} copies</div>
+                        <div class="genre-badge" title="${escapeHtml(data.genre)} | ${escapeHtml(data.year)}">
+                            🏷️ ${escapeHtml(data.genre)} | 📅 ${escapeHtml(data.year)}
+                        </div>
                     </div>
                 </div>
             `;
@@ -1410,8 +1448,23 @@
             else playSlot(slotIndex);
         }
 
-        function playSlot(slotIndex) {
-            stopCurrentAudio();
+        /* Мягкое нарастание громкости (Fade-in) */
+        async function fadeInAudio(audioObj, targetVolume = 1.0, duration = 250) {
+            if (!audioObj) return;
+            audioObj.volume = 0.0;
+            const steps = 10;
+            const stepTime = duration / steps;
+            const volumeIncrement = targetVolume / steps;
+
+            for (let i = 0; i < steps; i++) {
+                if (!currentAudio || currentAudio !== audioObj) break;
+                audioObj.volume = Math.min(targetVolume, audioObj.volume + volumeIncrement);
+                await sleep(stepTime);
+            }
+        }
+
+        async function playSlot(slotIndex) {
+            await fadeAndStopAudio();
             const albumData = currentPackData[slotIndex];
             if (!albumData || !albumData.preview) { playNextSlotInCarousel(slotIndex); return; }
 
@@ -1432,13 +1485,12 @@
 
             currentAudio = new Audio(albumData.preview);
             currentAudio.ontimeupdate = () => {
-                if (currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+                if (currentAudio && currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
             };
             
             currentAudio.onended = async () => {
                 resetSlotUI(slotIndex);
                 const nextSlot = (slotIndex + 1) % 5;
-                
                 const isAutoPullEnabled = document.getElementById('autoPullCheck') ? document.getElementById('autoPullCheck').checked : false;
 
                 if (nextSlot === 0 && isAutoPullEnabled) {
@@ -1456,7 +1508,9 @@
                 }
             };
 
-            currentAudio.play().catch(e => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); });
+            currentAudio.play().then(() => {
+                fadeInAudio(currentAudio, 1.0, 250);
+            }).catch(e => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); });
             renderCollectionUI();
         }
 
@@ -1477,7 +1531,7 @@
             if (!forceNextTrack && currentPlayingId === trackKey && currentAudio && !currentAudio.paused) {
                 pauseCurrentAudio(); renderCollectionUI(); return;
             }
-            stopCurrentAudio();
+            await fadeAndStopAudio();
 
             const album = collection.get(albumId);
             if (!album) return;
@@ -1491,34 +1545,38 @@
                 currentPlayingId = trackKey;
                 currentAudio = new Audio(refreshedData.preview);
                 currentAudio.ontimeupdate = () => {
-                    if (currentAudio.duration) {
+                    if (currentAudio && currentAudio.duration) {
                         const progressBar = document.getElementById(`col-progress-${albumId}`);
                         if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
                     }
                 };
                 currentAudio.onended = () => { currentPlayingId = null; renderCollectionUI(); };
-                currentAudio.play().catch(e => { currentPlayingId = null; renderCollectionUI(); });
+                currentAudio.play().then(() => {
+                    fadeInAudio(currentAudio, 1.0, 250);
+                }).catch(e => { currentPlayingId = null; renderCollectionUI(); });
             } else { alert('Audio preview not available right now.'); }
             renderCollectionUI();
         }
 
-        function pauseCurrentAudio() {
-            if (currentAudio) currentAudio.pause();
-            if (currentPlayingSlot !== null) {
-                const icon = document.getElementById(`play-icon-${currentPlayingSlot}`);
-                if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-                const card = document.getElementById(`pack-card-${currentPlayingSlot}`);
-                if (card) card.classList.remove('playing');
-            }
-            currentPlayingId = null;
-        }
-
-        function stopCurrentAudio() {
-            if (currentAudio) { 
-                currentAudio.pause(); 
-                currentAudio.onended = null;
-                currentAudio.onerror = null;
-                currentAudio = null; 
+        /* Мягкое плавное затухание (Fade-out) */
+        async function fadeAndStopAudio() {
+            if (currentAudio) {
+                const aud = currentAudio;
+                currentAudio = null;
+                aud.onended = null;
+                aud.onerror = null;
+                
+                try {
+                    let vol = aud.volume;
+                    while (vol > 0.1) {
+                        vol -= 0.15;
+                        aud.volume = Math.max(0, vol);
+                        await sleep(25);
+                    }
+                    aud.pause();
+                } catch(e) {
+                    aud.pause();
+                }
             }
             if (currentPlayingSlot !== null) { 
                 resetSlotUI(currentPlayingSlot); 
@@ -1527,6 +1585,14 @@
             }
             currentPlayingId = null;
             loadingCollectionId = null;
+        }
+
+        function pauseCurrentAudio() {
+            fadeAndStopAudio();
+        }
+
+        function stopCurrentAudio() {
+            fadeAndStopAudio();
         }
 
         function resetSlotUI(slotIndex) {
@@ -1573,8 +1639,11 @@
             const collectedCount = collection.size;
             const percentage = ((collectedCount / totalInDb) * 100).toFixed(1);
 
+            let favoritesCount = 0;
             let counts = { Legendary: 0, Epic: 0, Rare: 0, Common: 0 };
+
             collection.forEach(item => {
+                if (item.isFavorite) favoritesCount++;
                 if (counts[item.rarity] !== undefined) counts[item.rarity]++;
             });
 
@@ -1584,7 +1653,8 @@
             const commPct = ((counts.Common / totalInDb) * 100).toFixed(1);
 
             statsBar.innerHTML = `
-                <div>Total Completion: <span class="stat-badge">${collectedCount} / ${totalInDb} (${percentage}%)</span></div>
+                <div>Completion: <span class="stat-badge">${collectedCount} / ${totalInDb} (${percentage}%)</span></div>
+                <div style="color:#eab308; font-weight:bold;">★ Favorite: <span class="stat-badge" style="color:#eab308;">${favoritesCount}</span></div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <span style="color:var(--rarity-legend);">🟡 ${counts.Legendary} (${legPct}%)</span>
                     <span style="color:var(--rarity-epic);">🟣 ${counts.Epic} (${epicPct}%)</span>
@@ -1659,12 +1729,9 @@
             if (isLoading) playIconSVG = '';
             else if (isPlaying) playIconSVG = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
 
-            let trackDisplay = '';
-            if (isPlaying && activeTrackName) {
-                trackDisplay = `<div class="track-preview-name" title="${escapeHtml(activeTrackName)}">🎵 ${escapeHtml(activeTrackName)}</div>`;
-            } else if (isLoading) {
-                trackDisplay = `<div class="track-preview-name" style="color:#eab308;">⏳ Fetching...</div>`;
-            }
+            let trackDisplay = (isPlaying && activeTrackName) 
+                ? `<div class="track-preview-name" title="${escapeHtml(activeTrackName)}">🎵 ${escapeHtml(activeTrackName)}</div>`
+                : (isLoading ? `<div class="track-preview-name" style="color:#eab308;">⏳ Fetching...</div>` : `<div class="track-preview-name" style="visibility: hidden;">🎵 Placeholder</div>`);
 
             if (mode === 'grid') {
                 const mini = document.createElement('div');
@@ -1686,15 +1753,16 @@
                             <div class="play-overlay"><div class="play-btn-icon">${isLoading ? '⏳' : `<svg viewBox="0 0 24 24">${playIconSVG}</svg>`}</div></div>
                             <div class="progress-bar-container"><div class="progress-bar-fill" id="col-progress-${item.id}"></div></div>
                         </div>
-                        <div class="title" title="${escTitle}">${escTitle}</div>
-                        <div class="mini-artist" title="${escArtist}">${escArtist}</div>
-                        <div class="mini-track-container">${trackDisplay}</div>
-                    </div>
-                    <div>
-                        <div class="mini-info">
-                            <span class="mini-score">★ ${escapeHtml(item.score)}</span>
-                            <span class="copies-tag">🃏 ${progressText} copies</span>
-                            <span>📅 ${escapeHtml(item.year)} | 🏷️ ${escapeHtml(item.genre)}</span>
+                        <div class="card-details-box">
+                            <div class="mini-track-container">${trackDisplay}</div>
+                            <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                            <div class="album-title" title="${escTitle}">${escTitle}</div>
+                            <div class="type-badge">${escapeHtml(item.type)}</div>
+                            <div class="score-badge">★ ${escapeHtml(item.score)}</div>
+                            <div class="copies-tag">🃏 ${progressText} copies</div>
+                            <div class="genre-badge" title="${escapeHtml(item.genre)} | ${escapeHtml(item.year)}">
+                                🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1919,7 +1987,7 @@
 
                 let trackDisplay = album.trackName 
                     ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
-                    : `<div class="track-preview-name" style="color: #666;">🔇 No Audio</div>`;
+                    : `<div class="track-preview-name" style="visibility: hidden;">🎵 Placeholder</div>`;
 
                 let playIconSVG = isPlaying ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
 
@@ -1940,24 +2008,20 @@
                             <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
                         </div>
 
-                        <div class="album-info-top">
-                            <div class="album-title" title="${escTitle}">${escTitle}</div>
-                            <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                        <div class="card-details-box">
                             <div class="mini-track-container">${trackDisplay}</div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="album-info-bottom">
+                            <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                            <div class="album-title" title="${escTitle}">${escTitle}</div>
                             <div class="type-badge">${escapeHtml(album.type)}</div>
                             <div class="score-badge">★ ${escapeHtml(album.score)}</div>
                             <div class="copies-tag">🃏 ${progressText} copies</div>
-                            <div class="genre-badge">
-                                <span class="genre-text" title="${escapeHtml(album.genre)}">🏷️ ${escapeHtml(album.genre)}</span>
-                                <span class="year-text">| 📅 ${escapeHtml(album.year)}</span>
+                            <div class="genre-badge" title="${escapeHtml(album.genre)} | ${escapeHtml(album.year)}">
+                                🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}
                             </div>
                         </div>
+                    </div>
 
+                    <div style="margin-top: 4px;">
                         <div class="vote-control-bar">
                             <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
                             <span class="vote-score-val" id="tvote-val-${idx}">${currentMatchVotes[idx]} votes</span>
@@ -2007,8 +2071,8 @@
             }
         }
 
-        function playTournamentCarouselTrack(idx) {
-            stopCurrentAudio();
+        async function playTournamentCarouselTrack(idx) {
+            await fadeAndStopAudio();
             const album = currentMatchAlbums[idx];
             if (!album || !album.preview) {
                 playNextMatchTrackInCarousel(idx);
@@ -2062,7 +2126,9 @@
                 playNextMatchTrackInCarousel(idx);
             };
 
-            newAudio.play().catch(e => {
+            newAudio.play().then(() => {
+                if (currentAudio === newAudio) fadeInAudio(newAudio, 1.0, 250);
+            }).catch(e => {
                 if (currentAudio !== newAudio) return;
                 resetTournamentSlotUI(idx);
                 playNextMatchTrackInCarousel(idx);
@@ -2221,21 +2287,15 @@
                         <div class="progress-bar-container"><div class="progress-bar-fill" id="champ-progress-fill"></div></div>
                     </div>
 
-                    <div class="album-info-top">
-                        <div class="album-title" title="${escTitle}">${escTitle}</div>
-                        <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                    <div class="card-details-box">
                         <div class="mini-track-container" id="champ-track-display"><div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div></div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="album-info-bottom">
+                        <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                        <div class="album-title" title="${escTitle}">${escTitle}</div>
                         <div class="type-badge">${escapeHtml(champion.type)}</div>
                         <div class="score-badge">★ ${escapeHtml(champion.score)}</div>
                         <div class="copies-tag">🃏 ${progressText} copies</div>
-                        <div class="genre-badge">
-                            <span class="genre-text" title="${escapeHtml(champion.genre)}">🏷️ ${escapeHtml(champion.genre)}</span>
-                            <span class="year-text">| 📅 ${escapeHtml(champion.year)}</span>
+                        <div class="genre-badge" title="${escapeHtml(champion.genre)} | ${escapeHtml(champion.year)}">
+                            🏷️ ${escapeHtml(champion.genre)} | 📅 ${escapeHtml(champion.year)}
                         </div>
                     </div>
                 </div>
@@ -2286,8 +2346,8 @@
             playChampionTrack();
         }
 
-        function playChampionTrack() {
-            stopCurrentAudio();
+        async function playChampionTrack() {
+            await fadeAndStopAudio();
             if (!championAlbumObj || !championAlbumObj.preview) return;
 
             currentPlayingId = `champ_${championAlbumObj.id}`;
@@ -2305,7 +2365,7 @@
 
             currentAudio = new Audio(championAlbumObj.preview);
             currentAudio.ontimeupdate = () => {
-                if (currentAudio.duration && progressBar) {
+                if (currentAudio && currentAudio.duration && progressBar) {
                     progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
                 }
             };
@@ -2316,7 +2376,9 @@
                 playChampionNextTrack(true);
             };
 
-            currentAudio.play().catch(e => {
+            currentAudio.play().then(() => {
+                fadeInAudio(currentAudio, 1.0, 250);
+            }).catch(e => {
                 if (card) card.classList.remove('playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             });
