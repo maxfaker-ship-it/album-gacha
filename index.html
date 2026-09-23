@@ -30,6 +30,9 @@
             margin: 0;
             padding: 0;
             touch-action: pan-y;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -238,6 +241,11 @@
         .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic, .list-card.playing.rarity-Epic, .tourn-card.playing.rarity-Epic { box-shadow: 0 8px 32px rgba(168, 85, 247, 0.9), 0 0 20px var(--rarity-epic); }
         .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary, .list-card.playing.rarity-Legendary, .tourn-card.playing.rarity-Legendary { box-shadow: 0 8px 38px rgba(234, 179, 8, 1), 0 0 24px var(--rarity-legend); }
 
+        .tourn-card.blind-card.playing {
+            border-color: #ffffff !important;
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6), 0 0 14px #ffffff !important;
+        }
+
         .card.skeleton {
             border-color: #333;
             background: #18181c;
@@ -266,6 +274,8 @@
             width: 100%;
             height: 28px;
             position: relative;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .lvl-badge {
@@ -280,6 +290,8 @@
             transition: all 0.3s;
             flex-shrink: 0;
             z-index: 2;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .copies-tag {
@@ -309,6 +321,8 @@
             overflow: hidden;
             text-overflow: ellipsis;
             z-index: 1;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         @container (max-width: 150px) {
@@ -394,25 +408,26 @@
             user-select: none;
         }
 
-        .blind-center-shuffle {
-            margin: 12px 0 6px 0;
+        .card-center-shuffle {
+            margin: 4px 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
         }
 
-        .blind-center-shuffle .shuffle-btn {
-            width: 38px !important;
-            height: 38px !important;
-            min-width: 38px !important;
-            min-height: 38px !important;
-            background: rgba(99, 102, 241, 0.25);
+        .card-center-shuffle .shuffle-btn {
+            width: 34px !important;
+            height: 34px !important;
+            min-width: 34px !important;
+            min-height: 34px !important;
+            background: rgba(99, 102, 241, 0.2);
             border-color: var(--accent-color);
         }
 
-        .blind-center-shuffle .shuffle-btn svg {
-            width: 18px !important;
-            height: 18px !important;
+        .card-center-shuffle .shuffle-btn svg {
+            width: 16px !important;
+            height: 16px !important;
             fill: #fff;
         }
 
@@ -420,6 +435,10 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
             display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
             pointer-events: none;
+        }
+
+        .playing .play-overlay {
+            opacity: 1 !important;
         }
 
         @media (hover: hover) {
@@ -455,6 +474,7 @@
         .rarity-Rare .progress-bar-fill { background: var(--rarity-rare); }
         .rarity-Epic .progress-bar-fill { background: var(--rarity-epic); }
         .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
+        .tourn-card.blind-card .progress-bar-fill { background: #ffffff !important; }
 
         .card-details-box {
             display: flex;
@@ -659,7 +679,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             text-align: center;
             border: 2px solid var(--rarity-common);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s, opacity 0.4s ease, filter 0.4s ease;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s, opacity 2.5s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -670,16 +690,14 @@
         .tourn-card.winner-glow {
             border-color: var(--winner-color) !important;
             box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), 0 0 15px rgba(239, 68, 68, 0.5) !important;
-            transform: scale(1.05) !important;
+            transform: scale(1.03) !important;
             opacity: 1 !important;
-            filter: none !important;
             z-index: 10;
         }
 
         .tourn-card.loser-dimmed {
-            opacity: 0.3 !important;
-            filter: grayscale(100%) blur(0.5px) !important;
-            transform: scale(0.92) !important;
+            opacity: 0.7 !important;
+            transform: scale(0.97) !important;
             border-color: #ef4444 !important;
         }
 
@@ -1027,7 +1045,7 @@
         let currentPlayingId = null; 
         let loadingCollectionId = null;
         let currentPackData = [];
-        let nextPackCache = null; // Кэш следующего пака для бесшовного перехода
+        let nextPackCache = null;
 
         let tournBracket = [];
         let tournNextRound = [];
@@ -1311,7 +1329,6 @@
                 await sleep(10);
             }
 
-            // Фоновая подготовка следующего пака СРАЗУ при открытии текущего (независимо от Auto-Open)
             fetchPackData().then(p => { nextPackCache = p; });
 
             saveProgress();
@@ -1512,7 +1529,6 @@
                         <div class="lvl-badge ${lvlClass} ${animClass}">LVL ${data.level || 1}</div>
                         <div class="rarity-badge">${escapeHtml(data.rarity)}</div>
                         <div style="display:flex; gap:4px; align-items:center;">
-                            <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track">${SHUFFLE_SVG}</button>
                             <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromPack(${index}, ${data.id}, event)" title="Toggle Favorite">★</button>
                         </div>
                     </div>
@@ -1523,6 +1539,9 @@
                     </div>
                     <div class="card-details-box">
                         <div class="mini-track-container">${trackDisplay}</div>
+                        <div class="card-center-shuffle">
+                            <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                        </div>
                         <div class="artist-name" title="${escArtist}">${escArtist}</div>
                         <div class="album-title" title="${escTitle}">${escTitle}</div>
                         <div class="type-badge">${escapeHtml(data.type)}</div>
@@ -1592,8 +1611,24 @@
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
             currentAudio = new Audio(albumData.preview);
+            
+            let fadeOutTriggered = false;
             currentAudio.ontimeupdate = () => {
-                if (currentAudio && currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+                if (currentAudio && currentAudio.duration) {
+                    if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+                    
+                    if (currentAudio.duration - currentAudio.currentTime <= 0.5 && !fadeOutTriggered) {
+                        fadeOutTriggered = true;
+                        let vol = currentAudio.volume;
+                        const fadeInterval = setInterval(() => {
+                            if (currentAudio && currentAudio.volume > 0.05) {
+                                currentAudio.volume = Math.max(0, currentAudio.volume - 0.1);
+                            } else {
+                                clearInterval(fadeInterval);
+                            }
+                        }, 40);
+                    }
+                }
             };
             
             currentAudio.onended = async () => {
@@ -1648,10 +1683,24 @@
                 collectionTracksCache.set(albumId, refreshedData.trackName || 'Preview Track');
                 currentPlayingId = trackKey;
                 currentAudio = new Audio(refreshedData.preview);
+
+                let fadeOutTriggered = false;
                 currentAudio.ontimeupdate = () => {
                     if (currentAudio && currentAudio.duration) {
                         const progressBar = document.getElementById(`col-progress-${albumId}`);
                         if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+
+                        if (currentAudio.duration - currentAudio.currentTime <= 0.5 && !fadeOutTriggered) {
+                            fadeOutTriggered = true;
+                            let vol = currentAudio.volume;
+                            const fadeInterval = setInterval(() => {
+                                if (currentAudio && currentAudio.volume > 0.05) {
+                                    currentAudio.volume = Math.max(0, currentAudio.volume - 0.1);
+                                } else {
+                                    clearInterval(fadeInterval);
+                                }
+                            }, 40);
+                        }
                     }
                 };
                 currentAudio.onended = () => { currentPlayingId = null; renderCollectionUI(); };
@@ -1694,6 +1743,7 @@
 
         function pauseCurrentAudio() {
             fadeAndStopAudio();
+            renderBattleMatchUI();
         }
 
         function stopCurrentAudio() {
@@ -1849,7 +1899,6 @@
                             <div class="lvl-badge ${lvlClass}">LVL ${item.level || 1}</div>
                             <div class="rarity-badge">${escapeHtml(item.rarity)}</div>
                             <div style="display:flex; gap:4px; align-items:center;">
-                                <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
                                 <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
                             </div>
                         </div>
@@ -1860,6 +1909,9 @@
                         </div>
                         <div class="card-details-box">
                             <div class="mini-track-container">${trackDisplay}</div>
+                            <div class="card-center-shuffle">
+                                <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                            </div>
                             <div class="artist-name" title="${escArtist}">${escArtist}</div>
                             <div class="album-title" title="${escTitle}">${escTitle}</div>
                             <div class="type-badge">${escapeHtml(item.type)}</div>
@@ -2086,8 +2138,14 @@
 
                 const isSlotBlind = isBlindMode && !revealedSlots.includes(idx);
 
-                card.className = `tourn-card rarity-${escapeHtml(album.rarity)} ${isPlaying ? 'playing' : ''}`;
-                card.style.borderColor = isSlotBlind ? '#444' : `var(--rarity-${borderVar})`;
+                card.className = `tourn-card ${isSlotBlind ? 'blind-card' : `rarity-${escapeHtml(album.rarity)}`} ${isPlaying ? 'playing' : ''}`;
+                
+                if (isSlotBlind) {
+                    card.style.borderColor = isPlaying ? '#ffffff' : '#444444';
+                } else {
+                    card.style.borderColor = `var(--rarity-${borderVar})`;
+                }
+                
                 card.id = `tcard-${idx}`;
 
                 const escTitle = escapeHtml(album.title);
@@ -2109,16 +2167,15 @@
 
                             <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
                                 <div class="blind-cover-placeholder">❓</div>
-                                <div class="play-overlay" style="opacity: 0.95;"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
+                                <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
                                 <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
-                            </div>
-
-                            <div class="blind-center-shuffle">
-                                <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Shuffle Preview Track">${SHUFFLE_SVG}</button>
                             </div>
 
                             <div class="card-details-box" style="filter: blur(4px); opacity: 0.25; pointer-events: none;">
                                 <div class="mini-track-container"><div class="track-preview-name">🎵 Hidden Track</div></div>
+                                <div class="card-center-shuffle" style="pointer-events: auto;">
+                                    <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Shuffle Preview Track">${SHUFFLE_SVG}</button>
+                                </div>
                                 <div class="artist-name">Hidden Artist</div>
                                 <div class="album-title">Hidden Album</div>
                                 <div class="type-badge">ALBUM</div>
@@ -2147,7 +2204,6 @@
                                 <div class="lvl-badge ${lvlClass}">LVL ${album.level || 1}</div>
                                 <div class="rarity-badge">${escapeHtml(album.rarity)}</div>
                                 <div style="display:flex; gap:4px; align-items:center;">
-                                    <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
                                     <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</button>
                                 </div>
                             </div>
@@ -2160,6 +2216,9 @@
 
                             <div class="card-details-box">
                                 <div class="mini-track-container">${trackDisplay}</div>
+                                <div class="card-center-shuffle">
+                                    <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                                </div>
                                 <div class="artist-name" title="${escArtist}">${escArtist}</div>
                                 <div class="album-title" title="${escTitle}">${escTitle}</div>
                                 <div class="type-badge">${escapeHtml(album.type)}</div>
@@ -2217,7 +2276,6 @@
         function togglePlayTournamentSlot(idx) {
             if (currentPlayingSlot === idx && currentAudio && !currentAudio.paused) {
                 pauseCurrentAudio();
-                renderBattleMatchUI();
             } else {
                 playTournamentCarouselTrack(idx);
             }
@@ -2234,6 +2292,8 @@
             currentPlayingSlot = idx;
             currentPlayingId = `tourn_${idx}`;
 
+            renderBattleMatchUI();
+
             const card = document.getElementById(`tcard-${idx}`);
             const icon = document.getElementById(`tplay-icon-${idx}`);
             const progressBar = document.getElementById(`tprogress-${idx}`);
@@ -2249,9 +2309,22 @@
             const newAudio = new Audio(album.preview);
             currentAudio = newAudio;
 
+            let fadeOutTriggered = false;
             newAudio.ontimeupdate = () => {
-                if (currentAudio === newAudio && newAudio.duration && progressBar) {
-                    progressBar.style.width = `${(newAudio.currentTime / newAudio.duration) * 100}%`;
+                if (currentAudio === newAudio && newAudio.duration) {
+                    if (progressBar) progressBar.style.width = `${(newAudio.currentTime / newAudio.duration) * 100}%`;
+
+                    if (newAudio.duration - newAudio.currentTime <= 0.5 && !fadeOutTriggered) {
+                        fadeOutTriggered = true;
+                        let vol = newAudio.volume;
+                        const fadeInterval = setInterval(() => {
+                            if (newAudio && newAudio.volume > 0.05) {
+                                newAudio.volume = Math.max(0, newAudio.volume - 0.1);
+                            } else {
+                                clearInterval(fadeInterval);
+                            }
+                        }, 40);
+                    }
                 }
             };
             
@@ -2450,7 +2523,6 @@
                         <div class="lvl-badge ${lvlClass}">LVL ${champion.level || 1}</div>
                         <div class="rarity-badge">${escapeHtml(champion.rarity)}</div>
                         <div style="display:flex; gap:4px; align-items:center;">
-                            <button class="shuffle-btn" onclick="playChampionNextTrack(true, event)" title="Request another track">${SHUFFLE_SVG}</button>
                             <button class="fav-btn ${favClass}" id="champFavBtn" onclick="toggleFavoriteChampion(event)" title="Toggle Favorite">★</button>
                         </div>
                     </div>
@@ -2463,6 +2535,9 @@
 
                     <div class="card-details-box">
                         <div class="mini-track-container" id="champ-track-display"><div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div></div>
+                        <div class="card-center-shuffle">
+                            <button class="shuffle-btn" onclick="playChampionNextTrack(true, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                        </div>
                         <div class="artist-name" title="${escArtist}">${escArtist}</div>
                         <div class="album-title" title="${escTitle}">${escTitle}</div>
                         <div class="type-badge">${escapeHtml(champion.type)}</div>
@@ -2570,9 +2645,23 @@
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
             currentAudio = new Audio(championAlbumObj.preview);
+            
+            let fadeOutTriggered = false;
             currentAudio.ontimeupdate = () => {
-                if (currentAudio && currentAudio.duration && progressBar) {
-                    progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+                if (currentAudio && currentAudio.duration) {
+                    if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+
+                    if (currentAudio.duration - currentAudio.currentTime <= 0.5 && !fadeOutTriggered) {
+                        fadeOutTriggered = true;
+                        let vol = currentAudio.volume;
+                        const fadeInterval = setInterval(() => {
+                            if (currentAudio && currentAudio.volume > 0.05) {
+                                currentAudio.volume = Math.max(0, currentAudio.volume - 0.1);
+                            } else {
+                                clearInterval(fadeInterval);
+                            }
+                        }, 40);
+                    }
                 }
             };
 
