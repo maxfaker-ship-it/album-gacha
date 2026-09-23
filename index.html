@@ -408,44 +408,25 @@
             user-select: none;
         }
 
-        .card-center-shuffle {
-            margin: 4px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .card-center-shuffle .shuffle-btn {
-            width: 34px !important;
-            height: 34px !important;
-            min-width: 34px !important;
-            min-height: 34px !important;
-            background: rgba(99, 102, 241, 0.2);
-            border-color: var(--accent-color);
-        }
-
-        .card-center-shuffle .shuffle-btn svg {
-            width: 16px !important;
-            height: 16px !important;
-            fill: #fff;
-        }
-
         .play-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
             display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
             pointer-events: none;
         }
 
-        .playing .play-overlay {
-            opacity: 1 !important;
-        }
-
         @media (hover: hover) {
+            .playing .play-overlay,
             .cover-wrapper:hover .play-overlay, 
             .mini-cover-wrapper:hover .play-overlay, 
             .list-cover-wrapper:hover .play-overlay { 
                 opacity: 1 !important; 
+            }
+        }
+
+        @media (hover: none) {
+            .play-overlay {
+                display: none !important;
+                opacity: 0 !important;
             }
         }
 
@@ -1263,7 +1244,10 @@
                         <div class="card-top-bar">
                             <div class="lvl-badge">LVL ?</div>
                             <div class="rarity-badge">???</div>
-                            <div class="fav-btn">★</div>
+                            <div style="display:flex; gap:4px; align-items:center;">
+                                <div class="shuffle-btn"></div>
+                                <div class="fav-btn">★</div>
+                            </div>
                         </div>
                         <div class="cover-wrapper"></div>
                         <div class="card-details-box">
@@ -1529,6 +1513,7 @@
                         <div class="lvl-badge ${lvlClass} ${animClass}">LVL ${data.level || 1}</div>
                         <div class="rarity-badge">${escapeHtml(data.rarity)}</div>
                         <div style="display:flex; gap:4px; align-items:center;">
+                            <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track">${SHUFFLE_SVG}</button>
                             <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromPack(${index}, ${data.id}, event)" title="Toggle Favorite">★</button>
                         </div>
                     </div>
@@ -1539,9 +1524,6 @@
                     </div>
                     <div class="card-details-box">
                         <div class="mini-track-container">${trackDisplay}</div>
-                        <div class="card-center-shuffle">
-                            <button class="shuffle-btn" onclick="shuffleTrackInPack(${index}, event)" title="Request another track">${SHUFFLE_SVG}</button>
-                        </div>
                         <div class="artist-name" title="${escArtist}">${escArtist}</div>
                         <div class="album-title" title="${escTitle}">${escTitle}</div>
                         <div class="type-badge">${escapeHtml(data.type)}</div>
@@ -1899,6 +1881,7 @@
                             <div class="lvl-badge ${lvlClass}">LVL ${item.level || 1}</div>
                             <div class="rarity-badge">${escapeHtml(item.rarity)}</div>
                             <div style="display:flex; gap:4px; align-items:center;">
+                                <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
                                 <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
                             </div>
                         </div>
@@ -1909,9 +1892,6 @@
                         </div>
                         <div class="card-details-box">
                             <div class="mini-track-container">${trackDisplay}</div>
-                            <div class="card-center-shuffle">
-                                <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
-                            </div>
                             <div class="artist-name" title="${escArtist}">${escArtist}</div>
                             <div class="album-title" title="${escTitle}">${escTitle}</div>
                             <div class="type-badge">${escapeHtml(item.type)}</div>
@@ -2162,7 +2142,9 @@
                             <div class="card-top-bar">
                                 <div class="lvl-badge" style="color:#aaa;">LVL ?</div>
                                 <div class="rarity-badge" style="background:#333; color:#aaa;">BLIND</div>
-                                <div class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</div>
+                                <div style="display:flex; gap:4px; align-items:center;">
+                                    <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</button>
+                                </div>
                             </div>
 
                             <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
@@ -2171,15 +2153,14 @@
                                 <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
                             </div>
 
-                            <div class="card-details-box" style="filter: blur(4px); opacity: 0.25; pointer-events: none;">
-                                <div class="mini-track-container"><div class="track-preview-name">🎵 Hidden Track</div></div>
-                                <div class="card-center-shuffle" style="pointer-events: auto;">
+                            <div class="card-details-box">
+                                <div class="mini-track-container" style="filter: blur(4px); opacity: 0.25; pointer-events: none;"><div class="track-preview-name">🎵 Hidden Track</div></div>
+                                <div style="margin: 4px 0; display: flex; justify-content: center; width: 100%;">
                                     <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Shuffle Preview Track">${SHUFFLE_SVG}</button>
                                 </div>
-                                <div class="artist-name">Hidden Artist</div>
-                                <div class="album-title">Hidden Album</div>
-                                <div class="type-badge">ALBUM</div>
-                                <div class="score-badge">★ 0.0</div>
+                                <div class="artist-name" style="filter: blur(4px); opacity: 0.25; pointer-events: none;">Hidden Artist</div>
+                                <div class="type-badge" style="filter: blur(4px); opacity: 0.25; pointer-events: none;">ALBUM</div>
+                                <div class="score-badge" style="filter: blur(4px); opacity: 0.25; pointer-events: none;">★ 0.0</div>
                             </div>
                         </div>
 
@@ -2204,6 +2185,7 @@
                                 <div class="lvl-badge ${lvlClass}">LVL ${album.level || 1}</div>
                                 <div class="rarity-badge">${escapeHtml(album.rarity)}</div>
                                 <div style="display:flex; gap:4px; align-items:center;">
+                                    <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
                                     <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</button>
                                 </div>
                             </div>
@@ -2216,9 +2198,6 @@
 
                             <div class="card-details-box">
                                 <div class="mini-track-container">${trackDisplay}</div>
-                                <div class="card-center-shuffle">
-                                    <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
-                                </div>
                                 <div class="artist-name" title="${escArtist}">${escArtist}</div>
                                 <div class="album-title" title="${escTitle}">${escTitle}</div>
                                 <div class="type-badge">${escapeHtml(album.type)}</div>
@@ -2523,6 +2502,7 @@
                         <div class="lvl-badge ${lvlClass}">LVL ${champion.level || 1}</div>
                         <div class="rarity-badge">${escapeHtml(champion.rarity)}</div>
                         <div style="display:flex; gap:4px; align-items:center;">
+                            <button class="shuffle-btn" onclick="playChampionNextTrack(true, event)" title="Request another track">${SHUFFLE_SVG}</button>
                             <button class="fav-btn ${favClass}" id="champFavBtn" onclick="toggleFavoriteChampion(event)" title="Toggle Favorite">★</button>
                         </div>
                     </div>
@@ -2535,9 +2515,6 @@
 
                     <div class="card-details-box">
                         <div class="mini-track-container" id="champ-track-display"><div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div></div>
-                        <div class="card-center-shuffle">
-                            <button class="shuffle-btn" onclick="playChampionNextTrack(true, event)" title="Request another track">${SHUFFLE_SVG}</button>
-                        </div>
                         <div class="artist-name" title="${escArtist}">${escArtist}</div>
                         <div class="album-title" title="${escTitle}">${escTitle}</div>
                         <div class="type-badge">${escapeHtml(champion.type)}</div>
