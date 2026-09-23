@@ -1027,6 +1027,7 @@
         let currentPlayingId = null; 
         let loadingCollectionId = null;
         let currentPackData = [];
+        let nextPackCache = null; // Кэш следующего пака для бесшовного Auto-Open
 
         let tournBracket = [];
         let tournNextRound = [];
@@ -1034,7 +1035,7 @@
         let currentMatchVotes = [];
         let matchSize = 2;
         let isBlindMode = false;
-        let revealedSlots = []; // Список индексов карточек, которые уже нужно деблиндировать
+        let revealedSlots = []; 
         let currentRoundNumber = 1;
         let currentMatchNumber = 1;
         let championAlbumObj = null;
@@ -1151,6 +1152,20 @@
             });
         }
 
+        /* Выбор ближайшего доступного слота при свайпе */
+        function getNextAvailableSlot(list, currentSlot, direction) {
+            if (!list || list.length === 0) return 0;
+            const len = list.length;
+            let checkSlot = currentSlot;
+            for (let i = 0; i < len; i++) {
+                checkSlot = (checkSlot + direction + len) % len;
+                if (list[checkSlot] && list[checkSlot].preview) {
+                    return checkSlot;
+                }
+            }
+            return currentSlot;
+        }
+
         function handleSwipeGesture(container, startX, endX, startY, endY) {
             const diffX = endX - startX;
             const diffY = endY - startY;
@@ -1158,12 +1173,14 @@
             if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
                 if (container.id === 'packContainer' && currentPackData.length > 0) {
                     let currentSlot = currentPlayingSlot !== null ? currentPlayingSlot : 0;
-                    if (diffX < 0) playSlot((currentSlot + 1) % 5);
-                    else playSlot((currentSlot - 1 + 5) % 5);
+                    const dir = (diffX < 0) ? 1 : -1;
+                    const targetSlot = getNextAvailableSlot(currentPackData, currentSlot, dir);
+                    playSlot(targetSlot);
                 } else if (container.id === 'matchCardsContainer' && currentMatchAlbums.length > 0) {
                     let currentSlot = currentPlayingSlot !== null ? currentPlayingSlot : 0;
-                    if (diffX < 0) playTournamentCarouselTrack((currentSlot + 1) % currentMatchAlbums.length);
-                    else playTournamentCarouselTrack((currentSlot - 1 + currentMatchAlbums.length) % currentMatchAlbums.length);
+                    const dir = (diffX < 0) ? 1 : -1;
+                    const targetSlot = getNextAvailableSlot(currentMatchAlbums, currentSlot, dir);
+                    playTournamentCarouselTrack(targetSlot);
                 }
             }
         }
@@ -1247,6 +1264,17 @@
             }
         }
 
+        async function fetchPackData() {
+            const fetchedPack = [];
+            for (let i = 0; i < 5; i++) {
+                const targetRarity = rollRarity();
+                const rawAlbum = getRandomAlbumByRarity(targetRarity);
+                const albumObj = await fetchHitTrackForAlbum(rawAlbum, false, false);
+                fetchedPack.push(albumObj);
+            }
+            return fetchedPack;
+        }
+
         async function pull5Pack() {
             if (allAlbums.length === 0) return;
 
@@ -1265,14 +1293,14 @@
             btnTop.disabled = true;
             btnBottom.disabled = true;
 
-            createInitialPackSkeletons();
+            let fetchedPack = [];
 
-            const fetchedPack = [];
-            for (let i = 0; i < 5; i++) {
-                const targetRarity = rollRarity();
-                const rawAlbum = getRandomAlbumByRarity(targetRarity);
-                const albumObj = await fetchHitTrackForAlbum(rawAlbum, false, false);
-                fetchedPack.push(albumObj);
+            if (nextPackCache && nextPackCache.length === 5) {
+                fetchedPack = nextPackCache;
+                nextPackCache = null;
+            } else {
+                createInitialPackSkeletons();
+                fetchedPack = await fetchPackData();
             }
 
             currentPackData = fetchedPack;
@@ -1527,10 +1555,11 @@
             else playSlot(slotIndex);
         }
 
-        async function fadeInAudio(audioObj, targetVolume = 1.0, duration = 250) {
+        /* Увеличенная длина и плавность Fade-in (500мс) */
+        async function fadeInAudio(audioObj, targetVolume = 1.0, duration = 500) {
             if (!audioObj) return;
             audioObj.volume = 0.0;
-            const steps = 10;
+            const steps = 20;
             const stepTime = duration / steps;
             const volumeIncrement = targetVolume / steps;
 
@@ -1561,6 +1590,12 @@
             }
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
+            // Загрузка следующего пака под капотом во время воспроизведения последнего (4-го индексом) трека
+            const isAutoPullEnabled = document.getElementById('autoPullCheck') ? document.getElementById('autoPullCheck').checked : false;
+            if (slotIndex === 4 && isAutoPullEnabled && !nextPackCache) {
+                fetchPackData().then(p => { nextPackCache = p; });
+            }
+
             currentAudio = new Audio(albumData.preview);
             currentAudio.ontimeupdate = () => {
                 if (currentAudio && currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
@@ -1569,7 +1604,6 @@
             currentAudio.onended = async () => {
                 resetSlotUI(slotIndex);
                 const nextSlot = (slotIndex + 1) % 5;
-                const isAutoPullEnabled = document.getElementById('autoPullCheck') ? document.getElementById('autoPullCheck').checked : false;
 
                 if (nextSlot === 0 && isAutoPullEnabled) {
                     pull5Pack();
@@ -1587,19 +1621,15 @@
             };
 
             currentAudio.play().then(() => {
-                fadeInAudio(currentAudio, 1.0, 250);
+                fadeInAudio(currentAudio, 1.0, 500);
             }).catch(e => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); });
             renderCollectionUI();
         }
 
         function playNextSlotInCarousel(fromSlotIndex) {
             if (currentPackData.length === 0) return;
-            for (let i = 1; i <= 5; i++) {
-                const checkSlot = (fromSlotIndex + i) % 5;
-                if (currentPackData[checkSlot] && currentPackData[checkSlot].preview) {
-                    playSlot(checkSlot); return;
-                }
-            }
+            const nextSlot = getNextAvailableSlot(currentPackData, fromSlotIndex, 1);
+            if (nextSlot !== fromSlotIndex) playSlot(nextSlot);
         }
 
         async function playCollectionAlbum(albumId, forceNextTrack = false, event = null) {
@@ -1630,12 +1660,13 @@
                 };
                 currentAudio.onended = () => { currentPlayingId = null; renderCollectionUI(); };
                 currentAudio.play().then(() => {
-                    fadeInAudio(currentAudio, 1.0, 250);
+                    fadeInAudio(currentAudio, 1.0, 500);
                 }).catch(e => { currentPlayingId = null; renderCollectionUI(); });
             } else { alert('Audio preview not available right now.'); }
             renderCollectionUI();
         }
 
+        /* Увеличенная длина и плавность Fade-out (500мс) */
         async function fadeAndStopAudio() {
             if (currentAudio) {
                 const aud = currentAudio;
@@ -1645,10 +1676,12 @@
                 
                 try {
                     let vol = aud.volume;
-                    while (vol > 0.1) {
-                        vol -= 0.15;
-                        aud.volume = Math.max(0, vol);
-                        await sleep(25);
+                    const steps = 15;
+                    const volStep = vol / steps;
+                    for (let i = 0; i < steps; i++) {
+                        vol = Math.max(0, vol - volStep);
+                        aud.volume = vol;
+                        await sleep(20);
                     }
                     aud.pause();
                 } catch(e) {
@@ -1995,7 +2028,7 @@
 
         async function loadNextMatch() {
             stopCurrentAudio();
-            revealedSlots = []; // Сброс раскрывшейся карточки для следующей дуэли
+            revealedSlots = []; 
             document.getElementById('btnRollDice').disabled = false;
 
             if (tournBracket.length === 1 && tournNextRound.length === 0) {
@@ -2070,7 +2103,6 @@
 
                 let playIconSVG = isPlaying ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
 
-                // Если активирован Blind Mode и слот еще НЕ открыт (не проигравший после рулетки)
                 if (isSlotBlind) {
                     card.innerHTML = `
                         <div>
@@ -2231,7 +2263,7 @@
             newAudio.onended = async () => {
                 if (currentAudio !== newAudio) return;
                 resetTournamentSlotUI(idx);
-                const nextIdx = (idx + 1) % currentMatchAlbums.length;
+                const nextIdx = getNextAvailableSlot(currentMatchAlbums, idx, 1);
                 
                 if (nextIdx === 0) {
                     for (let i = 0; i < currentMatchAlbums.length; i++) {
@@ -2252,7 +2284,7 @@
             };
 
             newAudio.play().then(() => {
-                if (currentAudio === newAudio) fadeInAudio(newAudio, 1.0, 250);
+                if (currentAudio === newAudio) fadeInAudio(newAudio, 1.0, 500);
             }).catch(e => {
                 if (currentAudio !== newAudio) return;
                 resetTournamentSlotUI(idx);
@@ -2262,8 +2294,8 @@
 
         function playNextMatchTrackInCarousel(fromIdx) {
             if (currentMatchAlbums.length === 0) return;
-            const nextIdx = (fromIdx + 1) % currentMatchAlbums.length;
-            playTournamentCarouselTrack(nextIdx);
+            const nextIdx = getNextAvailableSlot(currentMatchAlbums, fromIdx, 1);
+            if (nextIdx !== fromIdx) playTournamentCarouselTrack(nextIdx);
         }
 
         function resetTournamentSlotUI(idx) {
@@ -2334,7 +2366,6 @@
 
             const totalRemaining = tournBracket.length + currentMatchAlbums.length + tournNextRound.length;
 
-            // 1. Анимация ролла (мигание)
             const remainingInBracket = tournBracket.length + tournNextRound.length;
             let totalTicks = 8;
             if (remainingInBracket <= 4) totalTicks = 22;
@@ -2352,7 +2383,6 @@
                 await sleep(80 + t * 15);
             }
 
-            // 2. Раскрываем ТОЛЬКО ПРОИГРАВШИХ участников в Blind Mode
             if (isBlindMode) {
                 currentMatchAlbums.forEach((_, i) => {
                     if (i !== winnerIdx && !revealedSlots.includes(i)) {
@@ -2362,7 +2392,6 @@
                 renderBattleMatchUI();
             }
 
-            // 3. Подсветка победителя и явное визуальное затемнение/выделение проигравшего
             currentMatchAlbums.forEach((_, i) => {
                 const c = document.getElementById(`tcard-${i}`);
                 if (c) {
@@ -2376,7 +2405,6 @@
                 }
             });
 
-            // Логирование выбывших участников
             const stageName = getPlayoffStageTitle(totalRemaining);
             currentMatchAlbums.forEach((album, idx) => {
                 if (idx !== winnerIdx) {
@@ -2560,7 +2588,7 @@
             };
 
             currentAudio.play().then(() => {
-                fadeInAudio(currentAudio, 1.0, 250);
+                fadeInAudio(currentAudio, 1.0, 500);
             }).catch(e => {
                 if (card) card.classList.remove('playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
