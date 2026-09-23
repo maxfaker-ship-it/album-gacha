@@ -1027,7 +1027,7 @@
         let currentPlayingId = null; 
         let loadingCollectionId = null;
         let currentPackData = [];
-        let nextPackCache = null; // Кэш следующего пака для бесшовного Auto-Open
+        let nextPackCache = null; // Кэш следующего пака для бесшовного перехода
 
         let tournBracket = [];
         let tournNextRound = [];
@@ -1152,7 +1152,6 @@
             });
         }
 
-        /* Выбор ближайшего доступного слота при свайпе */
         function getNextAvailableSlot(list, currentSlot, direction) {
             if (!list || list.length === 0) return 0;
             const len = list.length;
@@ -1311,6 +1310,9 @@
                 addToCollectionDataOnly(albumObj);
                 await sleep(10);
             }
+
+            // Фоновая подготовка следующего пака СРАЗУ при открытии текущего (независимо от Auto-Open)
+            fetchPackData().then(p => { nextPackCache = p; });
 
             saveProgress();
             renderCollectionUI();
@@ -1555,7 +1557,6 @@
             else playSlot(slotIndex);
         }
 
-        /* Увеличенная длина и плавность Fade-in (500мс) */
         async function fadeInAudio(audioObj, targetVolume = 1.0, duration = 500) {
             if (!audioObj) return;
             audioObj.volume = 0.0;
@@ -1590,12 +1591,6 @@
             }
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
-            // Загрузка следующего пака под капотом во время воспроизведения последнего (4-го индексом) трека
-            const isAutoPullEnabled = document.getElementById('autoPullCheck') ? document.getElementById('autoPullCheck').checked : false;
-            if (slotIndex === 4 && isAutoPullEnabled && !nextPackCache) {
-                fetchPackData().then(p => { nextPackCache = p; });
-            }
-
             currentAudio = new Audio(albumData.preview);
             currentAudio.ontimeupdate = () => {
                 if (currentAudio && currentAudio.duration && progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
@@ -1604,6 +1599,7 @@
             currentAudio.onended = async () => {
                 resetSlotUI(slotIndex);
                 const nextSlot = (slotIndex + 1) % 5;
+                const isAutoPullEnabled = document.getElementById('autoPullCheck') ? document.getElementById('autoPullCheck').checked : false;
 
                 if (nextSlot === 0 && isAutoPullEnabled) {
                     pull5Pack();
@@ -1666,7 +1662,6 @@
             renderCollectionUI();
         }
 
-        /* Увеличенная длина и плавность Fade-out (500мс) */
         async function fadeAndStopAudio() {
             if (currentAudio) {
                 const aud = currentAudio;
