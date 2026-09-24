@@ -457,6 +457,7 @@
         .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
         .tourn-card.blind-card .progress-bar-fill { background: #ffffff !important; }
 
+        /* Единый фиксированный блок информации для всех типов карт */
         .card-details-box {
             display: flex;
             flex-direction: column;
@@ -464,6 +465,7 @@
             justify-content: center;
             gap: 2px;
             width: 100%;
+            height: 105px;
             min-height: 105px;
             max-height: 105px;
             box-sizing: border-box;
@@ -2127,7 +2129,6 @@
             renderCollectionUI();
             updateTournamentSourceDropdown();
 
-            renderBattleMatchUI();
             playTournamentCarouselTrack(0);
         }
 
@@ -2162,90 +2163,65 @@
                 
                 card.id = `tcard-${idx}`;
 
-                const escTitle = escapeHtml(album.title);
-                const escArtist = escapeHtml(album.artist);
-                const escTrack = escapeHtml(album.trackName || 'No track');
-                const lvlClass = getLevelColorClass(album.level || 1);
+                const escTitle = isSlotBlind ? '??? Hidden' : escapeHtml(album.title);
+                const escArtist = isSlotBlind ? '??? Hidden' : escapeHtml(album.artist);
+                const escTrack = isSlotBlind ? 'Hidden Preview Track' : escapeHtml(album.trackName || 'No track');
+                const lvlClass = isSlotBlind ? 'lvl-color-1' : getLevelColorClass(album.level || 1);
                 const progressText = getCopiesProgressText(album.pulls || 1);
 
                 let playIconSVG = isPlaying ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
 
-                if (isSlotBlind) {
-                    card.innerHTML = `
-                        <div>
-                            <div class="card-top-bar">
-                                <div class="lvl-badge" style="color:#aaa;">LVL ?</div>
-                                <div class="rarity-badge" style="background:#333; color:#aaa;">BLIND</div>
-                                <div style="display:flex; gap:4px; align-items:center;">
-                                    <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</button>
-                                </div>
-                            </div>
+                const coverHTML = isSlotBlind 
+                    ? `<div class="blind-cover-placeholder">❓</div>`
+                    : (album.cover ? `<img src="${escapeHtml(album.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`);
 
-                            <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
-                                <div class="blind-cover-placeholder">❓</div>
-                                <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
-                                <div class="progress-bar-container" style="${isPlaying ? 'display:block;' : 'display:none;'}"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
-                            </div>
+                let trackDisplay = (isSlotBlind || album.trackName) 
+                    ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
+                    : `<div class="track-preview-name" style="visibility: hidden;">🎵 Placeholder</div>`;
 
-                            <div class="card-details-box">
-                                <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Shuffle Preview Track">${SHUFFLE_SVG}</button>
-                            </div>
-                        </div>
+                const rarityDisplay = isSlotBlind ? 'BLIND' : escapeHtml(album.rarity);
+                const lvlDisplay = isSlotBlind ? 'LVL ?' : `LVL ${album.level || 1}`;
+                const typeDisplay = isSlotBlind ? '?' : escapeHtml(album.type);
+                const scoreDisplay = isSlotBlind ? '★ -.-' : `★ ${escapeHtml(album.score)}`;
+                const genreDisplay = isSlotBlind ? '🏷️ Hidden Genre' : `🏷️ ${escapeHtml(album.genre)}`;
+                const copiesDisplay = isSlotBlind ? '🃏 ? copies' : `🃏 ${progressText} copies`;
 
-                        <div style="margin-top: 4px;">
-                            <div class="vote-control-bar">
-                                <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
-                                <span class="vote-score-val" id="tvote-val-${idx}">${currentMatchVotes[idx]} votes</span>
-                                <button class="vote-btn-step" onclick="changeVote(${idx}, 1)">+</button>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    const coverHTML = album.cover ? `<img src="${escapeHtml(album.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
-
-                    let trackDisplay = album.trackName 
-                        ? `<div class="track-preview-name" title="${escTrack}">🎵 ${escTrack}</div>`
-                        : `<div class="track-preview-name" style="visibility: hidden;">🎵 Placeholder</div>`;
-
-                    card.innerHTML = `
-                        <div>
-                            <div class="card-top-bar">
-                                <div class="lvl-badge ${lvlClass}">LVL ${album.level || 1}</div>
-                                <div class="rarity-badge">${escapeHtml(album.rarity)}</div>
-                                <div style="display:flex; gap:4px; align-items:center;">
-                                    <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
-                                    <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</button>
-                                </div>
-                            </div>
-
-                            <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
-                                ${coverHTML}
-                                <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
-                                <div class="progress-bar-container" style="${isPlaying ? 'display:block;' : 'display:none;'}"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
-                            </div>
-
-                            <div class="card-details-box">
-                                <div class="mini-track-container">${trackDisplay}</div>
-                                <div class="artist-name" title="${escArtist}">${escArtist}</div>
-                                <div class="album-title" title="${escTitle}">${escTitle}</div>
-                                <div class="type-badge">${escapeHtml(album.type)}</div>
-                                <div class="score-badge">★ ${escapeHtml(album.score)}</div>
-                                <div class="copies-tag">🃏 ${progressText} copies</div>
-                                <div class="genre-badge" title="${escapeHtml(album.genre)}">
-                                    🏷️ ${escapeHtml(album.genre)}
-                                </div>
+                card.innerHTML = `
+                    <div>
+                        <div class="card-top-bar">
+                            <div class="lvl-badge ${lvlClass}">${lvlDisplay}</div>
+                            <div class="rarity-badge" style="${isSlotBlind ? 'background:#333; color:#aaa;' : ''}">${rarityDisplay}</div>
+                            <div style="display:flex; gap:4px; align-items:center;">
+                                <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Request another track">${SHUFFLE_SVG}</button>
+                                <button class="fav-btn ${favClass}" onclick="toggleFavoriteFromTournament(${idx}, ${album.id}, event)" title="Toggle Favorite">★</button>
                             </div>
                         </div>
 
-                        <div style="margin-top: 4px;">
-                            <div class="vote-control-bar">
-                                <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
-                                <span class="vote-score-val" id="tvote-val-${idx}">${currentMatchVotes[idx]} votes</span>
-                                <button class="vote-btn-step" onclick="changeVote(${idx}, 1)">+</button>
-                            </div>
+                        <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
+                            ${coverHTML}
+                            <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
+                            <div class="progress-bar-container" style="${isPlaying ? 'display:block;' : 'display:none;'}"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
                         </div>
-                    `;
-                }
+
+                        <div class="card-details-box">
+                            <div class="mini-track-container">${trackDisplay}</div>
+                            <div class="artist-name" title="${escArtist}">${escArtist}</div>
+                            <div class="album-title" title="${escTitle}">${escTitle}</div>
+                            <div class="type-badge">${typeDisplay}</div>
+                            <div class="score-badge">${scoreDisplay}</div>
+                            <div class="copies-tag">${copiesDisplay}</div>
+                            <div class="genre-badge" title="${genreDisplay}">${genreDisplay}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 4px;">
+                        <div class="vote-control-bar">
+                            <button class="vote-btn-step" onclick="changeVote(${idx}, -1)">-</button>
+                            <span class="vote-score-val" id="tvote-val-${idx}">${currentMatchVotes[idx]} votes</span>
+                            <button class="vote-btn-step" onclick="changeVote(${idx}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
 
                 container.appendChild(card);
             });
@@ -2297,6 +2273,7 @@
                 return;
             }
 
+            // Устанавливаем текущий слот ДО перерисовки интерфейса
             currentPlayingSlot = idx;
             currentPlayingId = `tourn_${idx}`;
 
