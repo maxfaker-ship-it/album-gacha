@@ -2135,7 +2135,33 @@
             renderCollectionUI();
             updateTournamentSourceDropdown();
 
+            // Отрисовываем DOM, затем принудительно заново запускаем 0 слот
+            renderBattleMatchUI();
             playTournamentCarouselTrack(0);
+        }
+
+        function highlightTournamentCard(idx) {
+            currentMatchAlbums.forEach((_, i) => {
+                const card = document.getElementById(`tcard-${i}`);
+                const icon = document.getElementById(`tplay-icon-${i}`);
+                const progressBarContainer = card ? card.querySelector('.progress-bar-container') : null;
+
+                if (card) {
+                    if (i === idx) {
+                        card.classList.add('playing');
+                    } else {
+                        card.classList.remove('playing');
+                    }
+                }
+                if (icon) {
+                    icon.innerHTML = (i === idx) 
+                        ? '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>' 
+                        : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                }
+                if (progressBarContainer) {
+                    progressBarContainer.style.display = (i === idx) ? 'block' : 'none';
+                }
+            });
         }
 
         function renderBattleMatchUI() {
@@ -2154,7 +2180,6 @@
                 else if (album.rarity === 'Epic') borderVar = 'epic';
                 else if (album.rarity === 'Rare') borderVar = 'rare';
 
-                // Исправлено: Слот подсвечивается, если он выбран активным слот-индексом
                 const isPlaying = (currentPlayingSlot === idx);
                 const favClass = album.isFavorite ? 'active' : '';
 
@@ -2283,20 +2308,7 @@
             currentPlayingSlot = idx;
             currentPlayingId = `tourn_${idx}`;
 
-            renderBattleMatchUI();
-
-            const card = document.getElementById(`tcard-${idx}`);
-            const icon = document.getElementById(`tplay-icon-${idx}`);
-            const progressBarContainer = card ? card.querySelector('.progress-bar-container') : null;
-
-            if (card) {
-                card.classList.add('playing');
-                if (window.innerWidth <= 600) {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-            if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-            if (progressBarContainer) progressBarContainer.style.display = 'block';
+            highlightTournamentCard(idx);
 
             const newAudio = new Audio(album.preview);
             currentAudio = newAudio;
