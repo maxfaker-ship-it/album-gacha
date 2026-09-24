@@ -243,7 +243,7 @@
 
         .tourn-card.blind-card.playing {
             border-color: #ffffff !important;
-            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6), 0 0 14px #ffffff !important;
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.8), 0 0 16px #ffffff !important;
         }
 
         .card.skeleton {
@@ -448,7 +448,7 @@
             display: none; 
         }
 
-        .playing .progress-bar-container { display: block; }
+        .playing .progress-bar-container { display: block !important; }
         .progress-bar-fill { height: 100%; width: 0%; background: var(--rarity-common); transition: width 0.1s linear; }
 
         .rarity-Common .progress-bar-fill { background: var(--rarity-common); }
@@ -660,7 +660,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             text-align: center;
             border: 2px solid var(--rarity-common);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s, opacity 2.5s ease;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s, opacity 2.5s ease, filter 2.5s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -669,17 +669,17 @@
         }
 
         .tourn-card.winner-glow {
-            border-color: var(--winner-color) !important;
-            box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), 0 0 15px rgba(239, 68, 68, 0.5) !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 35px rgba(255, 255, 255, 0.95), 0 0 15px rgba(255, 255, 255, 0.5) !important;
             transform: scale(1.03) !important;
             opacity: 1 !important;
             z-index: 10;
         }
 
         .tourn-card.loser-dimmed {
-            opacity: 0.7 !important;
-            transform: scale(0.97) !important;
-            border-color: #ef4444 !important;
+            opacity: 0.25 !important;
+            filter: grayscale(80%) !important;
+            transform: scale(0.96) !important;
         }
 
         .vote-control-bar {
@@ -926,7 +926,7 @@
             <div class="setup-group">
                 <label>Card Source Pool:</label>
                 <select id="tournSource">
-                    <option value="all">All Albums (albums.json)</option>
+                    <option value="all">All Albums</option>
                     <option value="collection">My Collection Only</option>
                     <option value="favorites">Favorites Only</option>
                 </select>
@@ -1096,7 +1096,25 @@
                 collection.clear();
                 collectionTracksCache.clear();
                 renderCollectionUI();
+                updateTournamentSourceDropdown();
             }
+        }
+
+        function updateTournamentSourceDropdown() {
+            const select = document.getElementById('tournSource');
+            if (!select) return;
+
+            const totalAll = allAlbums.length;
+            const totalCol = collection.size;
+            let totalFav = 0;
+
+            collection.forEach(item => {
+                if (item.isFavorite) totalFav++;
+            });
+
+            select.options[0].text = `All Albums (${totalAll})`;
+            select.options[1].text = `My Collection Only (${totalCol})`;
+            select.options[2].text = `Favorites Only (${totalFav})`;
         }
 
         async function loadDatabase() {
@@ -1109,6 +1127,7 @@
                 }));
                 loadProgress();
                 renderCollectionUI();
+                updateTournamentSourceDropdown();
                 
                 document.getElementById('pullBtn').disabled = false;
                 document.getElementById('pullBtnBottom').disabled = false;
@@ -1189,6 +1208,9 @@
             document.getElementById('tabTournament').classList.toggle('active', mode === 'tournament');
             document.getElementById('gachaSection').classList.toggle('hidden', mode !== 'gacha');
             document.getElementById('tournamentSection').classList.toggle('hidden', mode !== 'tournament');
+            if (mode === 'tournament') {
+                updateTournamentSourceDropdown();
+            }
         }
 
         function toggleCollectionArea() {
@@ -1317,6 +1339,7 @@
 
             saveProgress();
             renderCollectionUI();
+            updateTournamentSourceDropdown();
             btnTop.disabled = false;
             btnBottom.disabled = false;
             playSlot(0);
@@ -1545,6 +1568,7 @@
                 item.isFavorite = !item.isFavorite;
                 saveProgress();
                 renderCollectionUI();
+                updateTournamentSourceDropdown();
             }
             const card = document.getElementById(`pack-card-${slotIndex}`);
             if (card) {
@@ -1757,7 +1781,7 @@
         function toggleFavorite(albumId, event) {
             if (event) event.stopPropagation();
             const item = collection.get(albumId);
-            if (item) { item.isFavorite = !item.isFavorite; saveProgress(); renderCollectionUI(); }
+            if (item) { item.isFavorite = !item.isFavorite; saveProgress(); renderCollectionUI(); updateTournamentSourceDropdown(); }
         }
 
         function setViewMode(mode) {
@@ -1848,13 +1872,13 @@
             else if (item.rarity === 'Epic') borderVar = 'epic';
             else if (item.rarity === 'Rare') borderVar = 'rare';
 
-            const escTitle = escapeHtml(item.title);
-            const escArtist = escapeHtml(item.artist);
+            const escTitle = isBlindMode ? 'Hidden Album' : escapeHtml(item.title);
+            const escArtist = isBlindMode ? 'Hidden Artist' : escapeHtml(item.artist);
             const isPlaying = (currentPlayingId === `col_${item.id}`) && currentAudio && !currentAudio.paused;
             const isLoading = (loadingCollectionId === item.id);
             const activeTrackName = collectionTracksCache.get(item.id) || '';
 
-            const coverImg = item.cover 
+            const coverImg = item.cover && !isBlindMode
                 ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
                 : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
 
@@ -1866,7 +1890,7 @@
             if (isLoading) playIconSVG = '';
             else if (isPlaying) playIconSVG = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
 
-            let trackDisplay = (isPlaying && activeTrackName) 
+            let trackDisplay = (isPlaying && activeTrackName && !isBlindMode) 
                 ? `<div class="track-preview-name" title="${escapeHtml(activeTrackName)}">🎵 ${escapeHtml(activeTrackName)}</div>`
                 : (isLoading ? `<div class="track-preview-name" style="color:#eab308;">⏳ Fetching...</div>` : `<div class="track-preview-name" style="visibility: hidden;">🎵 Placeholder</div>`);
 
@@ -1897,8 +1921,8 @@
                             <div class="type-badge">${escapeHtml(item.type)}</div>
                             <div class="score-badge">★ ${escapeHtml(item.score)}</div>
                             <div class="copies-tag">🃏 ${progressText} copies</div>
-                            <div class="genre-badge" title="${escapeHtml(item.genre)} | ${escapeHtml(item.year)}">
-                                🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)}
+                            <div class="genre-badge" title="${escapeHtml(item.genre)}">
+                                🏷️ ${escapeHtml(item.genre)}
                             </div>
                         </div>
                     </div>
@@ -1921,7 +1945,7 @@
                     <div class="list-right-group">
                         <div class="list-meta">
                             <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)} <span class="copies-tag" style="margin-left:3px;">(🃏 ${progressText})</span></div>
-                            <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)}</div>
+                            <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)}</div>
                         </div>
                         <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
                         <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
@@ -1987,8 +2011,8 @@
             else if (source === 'favorites') pool = Array.from(collection.values()).filter(a => a.isFavorite);
             else pool = [...allAlbums];
 
-            if (pool.length < matchSize) {
-                alert(`Not enough albums in selected pool (${pool.length})!`);
+            if (pool.length < targetSize) {
+                alert(`Not enough albums in selected pool (${pool.length} available). Please select at least ${targetSize} albums or reduce bracket size!`);
                 return;
             }
 
@@ -2092,6 +2116,7 @@
 
             saveProgress();
             renderCollectionUI();
+            updateTournamentSourceDropdown();
 
             renderBattleMatchUI();
             playTournamentCarouselTrack(0);
@@ -2150,17 +2175,13 @@
                             <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
                                 <div class="blind-cover-placeholder">❓</div>
                                 <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
-                                <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
+                                <div class="progress-bar-container" style="${isPlaying ? 'display:block;' : 'display:none;'}"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
                             </div>
 
                             <div class="card-details-box">
-                                <div class="mini-track-container" style="filter: blur(4px); opacity: 0.25; pointer-events: none;"><div class="track-preview-name">🎵 Hidden Track</div></div>
-                                <div style="margin: 4px 0; display: flex; justify-content: center; width: 100%;">
+                                <div style="margin: 12px 0; display: flex; justify-content: center; width: 100%;">
                                     <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Shuffle Preview Track">${SHUFFLE_SVG}</button>
                                 </div>
-                                <div class="artist-name" style="filter: blur(4px); opacity: 0.25; pointer-events: none;">Hidden Artist</div>
-                                <div class="type-badge" style="filter: blur(4px); opacity: 0.25; pointer-events: none;">ALBUM</div>
-                                <div class="score-badge" style="filter: blur(4px); opacity: 0.25; pointer-events: none;">★ 0.0</div>
                             </div>
                         </div>
 
@@ -2193,7 +2214,7 @@
                             <div class="cover-wrapper" onclick="togglePlayTournamentSlot(${idx})">
                                 ${coverHTML}
                                 <div class="play-overlay"><div class="play-btn-icon" id="tplay-icon-${idx}"><svg viewBox="0 0 24 24">${playIconSVG}</svg></div></div>
-                                <div class="progress-bar-container"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
+                                <div class="progress-bar-container" style="${isPlaying ? 'display:block;' : 'display:none;'}"><div class="progress-bar-fill" id="tprogress-${idx}"></div></div>
                             </div>
 
                             <div class="card-details-box">
@@ -2203,8 +2224,8 @@
                                 <div class="type-badge">${escapeHtml(album.type)}</div>
                                 <div class="score-badge">★ ${escapeHtml(album.score)}</div>
                                 <div class="copies-tag">🃏 ${progressText} copies</div>
-                                <div class="genre-badge" title="${escapeHtml(album.genre)} | ${escapeHtml(album.year)}">
-                                    🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}
+                                <div class="genre-badge" title="${escapeHtml(album.genre)}">
+                                    🏷️ ${escapeHtml(album.genre)}
                                 </div>
                             </div>
                         </div>
@@ -2233,6 +2254,7 @@
                 item.isFavorite = !item.isFavorite;
                 saveProgress();
                 renderCollectionUI();
+                updateTournamentSourceDropdown();
             }
             renderBattleMatchUI();
         }
@@ -2275,7 +2297,7 @@
 
             const card = document.getElementById(`tcard-${idx}`);
             const icon = document.getElementById(`tplay-icon-${idx}`);
-            const progressBar = document.getElementById(`tprogress-${idx}`);
+            const progressBarContainer = card ? card.querySelector('.progress-bar-container') : null;
 
             if (card) {
                 card.classList.add('playing');
@@ -2284,6 +2306,7 @@
                 }
             }
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            if (progressBarContainer) progressBarContainer.style.display = 'block';
 
             const newAudio = new Audio(album.preview);
             currentAudio = newAudio;
@@ -2291,6 +2314,7 @@
             let fadeOutTriggered = false;
             newAudio.ontimeupdate = () => {
                 if (currentAudio === newAudio && newAudio.duration) {
+                    const progressBar = document.getElementById(`tprogress-${idx}`);
                     if (progressBar) progressBar.style.width = `${(newAudio.currentTime / newAudio.duration) * 100}%`;
 
                     if (newAudio.duration - newAudio.currentTime <= 0.5 && !fadeOutTriggered) {
@@ -2348,10 +2372,12 @@
         function resetTournamentSlotUI(idx) {
             const card = document.getElementById(`tcard-${idx}`);
             const icon = document.getElementById(`tplay-icon-${idx}`);
+            const progressBarContainer = card ? card.querySelector('.progress-bar-container') : null;
             const progressBar = document.getElementById(`tprogress-${idx}`);
 
             if (card) card.classList.remove('playing');
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            if (progressBarContainer) progressBarContainer.style.display = 'none';
             if (progressBar) progressBar.style.width = '0%';
         }
 
@@ -2487,14 +2513,14 @@
             card.style.borderColor = `var(--rarity-${borderVar})`;
             card.id = `champion-card-el`;
 
-            const escTitle = escapeHtml(champion.title);
-            const escArtist = escapeHtml(champion.artist);
-            const escTrack = escapeHtml(champion.trackName || 'Main Hit Track');
+            const escTitle = isBlindMode ? 'Hidden Album' : escapeHtml(champion.title);
+            const escArtist = isBlindMode ? 'Hidden Artist' : escapeHtml(champion.artist);
+            const escTrack = isBlindMode ? 'Main Hit Track' : escapeHtml(champion.trackName || 'Main Hit Track');
             const lvlClass = getLevelColorClass(champion.level || 1);
             const progressText = getCopiesProgressText(champion.pulls || 1);
             const favClass = champion.isFavorite ? 'active' : '';
 
-            const coverHTML = champion.cover ? `<img src="${escapeHtml(champion.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
+            const coverHTML = champion.cover && !isBlindMode ? `<img src="${escapeHtml(champion.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
 
             card.innerHTML = `
                 <div>
@@ -2520,8 +2546,8 @@
                         <div class="type-badge">${escapeHtml(champion.type)}</div>
                         <div class="score-badge">★ ${escapeHtml(champion.score)}</div>
                         <div class="copies-tag">🃏 ${progressText} copies</div>
-                        <div class="genre-badge" title="${escapeHtml(champion.genre)} | ${escapeHtml(champion.year)}">
-                            🏷️ ${escapeHtml(champion.genre)} | 📅 ${escapeHtml(champion.year)}
+                        <div class="genre-badge" title="${escapeHtml(champion.genre)}">
+                            🏷️ ${escapeHtml(champion.genre)}
                         </div>
                     </div>
                 </div>
@@ -2576,6 +2602,7 @@
 
             saveProgress();
             renderCollectionUI();
+            updateTournamentSourceDropdown();
         }
 
         function togglePlayChampionTrack() {
@@ -2661,6 +2688,7 @@
             addToCollectionDataOnly(champion);
             saveProgress();
             renderCollectionUI();
+            updateTournamentSourceDropdown();
 
             document.getElementById('battleArena').classList.add('hidden');
             document.getElementById('winnerScreen').classList.remove('hidden');
@@ -2683,6 +2711,7 @@
             document.getElementById('battleArena').classList.add('hidden');
             document.getElementById('winnerScreen').classList.add('hidden');
             document.getElementById('tournamentSetup').classList.remove('hidden');
+            updateTournamentSourceDropdown();
         }
 
         window.onload = loadDatabase;
