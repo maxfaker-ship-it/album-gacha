@@ -415,7 +415,7 @@
         }
 
         @media (hover: hover) {
-            .playing .play-overlay,
+            .play-overlay { opacity: 0 !important; }
             .cover-wrapper:hover .play-overlay, 
             .mini-cover-wrapper:hover .play-overlay, 
             .list-cover-wrapper:hover .play-overlay { 
@@ -461,10 +461,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 2px;
             width: 100%;
+            min-height: 105px;
+            max-height: 105px;
             box-sizing: border-box;
             margin-top: 2px;
+            overflow: hidden;
         }
 
         .mini-track-container {
@@ -660,7 +664,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             text-align: center;
             border: 2px solid var(--rarity-common);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s, opacity 2.5s ease, filter 2.5s ease;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s, opacity 1.2s ease, filter 1.2s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -2184,9 +2188,7 @@
                             </div>
 
                             <div class="card-details-box">
-                                <div style="margin: 12px 0; display: flex; justify-content: center; width: 100%;">
-                                    <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Shuffle Preview Track">${SHUFFLE_SVG}</button>
-                                </div>
+                                <button class="shuffle-btn" onclick="shuffleTrackInTournament(${idx}, event)" title="Shuffle Preview Track">${SHUFFLE_SVG}</button>
                             </div>
                         </div>
 
@@ -2464,11 +2466,13 @@
 
             if (isBlindMode) {
                 currentMatchAlbums.forEach((_, i) => {
-                    if (i !== winnerIdx && !revealedSlots.includes(i)) {
+                    if (!revealedSlots.includes(i)) {
                         revealedSlots.push(i);
                     }
                 });
                 renderBattleMatchUI();
+                
+                await sleep(1200);
             }
 
             currentMatchAlbums.forEach((_, i) => {
@@ -2495,7 +2499,7 @@
                 }
             });
 
-            await sleep(2400);
+            await sleep(2000);
 
             const winnerAlbum = currentMatchAlbums[winnerIdx];
             tournNextRound.push(winnerAlbum);
