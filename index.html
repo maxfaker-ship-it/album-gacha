@@ -1277,7 +1277,6 @@
         }
 
         function createInitialPackSkeletons() {
-            stopCurrentAudio();
             currentPackData = [];
             const packContainer = document.getElementById('packContainer');
             packContainer.className = 'pack-container';
@@ -1326,6 +1325,8 @@
 
         async function pull5Pack() {
             if (allAlbums.length === 0) return;
+
+            await fadeAndStopAudio();
 
             if (!isFirstPackOpened) {
                 isFirstPackOpened = true;
@@ -1635,6 +1636,7 @@
             const progressBar = document.getElementById(`progress-${slotIndex}`);
 
             if (card) {
+                card.classList.remove('flip-reveal');
                 card.classList.add('playing');
                 if (window.innerWidth <= 600) {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1642,19 +1644,19 @@
             }
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
-            currentAudio = new Audio(albumData.preview);
+            const newAudio = new Audio(albumData.preview);
+            currentAudio = newAudio;
             
             let fadeOutTriggered = false;
-            currentAudio.ontimeupdate = () => {
-                if (currentAudio && currentAudio.duration) {
-                    if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+            newAudio.ontimeupdate = () => {
+                if (currentAudio === newAudio && newAudio.duration) {
+                    if (progressBar) progressBar.style.width = `${(newAudio.currentTime / newAudio.duration) * 100}%`;
                     
-                    if (currentAudio.duration - currentAudio.currentTime <= 0.8 && !fadeOutTriggered) {
+                    if (newAudio.duration - newAudio.currentTime <= 0.8 && !fadeOutTriggered) {
                         fadeOutTriggered = true;
-                        let vol = currentAudio.volume;
                         const fadeInterval = setInterval(() => {
-                            if (currentAudio && currentAudio.volume > 0.05) {
-                                currentAudio.volume = Math.max(0, currentAudio.volume - 0.1);
+                            if (currentAudio === newAudio && newAudio.volume > 0.05) {
+                                newAudio.volume = Math.max(0, newAudio.volume - 0.1);
                             } else {
                                 clearInterval(fadeInterval);
                             }
@@ -1663,8 +1665,11 @@
                 }
             };
             
-            currentAudio.onended = async () => {
+            newAudio.onended = async () => {
+                if (currentAudio !== newAudio) return;
                 await sleep(600);
+                if (currentAudio !== newAudio) return;
+                
                 resetSlotUI(slotIndex);
                 const nextSlot = (slotIndex + 1) % 5;
                 const isAutoPullEnabled = document.getElementById('autoPullCheck') ? document.getElementById('autoPullCheck').checked : false;
@@ -1684,9 +1689,20 @@
                 }
             };
 
-            currentAudio.play().then(() => {
-                fadeInAudio(currentAudio, 1.0, 500);
-            }).catch(e => { resetSlotUI(slotIndex); playNextSlotInCarousel(slotIndex); });
+            newAudio.onerror = () => {
+                if (currentAudio !== newAudio) return;
+                resetSlotUI(slotIndex); 
+                playNextSlotInCarousel(slotIndex);
+            };
+
+            newAudio.play().then(() => {
+                if (currentAudio === newAudio) fadeInAudio(newAudio, 1.0, 500);
+            }).catch(e => { 
+                if (currentAudio === newAudio) {
+                    resetSlotUI(slotIndex); 
+                    playNextSlotInCarousel(slotIndex); 
+                }
+            });
             renderCollectionUI();
         }
 
@@ -1715,20 +1731,21 @@
             if (refreshedData && refreshedData.preview) {
                 collectionTracksCache.set(albumId, refreshedData.trackName || 'Preview Track');
                 currentPlayingId = trackKey;
-                currentAudio = new Audio(refreshedData.preview);
+                
+                const newAudio = new Audio(refreshedData.preview);
+                currentAudio = newAudio;
 
                 let fadeOutTriggered = false;
-                currentAudio.ontimeupdate = () => {
-                    if (currentAudio && currentAudio.duration) {
+                newAudio.ontimeupdate = () => {
+                    if (currentAudio === newAudio && newAudio.duration) {
                         const progressBar = document.getElementById(`col-progress-${albumId}`);
-                        if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+                        if (progressBar) progressBar.style.width = `${(newAudio.currentTime / newAudio.duration) * 100}%`;
 
-                        if (currentAudio.duration - currentAudio.currentTime <= 0.8 && !fadeOutTriggered) {
+                        if (newAudio.duration - newAudio.currentTime <= 0.8 && !fadeOutTriggered) {
                             fadeOutTriggered = true;
-                            let vol = currentAudio.volume;
                             const fadeInterval = setInterval(() => {
-                                if (currentAudio && currentAudio.volume > 0.05) {
-                                    currentAudio.volume = Math.max(0, currentAudio.volume - 0.1);
+                                if (currentAudio === newAudio && newAudio.volume > 0.05) {
+                                    newAudio.volume = Math.max(0, newAudio.volume - 0.1);
                                 } else {
                                     clearInterval(fadeInterval);
                                 }
@@ -1736,22 +1753,43 @@
                         }
                     }
                 };
-                currentAudio.onended = async () => { 
+                newAudio.onended = async () => { 
+                    if (currentAudio !== newAudio) return;
                     await sleep(600);
+                    if (currentAudio !== newAudio) return;
                     currentPlayingId = null; 
                     renderCollectionUI(); 
                 };
-                currentAudio.play().then(() => {
-                    fadeInAudio(currentAudio, 1.0, 500);
-                }).catch(e => { currentPlayingId = null; renderCollectionUI(); });
+                newAudio.play().then(() => {
+                    if (currentAudio === newAudio) fadeInAudio(newAudio, 1.0, 500);
+                }).catch(e => { 
+                    if (currentAudio === newAudio) {
+                        currentPlayingId = null; 
+                        renderCollectionUI(); 
+                    }
+                });
             } else { alert('Audio preview not available right now.'); }
             renderCollectionUI();
         }
 
         async function fadeAndStopAudio() {
+            // 1. МГНОВЕННО и синхронно перехватываем текущий активный слот и очищаем его
+            const slotToReset = currentPlayingSlot;
+            
+            currentPlayingSlot = null; 
+            currentPlayingId = null;
+            loadingCollectionId = null;
+
+            // 2. Сбрасываем интерфейс старого трека ДО того, как начнут отрисовываться новые
+            if (slotToReset !== null) {
+                resetSlotUI(slotToReset);
+                resetTournamentSlotUI(slotToReset);
+            }
+
+            // 3. Плавно глушим звук, при этом для всей остальной логики плеер уже свободен
             if (currentAudio) {
                 const aud = currentAudio;
-                currentAudio = null;
+                currentAudio = null; // Отвязываем объект
                 aud.onended = null;
                 aud.onerror = null;
                 
@@ -1769,13 +1807,6 @@
                     aud.pause();
                 }
             }
-            if (currentPlayingSlot !== null) { 
-                resetSlotUI(currentPlayingSlot); 
-                resetTournamentSlotUI(currentPlayingSlot);
-                currentPlayingSlot = null; 
-            }
-            currentPlayingId = null;
-            loadingCollectionId = null;
         }
 
         function pauseCurrentAudio() {
@@ -2101,7 +2132,8 @@
         }
 
         async function loadNextMatch() {
-            stopCurrentAudio();
+            await fadeAndStopAudio(); // ЖДЕМ полной остановки старого звука перед сборкой нового UI
+
             revealedSlots = []; 
             document.getElementById('btnRollDice').disabled = false;
 
@@ -2153,6 +2185,7 @@
 
                 if (card) {
                     if (i === idx) {
+                        card.classList.remove('flip-reveal');
                         card.classList.add('playing');
                     } else {
                         card.classList.remove('playing');
@@ -2314,9 +2347,8 @@
 
                     if (newAudio.duration - newAudio.currentTime <= 0.8 && !fadeOutTriggered) {
                         fadeOutTriggered = true;
-                        let vol = newAudio.volume;
                         const fadeInterval = setInterval(() => {
-                            if (newAudio && newAudio.volume > 0.05) {
+                            if (currentAudio === newAudio && newAudio.volume > 0.05) {
                                 newAudio.volume = Math.max(0, newAudio.volume - 0.1);
                             } else {
                                 clearInterval(fadeInterval);
@@ -2329,6 +2361,8 @@
             newAudio.onended = async () => {
                 if (currentAudio !== newAudio) return;
                 await sleep(600);
+                if (currentAudio !== newAudio) return;
+                
                 resetTournamentSlotUI(idx);
                 const nextIdx = getNextAvailableSlot(currentMatchAlbums, idx, 1);
                 
@@ -2342,20 +2376,19 @@
                 playTournamentCarouselTrack(nextIdx);
             };
 
-            newAudio.onerror = async () => {
+            newAudio.onerror = () => {
                 if (currentAudio !== newAudio) return;
                 resetTournamentSlotUI(idx);
-                currentMatchAlbums[idx] = await fetchHitTrackForAlbum(currentMatchAlbums[idx], true, true);
-                renderBattleMatchUI();
                 playNextMatchTrackInCarousel(idx);
             };
 
             newAudio.play().then(() => {
                 if (currentAudio === newAudio) fadeInAudio(newAudio, 1.0, 500);
             }).catch(e => {
-                if (currentAudio !== newAudio) return;
-                resetTournamentSlotUI(idx);
-                playNextMatchTrackInCarousel(idx);
+                if (currentAudio === newAudio) {
+                    resetTournamentSlotUI(idx);
+                    playNextMatchTrackInCarousel(idx);
+                }
             });
         }
 
@@ -2633,6 +2666,7 @@
             const progressBar = document.getElementById('champ-progress-fill');
 
             if (card) {
+                card.classList.remove('flip-reveal');
                 card.classList.add('playing');
                 if (window.innerWidth <= 600) {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2640,19 +2674,19 @@
             }
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" style="padding-right:0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
-            currentAudio = new Audio(championAlbumObj.preview);
+            const newAudio = new Audio(championAlbumObj.preview);
+            currentAudio = newAudio;
             
             let fadeOutTriggered = false;
-            currentAudio.ontimeupdate = () => {
-                if (currentAudio && currentAudio.duration) {
-                    if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
+            newAudio.ontimeupdate = () => {
+                if (currentAudio === newAudio && newAudio.duration) {
+                    if (progressBar) progressBar.style.width = `${(newAudio.currentTime / newAudio.duration) * 100}%`;
 
-                    if (currentAudio.duration - currentAudio.currentTime <= 0.8 && !fadeOutTriggered) {
+                    if (newAudio.duration - newAudio.currentTime <= 0.8 && !fadeOutTriggered) {
                         fadeOutTriggered = true;
-                        let vol = currentAudio.volume;
                         const fadeInterval = setInterval(() => {
-                            if (currentAudio && currentAudio.volume > 0.05) {
-                                currentAudio.volume = Math.max(0, currentAudio.volume - 0.1);
+                            if (currentAudio === newAudio && newAudio.volume > 0.05) {
+                                newAudio.volume = Math.max(0, newAudio.volume - 0.1);
                             } else {
                                 clearInterval(fadeInterval);
                             }
@@ -2661,18 +2695,22 @@
                 }
             };
 
-            currentAudio.onended = async () => {
+            newAudio.onended = async () => {
+                if (currentAudio !== newAudio) return;
                 await sleep(600);
+                if (currentAudio !== newAudio) return;
                 if (card) card.classList.remove('playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
                 playChampionNextTrack(true);
             };
 
-            currentAudio.play().then(() => {
-                fadeInAudio(currentAudio, 1.0, 500);
+            newAudio.play().then(() => {
+                if (currentAudio === newAudio) fadeInAudio(newAudio, 1.0, 500);
             }).catch(e => {
-                if (card) card.classList.remove('playing');
-                if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                if (currentAudio === newAudio) {
+                    if (card) card.classList.remove('playing');
+                    if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                }
             });
         }
 
