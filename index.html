@@ -457,7 +457,6 @@
         .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
         .tourn-card.blind-card .progress-bar-fill { background: #ffffff !important; }
 
-        /* ИСПРАВЛЕННЫЙ АДАПТИВНЫЙ БЛОК ДЕТАЛЕЙ (БЕЗ ЖЕСТКОЙ ВЫСОТЫ) */
         .card-details-box {
             display: flex;
             flex-direction: column;
@@ -492,7 +491,6 @@
             width: 100%;
         }
 
-        /* НАЗВАНИЕ АЛЬБОМА ТЕПЕРЬ ПОМЕЩАЕТСЯ (МНОГОСТРОЧНОЕ ДО 2 СТРОК) */
         .album-title { 
             font-size: 0.8rem; 
             font-weight: bold; 
@@ -2156,7 +2154,8 @@
                 else if (album.rarity === 'Epic') borderVar = 'epic';
                 else if (album.rarity === 'Rare') borderVar = 'rare';
 
-                const isPlaying = (currentPlayingSlot === idx) && currentAudio && !currentAudio.paused;
+                // Исправлено: Слот подсвечивается, если он выбран активным слот-индексом
+                const isPlaying = (currentPlayingSlot === idx);
                 const favClass = album.isFavorite ? 'active' : '';
 
                 const isSlotBlind = isBlindMode && !revealedSlots.includes(idx);
