@@ -1623,7 +1623,7 @@
                 if (currentAudio && currentAudio.duration) {
                     if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
                     
-                    if (currentAudio.duration - currentAudio.currentTime <= 0.5 && !fadeOutTriggered) {
+                    if (currentAudio.duration - currentAudio.currentTime <= 0.8 && !fadeOutTriggered) {
                         fadeOutTriggered = true;
                         let vol = currentAudio.volume;
                         const fadeInterval = setInterval(() => {
@@ -1638,6 +1638,7 @@
             };
             
             currentAudio.onended = async () => {
+                await sleep(600);
                 resetSlotUI(slotIndex);
                 const nextSlot = (slotIndex + 1) % 5;
                 const isAutoPullEnabled = document.getElementById('autoPullCheck') ? document.getElementById('autoPullCheck').checked : false;
@@ -1696,7 +1697,7 @@
                         const progressBar = document.getElementById(`col-progress-${albumId}`);
                         if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
 
-                        if (currentAudio.duration - currentAudio.currentTime <= 0.5 && !fadeOutTriggered) {
+                        if (currentAudio.duration - currentAudio.currentTime <= 0.8 && !fadeOutTriggered) {
                             fadeOutTriggered = true;
                             let vol = currentAudio.volume;
                             const fadeInterval = setInterval(() => {
@@ -1709,7 +1710,11 @@
                         }
                     }
                 };
-                currentAudio.onended = () => { currentPlayingId = null; renderCollectionUI(); };
+                currentAudio.onended = async () => { 
+                    await sleep(600);
+                    currentPlayingId = null; 
+                    renderCollectionUI(); 
+                };
                 currentAudio.play().then(() => {
                     fadeInAudio(currentAudio, 1.0, 500);
                 }).catch(e => { currentPlayingId = null; renderCollectionUI(); });
@@ -2317,7 +2322,7 @@
                     const progressBar = document.getElementById(`tprogress-${idx}`);
                     if (progressBar) progressBar.style.width = `${(newAudio.currentTime / newAudio.duration) * 100}%`;
 
-                    if (newAudio.duration - newAudio.currentTime <= 0.5 && !fadeOutTriggered) {
+                    if (newAudio.duration - newAudio.currentTime <= 0.8 && !fadeOutTriggered) {
                         fadeOutTriggered = true;
                         let vol = newAudio.volume;
                         const fadeInterval = setInterval(() => {
@@ -2333,6 +2338,7 @@
             
             newAudio.onended = async () => {
                 if (currentAudio !== newAudio) return;
+                await sleep(600);
                 resetTournamentSlotUI(idx);
                 const nextIdx = getNextAvailableSlot(currentMatchAlbums, idx, 1);
                 
@@ -2655,7 +2661,7 @@
                 if (currentAudio && currentAudio.duration) {
                     if (progressBar) progressBar.style.width = `${(currentAudio.currentTime / currentAudio.duration) * 100}%`;
 
-                    if (currentAudio.duration - currentAudio.currentTime <= 0.5 && !fadeOutTriggered) {
+                    if (currentAudio.duration - currentAudio.currentTime <= 0.8 && !fadeOutTriggered) {
                         fadeOutTriggered = true;
                         let vol = currentAudio.volume;
                         const fadeInterval = setInterval(() => {
@@ -2669,7 +2675,8 @@
                 }
             };
 
-            currentAudio.onended = () => {
+            currentAudio.onended = async () => {
+                await sleep(600);
                 if (card) card.classList.remove('playing');
                 if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
                 playChampionNextTrack(true);
