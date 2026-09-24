@@ -2465,8 +2465,9 @@
             }
 
             if (isBlindMode) {
+                // Раскрываем ТОЛЬКО проигравших, победитель остается скрытым
                 currentMatchAlbums.forEach((_, i) => {
-                    if (!revealedSlots.includes(i)) {
+                    if (i !== winnerIdx && !revealedSlots.includes(i)) {
                         revealedSlots.push(i);
                     }
                 });
