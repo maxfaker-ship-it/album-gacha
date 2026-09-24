@@ -251,7 +251,6 @@
             100% { transform: rotateY(0deg) scale(1); opacity: 1; }
         }
 
-        /* Полный CSS-контроль цветов рамок */
         .card.rarity-Common, .mini-card.rarity-Common, .tourn-card.rarity-Common { border-color: var(--rarity-common); }
         .card.rarity-Rare, .mini-card.rarity-Rare, .tourn-card.rarity-Rare { border-color: var(--rarity-rare); }
         .card.rarity-Epic, .mini-card.rarity-Epic, .tourn-card.rarity-Epic { border-color: var(--rarity-epic); }
@@ -264,7 +263,6 @@
 
         .tourn-card.blind-card { border-color: #3e3e4a; }
 
-        /* Эффекты свечения во время проигрывания */
         .card.playing.rarity-Common, .mini-card.playing.rarity-Common, .list-card.playing.rarity-Common, .tourn-card.playing.rarity-Common { 
             box-shadow: 0 8px 25px rgba(160, 160, 160, 0.6), 0 0 12px var(--rarity-common); 
         }
@@ -1899,13 +1897,13 @@
         }
 
         function createAlbumCardElement(item, mode) {
-            const escTitle = isBlindMode ? 'Hidden Album' : escapeHtml(item.title);
-            const escArtist = isBlindMode ? 'Hidden Artist' : escapeHtml(item.artist);
+            const escTitle = escapeHtml(item.title);
+            const escArtist = escapeHtml(item.artist);
             const isPlaying = (currentPlayingId === `col_${item.id}`) && currentAudio && !currentAudio.paused;
             const isLoading = (loadingCollectionId === item.id);
             const activeTrackName = collectionTracksCache.get(item.id) || '';
 
-            const coverImg = item.cover && !isBlindMode
+            const coverImg = item.cover
                 ? `<img src="${escapeHtml(item.cover)}" alt="${escTitle}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300?text=No+Cover';">`
                 : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
 
@@ -1917,7 +1915,7 @@
             if (isLoading) playIconSVG = '';
             else if (isPlaying) playIconSVG = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
 
-            let trackDisplay = (isPlaying && activeTrackName && !isBlindMode) 
+            let trackDisplay = (isPlaying && activeTrackName) 
                 ? `<div class="track-preview-name" title="${escapeHtml(activeTrackName)}">🎵 ${escapeHtml(activeTrackName)}</div>`
                 : (isLoading ? `<div class="track-preview-name" style="color:#eab308;">⏳ Fetching...</div>` : `<div class="track-preview-name" style="visibility: hidden;">🎵 Placeholder</div>`);
 
@@ -2187,7 +2185,6 @@
 
                 const isSlotBlind = isBlindMode && !revealedSlots.includes(idx);
 
-                // CSS классы теперь полностью отвечают за цвета
                 card.className = `tourn-card ${isSlotBlind ? 'blind-card' : `rarity-${escapeHtml(album.rarity)}`} ${isPlaying ? 'playing' : ''}`;
                 card.id = `tcard-${idx}`;
 
@@ -2508,14 +2505,14 @@
             card.className = `tourn-card rarity-${escapeHtml(champion.rarity)}`;
             card.id = `champion-card-el`;
 
-            const escTitle = isBlindMode ? 'Hidden Album' : escapeHtml(champion.title);
-            const escArtist = isBlindMode ? 'Hidden Artist' : escapeHtml(champion.artist);
-            const escTrack = isBlindMode ? 'Main Hit Track' : escapeHtml(champion.trackName || 'Main Hit Track');
+            const escTitle = escapeHtml(champion.title);
+            const escArtist = escapeHtml(champion.artist);
+            const escTrack = escapeHtml(champion.trackName || 'Main Hit Track');
             const lvlClass = getLevelColorClass(champion.level || 1);
             const progressText = getCopiesProgressText(champion.pulls || 1);
             const favClass = champion.isFavorite ? 'active' : '';
 
-            const coverHTML = champion.cover && !isBlindMode ? `<img src="${escapeHtml(champion.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
+            const coverHTML = champion.cover ? `<img src="${escapeHtml(champion.cover)}" class="cover-art">` : `<div class="vinyl-placeholder"><div class="ph-title">${escTitle}</div></div>`;
 
             card.innerHTML = `
                 <div>
