@@ -236,16 +236,6 @@
             z-index: 5;
         }
 
-        .card.playing.rarity-Common, .mini-card.playing.rarity-Common, .list-card.playing.rarity-Common, .tourn-card.playing.rarity-Common { box-shadow: 0 8px 25px rgba(160, 160, 160, 0.6), 0 0 12px var(--rarity-common); }
-        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare, .list-card.playing.rarity-Rare, .tourn-card.playing.rarity-Rare { box-shadow: 0 8px 30px rgba(59, 130, 246, 0.8), 0 0 16px var(--rarity-rare); }
-        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic, .list-card.playing.rarity-Epic, .tourn-card.playing.rarity-Epic { box-shadow: 0 8px 32px rgba(168, 85, 247, 0.9), 0 0 20px var(--rarity-epic); }
-        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary, .list-card.playing.rarity-Legendary, .tourn-card.playing.rarity-Legendary { box-shadow: 0 8px 38px rgba(234, 179, 8, 1), 0 0 24px var(--rarity-legend); }
-
-        .tourn-card.blind-card.playing {
-            border-color: #ffffff !important;
-            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.8), 0 0 16px #ffffff !important;
-        }
-
         .card.skeleton {
             border-color: #333;
             background: #18181c;
@@ -261,10 +251,36 @@
             100% { transform: rotateY(0deg) scale(1); opacity: 1; }
         }
 
-        .card.rarity-Common { border-color: var(--rarity-common); }
-        .card.rarity-Rare { border-color: var(--rarity-rare); }
-        .card.rarity-Epic { border-color: var(--rarity-epic); }
-        .card.rarity-Legendary { border-color: var(--rarity-legend); }
+        /* Полный CSS-контроль цветов рамок */
+        .card.rarity-Common, .mini-card.rarity-Common, .tourn-card.rarity-Common { border-color: var(--rarity-common); }
+        .card.rarity-Rare, .mini-card.rarity-Rare, .tourn-card.rarity-Rare { border-color: var(--rarity-rare); }
+        .card.rarity-Epic, .mini-card.rarity-Epic, .tourn-card.rarity-Epic { border-color: var(--rarity-epic); }
+        .card.rarity-Legendary, .mini-card.rarity-Legendary, .tourn-card.rarity-Legendary { border-color: var(--rarity-legend); }
+
+        .list-card.rarity-Common { border-left-color: var(--rarity-common); }
+        .list-card.rarity-Rare { border-left-color: var(--rarity-rare); }
+        .list-card.rarity-Epic { border-left-color: var(--rarity-epic); }
+        .list-card.rarity-Legendary { border-left-color: var(--rarity-legend); }
+
+        .tourn-card.blind-card { border-color: #3e3e4a; }
+
+        /* Эффекты свечения во время проигрывания */
+        .card.playing.rarity-Common, .mini-card.playing.rarity-Common, .list-card.playing.rarity-Common, .tourn-card.playing.rarity-Common { 
+            box-shadow: 0 8px 25px rgba(160, 160, 160, 0.6), 0 0 12px var(--rarity-common); 
+        }
+        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare, .list-card.playing.rarity-Rare, .tourn-card.playing.rarity-Rare { 
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.8), 0 0 16px var(--rarity-rare); 
+        }
+        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic, .list-card.playing.rarity-Epic, .tourn-card.playing.rarity-Epic { 
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.9), 0 0 20px var(--rarity-epic); 
+        }
+        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary, .list-card.playing.rarity-Legendary, .tourn-card.playing.rarity-Legendary { 
+            box-shadow: 0 8px 38px rgba(234, 179, 8, 1), 0 0 24px var(--rarity-legend); 
+        }
+        .tourn-card.blind-card.playing {
+            border-color: #ffffff;
+            box-shadow: 0 8px 30px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 1);
+        }
 
         .card-top-bar {
             display: flex;
@@ -587,8 +603,7 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 
         .mini-card {
-            background: var(--card-bg); border-radius: 8px; padding: 8px; text-align: center; border: 2px solid var(--rarity-common);
-            font-size: 0.75rem; transition: transform 0.2s, box-shadow 0.2s; position: relative; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer;
+            background: var(--card-bg); border-radius: 8px; padding: 8px; text-align: center; font-size: 0.75rem; transition: transform 0.2s, box-shadow 0.2s; position: relative; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; border-width: 2px; border-style: solid;
         }
 
         .mini-card:hover { transform: translateY(-3px); }
@@ -601,7 +616,7 @@
         .list { display: flex; flex-direction: column; gap: 6px; }
         .list-card { 
             background: var(--card-bg); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; 
-            justify-content: space-between; gap: 10px; border-left: 4px solid var(--rarity-common); transition: background 0.2s; 
+            justify-content: space-between; gap: 10px; border-left-width: 4px; border-left-style: solid; transition: background 0.2s; 
             position: relative; cursor: pointer; box-sizing: border-box; width: 100%;
         }
         .list-card.playing { background: #282832; }
@@ -671,13 +686,14 @@
             padding: 6px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             text-align: center;
-            border: 2px solid var(--rarity-common);
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s, opacity 1.2s ease, filter 1.2s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             box-sizing: border-box;
             position: relative;
+            border-width: 2px;
+            border-style: solid;
         }
 
         .tourn-card.winner-glow {
@@ -1766,7 +1782,6 @@
 
         function pauseCurrentAudio() {
             fadeAndStopAudio();
-            renderBattleMatchUI();
         }
 
         function stopCurrentAudio() {
@@ -1884,11 +1899,6 @@
         }
 
         function createAlbumCardElement(item, mode) {
-            let borderVar = 'common';
-            if (item.rarity === 'Legendary') borderVar = 'legend';
-            else if (item.rarity === 'Epic') borderVar = 'epic';
-            else if (item.rarity === 'Rare') borderVar = 'rare';
-
             const escTitle = isBlindMode ? 'Hidden Album' : escapeHtml(item.title);
             const escArtist = isBlindMode ? 'Hidden Artist' : escapeHtml(item.artist);
             const isPlaying = (currentPlayingId === `col_${item.id}`) && currentAudio && !currentAudio.paused;
@@ -1914,7 +1924,6 @@
             if (mode === 'grid') {
                 const mini = document.createElement('div');
                 mini.className = `mini-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing' : ''}`;
-                mini.style.borderColor = `var(--rarity-${borderVar})`;
                 mini.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 mini.innerHTML = `
                     <div>
@@ -1948,7 +1957,6 @@
             } else {
                 const listItem = document.createElement('div');
                 listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing' : ''}`;
-                listItem.style.borderLeftColor = `var(--rarity-${borderVar})`;
                 listItem.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 listItem.innerHTML = `
                     <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0; overflow:hidden;">
@@ -2135,7 +2143,6 @@
             renderCollectionUI();
             updateTournamentSourceDropdown();
 
-            // Отрисовываем DOM, затем принудительно заново запускаем 0 слот
             renderBattleMatchUI();
             playTournamentCarouselTrack(0);
         }
@@ -2175,24 +2182,13 @@
 
             currentMatchAlbums.forEach((album, idx) => {
                 const card = document.createElement('div');
-                let borderVar = 'common';
-                if (album.rarity === 'Legendary') borderVar = 'legend';
-                else if (album.rarity === 'Epic') borderVar = 'epic';
-                else if (album.rarity === 'Rare') borderVar = 'rare';
-
                 const isPlaying = (currentPlayingSlot === idx);
                 const favClass = album.isFavorite ? 'active' : '';
 
                 const isSlotBlind = isBlindMode && !revealedSlots.includes(idx);
 
+                // CSS классы теперь полностью отвечают за цвета
                 card.className = `tourn-card ${isSlotBlind ? 'blind-card' : `rarity-${escapeHtml(album.rarity)}`} ${isPlaying ? 'playing' : ''}`;
-                
-                if (isSlotBlind) {
-                    card.style.borderColor = isPlaying ? '#ffffff' : '#444444';
-                } else {
-                    card.style.borderColor = `var(--rarity-${borderVar})`;
-                }
-                
                 card.id = `tcard-${idx}`;
 
                 const escTitle = isSlotBlind ? '??? Hidden' : escapeHtml(album.title);
@@ -2508,14 +2504,8 @@
             const container = document.getElementById('championCardContainer');
             container.innerHTML = '';
 
-            let borderVar = 'common';
-            if (champion.rarity === 'Legendary') borderVar = 'legend';
-            else if (champion.rarity === 'Epic') borderVar = 'epic';
-            else if (champion.rarity === 'Rare') borderVar = 'rare';
-
             const card = document.createElement('div');
             card.className = `tourn-card rarity-${escapeHtml(champion.rarity)}`;
-            card.style.borderColor = `var(--rarity-${borderVar})`;
             card.id = `champion-card-el`;
 
             const escTitle = isBlindMode ? 'Hidden Album' : escapeHtml(champion.title);
