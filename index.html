@@ -2,1050 +2,794 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Album Gacha 5x Pack Pro & Tournament Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Gacha & Tournament</title>
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
-            --bg-color: #121214;
-            --card-bg: #1e1e24;
-            --text-color: #f0f0f5;
-            --rarity-common: #a0a0a0;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --rarity-common: #94a3b8;
             --rarity-rare: #3b82f6;
             --rarity-epic: #a855f7;
             --rarity-legend: #eab308;
-            --accent-color: #6366f1;
-            
-            --lvl-1-color: #a0a0a0;
-            --lvl-2-color: #4ade80;
-            --lvl-3-color: #60a5fa;
-            --lvl-4-color: #c084fc;
-            --lvl-5-color: #facc15;
-
-            --winner-color: #ef4444;
+            --lvl-1: #94a3b8;
+            --lvl-2: #22c55e;
+            --lvl-3: #3b82f6;
+            --lvl-4: #a855f7;
+            --lvl-5: #eab308;
         }
 
-        html, body {
-            max-width: 100vw;
-            overflow-x: hidden;
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            touch-action: pan-y;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            padding: 6px 12px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
+            padding: 16px;
         }
 
-        .header-container {
-            text-align: center;
-            position: relative;
+        header {
             width: 100%;
-            max-width: 1300px;
-            margin-bottom: 4px;
-        }
-
-        h1 { margin: 0 0 1px 0; font-size: 1.2rem; }
-        
-        p.sub { 
-            color: #888; 
-            margin-top: 0; 
-            margin-bottom: 4px; 
-            font-size: 0.65rem; 
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            opacity: 0.75;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-            padding: 1px 0;
-        }
-
-        .mode-tabs {
+            max-width: 1000px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #334155;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sync-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #1e293b;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            font-size: 0.85rem;
+        }
+
+        .user-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .sync-status {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .sync-status.syncing { color: #eab308; }
+        .sync-status.success { color: #22c55e; }
+
+        .btn-google {
+            background: #ffffff;
+            color: #1f2937;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
             gap: 6px;
-            margin-bottom: 4px;
+            transition: background 0.2s;
+        }
+
+        .btn-google:hover { background: #f3f4f6; }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: #1e293b;
+            padding: 4px;
+            border-radius: 8px;
         }
 
         .tab-btn {
-            background: #1e1e24;
-            color: #888;
-            border: 1px solid #333;
-            padding: 4px 14px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            border-radius: 14px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .tab-btn.active {
             background: var(--accent-color);
-            color: #fff;
-            border-color: var(--accent-color);
-            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+            color: #ffffff;
         }
 
-        .view-section {
+        main {
             width: 100%;
-            max-width: 1300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            max-width: 1000px;
         }
 
         .hidden { display: none !important; }
 
-        .controls { 
-            margin-bottom: 0; 
-            display: flex; 
-            gap: 12px; 
-            align-items: center; 
-            justify-content: center; 
-            flex-wrap: wrap;
-        }
-
-        .auto-pull-toggle {
+        .controls-bar {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            background: #1e1e24;
-            border: 1px solid #333;
-            padding: 4px 10px;
-            border-radius: 16px;
-            font-size: 0.75rem;
-            color: #aaa;
-            cursor: pointer;
-            user-select: none;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        .auto-pull-toggle input {
-            cursor: pointer;
-            accent-color: var(--accent-color);
-        }
-
-        button.pull-btn, button.action-btn {
-            background: linear-gradient(135deg, #6366f1, #a855f7);
+        .btn-primary {
+            background: var(--accent-color);
             color: white;
             border: none;
-            padding: 8px 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            border-radius: 20px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
-            transition: transform 0.1s, box-shadow 0.2s;
+            transition: background 0.2s;
         }
 
-        button.pull-btn:hover, button.action-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.6);
-        }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        button.pull-btn:disabled, button.action-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        button.pull-btn-large {
-            padding: 14px 36px;
-            font-size: 1.1rem;
-            border-radius: 28px;
-            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
-        }
-
-        .initial-start-box {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 260px;
-            width: 100%;
-        }
-
-        button.reset-btn {
-            background: #2a2a35;
-            color: #888;
-            border: 1px solid #333;
-            padding: 4px 8px;
-            font-size: 0.7rem;
-            border-radius: 5px;
+        .btn-secondary {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
             cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+            transition: background 0.2s;
         }
 
-        button.reset-btn:hover {
-            background: #3a2a35;
-            color: #ff5555;
-            border-color: #ff5555;
-        }
+        .btn-secondary:hover { background: #475569; }
 
-        .pack-area {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
+        /* Card Styles */
         .pack-container {
-            display: flex;
-            flex-direction: row;
-            gap: 10px;
-            justify-content: space-between;
-            align-items: stretch;
-            margin: 15px 0;
-            width: 100%;
-            max-width: 1300px;
-            box-sizing: border-box;
-            min-height: 330px;
-        }
-
-        .card, .mini-card, .list-card, .tourn-card {
-            container-type: inline-size;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         .card {
-            flex: 1;
-            min-width: 0;
             background: var(--card-bg);
-            border-radius: 10px;
-            padding: 8px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-            text-align: center;
-            border: 2px solid var(--rarity-common);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+            border-radius: 12px;
+            padding: 12px;
+            border: 2px solid transparent;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-sizing: border-box;
-            height: 100%;
             position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .card.playing, .tourn-card.playing {
-            transform: translateY(-4px) scale(1.01);
-            z-index: 5;
+        .card.rarity-Common { border-color: var(--rarity-common); }
+        .card.rarity-Rare { border-color: var(--rarity-rare); }
+        .card.rarity-Epic { border-color: var(--rarity-epic); }
+        .card.rarity-Legendary { border-color: var(--rarity-legend); }
+
+        .card.playing {
+            box-shadow: 0 0 15px var(--accent-color);
+            transform: scale(1.02);
         }
 
-        .card.skeleton {
-            border-color: #333;
-            background: #18181c;
-            opacity: 0.6;
+        .card-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
         }
 
-        .card.flip-reveal {
-            animation: flip 0.25s ease-out forwards;
+        .lvl-badge {
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #0f172a;
         }
 
-        @keyframes flip {
-            0% { transform: rotateY(90deg) scale(0.92); opacity: 0.3; }
-            100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+        .lvl-color-1 { background-color: var(--lvl-1); }
+        .lvl-color-2 { background-color: var(--lvl-2); }
+        .lvl-color-3 { background-color: var(--lvl-3); }
+        .lvl-color-4 { background-color: var(--lvl-4); }
+        .lvl-color-5 { background-color: var(--lvl-5); }
+
+        .rarity-badge {
+            font-weight: 700;
+            text-transform: uppercase;
         }
 
-        .card.rarity-Common, .mini-card.rarity-Common, .tourn-card.rarity-Common { border-color: var(--rarity-common); }
-        .card.rarity-Rare, .mini-card.rarity-Rare, .tourn-card.rarity-Rare { border-color: var(--rarity-rare); }
-        .card.rarity-Epic, .mini-card.rarity-Epic, .tourn-card.rarity-Epic { border-color: var(--rarity-epic); }
-        .card.rarity-Legendary, .mini-card.rarity-Legendary, .tourn-card.rarity-Legendary { border-color: var(--rarity-legend); }
+        .fav-btn, .shuffle-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+
+        .fav-btn.active { color: #eab308; }
+        .shuffle-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .cover-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #0f172a;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .cover-art {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .vinyl-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+            text-align: center;
+            background: #1e293b;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .cover-wrapper:hover .play-overlay { opacity: 1; }
+
+        .play-btn-icon svg {
+            width: 36px;
+            height: 36px;
+            fill: #ffffff;
+        }
+
+        .progress-bar-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent-color);
+        }
+
+        .card-details-box {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 0.8rem;
+        }
+
+        .artist-name { font-weight: 700; color: #cbd5e1; }
+        .album-title { font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-preview-name { color: #818cf8; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Collection Grid & List */
+        .collection-stats-bar {
+            display: flex;
+            gap: 16px;
+            background: #1e293b;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            flex-wrap: wrap;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .list-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-left: 4px solid transparent;
+        }
 
         .list-card.rarity-Common { border-left-color: var(--rarity-common); }
         .list-card.rarity-Rare { border-left-color: var(--rarity-rare); }
         .list-card.rarity-Epic { border-left-color: var(--rarity-epic); }
         .list-card.rarity-Legendary { border-left-color: var(--rarity-legend); }
 
-        .tourn-card.blind-card { border-color: #3e3e4a; }
-
-        .card.playing.rarity-Common, .mini-card.playing.rarity-Common, .list-card.playing.rarity-Common, .tourn-card.playing.rarity-Common { 
-            box-shadow: 0 8px 25px rgba(160, 160, 160, 0.6), 0 0 12px var(--rarity-common); 
-        }
-        .card.playing.rarity-Rare, .mini-card.playing.rarity-Rare, .list-card.playing.rarity-Rare, .tourn-card.playing.rarity-Rare { 
-            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.8), 0 0 16px var(--rarity-rare); 
-        }
-        .card.playing.rarity-Epic, .mini-card.playing.rarity-Epic, .list-card.playing.rarity-Epic, .tourn-card.playing.rarity-Epic { 
-            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.9), 0 0 20px var(--rarity-epic); 
-        }
-        .card.playing.rarity-Legendary, .mini-card.playing.rarity-Legendary, .list-card.playing.rarity-Legendary, .tourn-card.playing.rarity-Legendary { 
-            box-shadow: 0 8px 38px rgba(234, 179, 8, 1), 0 0 24px var(--rarity-legend); 
-        }
-        .tourn-card.blind-card.playing {
-            border-color: #ffffff;
-            box-shadow: 0 8px 30px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 1);
-        }
-
-        .card-top-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 4px;
-            width: 100%;
-            height: 28px;
+        .list-cover-wrapper {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            overflow: hidden;
             position: relative;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .lvl-badge {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid currentColor;
-            font-size: 0.6rem;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 6px;
-            line-height: 1;
-            white-space: nowrap;
-            transition: all 0.3s;
             flex-shrink: 0;
-            z-index: 2;
-            user-select: none;
-            -webkit-user-select: none;
         }
 
-        .copies-tag {
-            font-size: 0.62rem;
-            color: #888;
-            margin-top: 1px;
-            white-space: nowrap;
-        }
-        
-        .lvl-color-1 { color: var(--lvl-1-color); }
-        .lvl-color-2 { color: var(--lvl-2-color); text-shadow: 0 0 5px rgba(74,222,128,0.4); }
-        .lvl-color-3 { color: var(--lvl-3-color); text-shadow: 0 0 5px rgba(96,165,250,0.4); }
-        .lvl-color-4 { color: var(--lvl-4-color); text-shadow: 0 0 5px rgba(192,132,252,0.4); }
-        .lvl-color-5 { color: var(--lvl-5-color); text-shadow: 0 0 5px rgba(250,204,21,0.4); }
-
-        .rarity-badge {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 2px 8px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            line-height: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            z-index: 1;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        @container (max-width: 150px) {
-            .rarity-badge { display: none !important; }
-        }
-
-        .rarity-Common .rarity-badge { background: var(--rarity-common); color: #000; }
-        .rarity-Rare .rarity-badge { background: var(--rarity-rare); color: #fff; }
-        .rarity-Epic .rarity-badge { background: var(--rarity-epic); color: #fff; }
-        .rarity-Legendary .rarity-badge { background: var(--rarity-legend); color: #000; }
-
-        .fav-btn, .shuffle-btn {
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #444;
-            color: #aaa;
-            font-size: 0.85rem;
-            width: 28px !important;
-            height: 28px !important;
-            min-width: 28px !important;
-            min-height: 28px !important;
-            max-width: 28px !important;
-            max-height: 28px !important;
-            border-radius: 50% !important;
-            cursor: pointer;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            transition: color 0.2s, transform 0.1s, background 0.2s;
-            padding: 0 !important;
-            line-height: 1 !important;
-            flex-shrink: 0 !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
-            z-index: 2;
-        }
-
-        .shuffle-btn svg { 
-            width: 14px !important; 
-            height: 14px !important; 
-            fill: #aaa; 
-            transition: fill 0.2s; 
-            display: block;
-        }
-
-        .fav-btn.active { color: #eab308; border-color: #eab308; text-shadow: 0 0 5px rgba(234, 179, 8, 0.8); }
-        .shuffle-btn:hover svg { fill: #fff; }
-        .shuffle-btn:hover, .fav-btn:hover { transform: scale(1.1); background: rgba(0, 0, 0, 0.9); }
-
-        .cover-wrapper {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1/1;
-            margin-bottom: 6px;
-            border-radius: 6px;
-            overflow: hidden;
-            background: #18181c;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .cover-art { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-        .vinyl-placeholder {
-            width: 100%; height: 100%; background: radial-gradient(circle, #2a2a35 0%, #111115 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; box-sizing: border-box; border: 1px solid #333;
-        }
-        .vinyl-placeholder .ph-title { font-size: 0.75rem; font-weight: bold; color: #fff; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .vinyl-placeholder .ph-artist { font-size: 0.65rem; color: #888; }
-
-        .blind-cover-placeholder {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
+        /* Tournament Arena */
+        .arena-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            font-size: 2.2rem;
-            color: rgba(255, 255, 255, 0.8);
-            box-sizing: border-box;
-            user-select: none;
-        }
-
-        .play-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4);
-            display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
-            pointer-events: none;
-        }
-
-        @media (hover: hover) {
-            .play-overlay { opacity: 0 !important; }
-            .cover-wrapper:hover .play-overlay, 
-            .mini-cover-wrapper:hover .play-overlay, 
-            .list-cover-wrapper:hover .play-overlay { 
-                opacity: 1 !important; 
-            }
-        }
-
-        @media (hover: none) {
-            .play-overlay {
-                display: none !important;
-                opacity: 0 !important;
-            }
-        }
-
-        .play-btn-icon {
-            width: 34px; height: 34px; background: rgba(255, 255, 255, 0.95); color: #000; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5); transition: transform 0.15s ease; box-sizing: border-box;
-        }
-
-        .play-btn-icon svg { width: 14px; height: 14px; fill: #000; }
-
-        .progress-bar-container { 
-            position: absolute; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 3px; 
-            background: rgba(255, 255, 255, 0.2); 
-            z-index: 4; 
-            display: none; 
-        }
-
-        .playing .progress-bar-container { display: block !important; }
-        .progress-bar-fill { height: 100%; width: 0%; background: var(--rarity-common); transition: width 0.1s linear; }
-
-        .rarity-Common .progress-bar-fill { background: var(--rarity-common); }
-        .rarity-Rare .progress-bar-fill { background: var(--rarity-rare); }
-        .rarity-Epic .progress-bar-fill { background: var(--rarity-epic); }
-        .rarity-Legendary .progress-bar-fill { background: var(--rarity-legend); }
-        .tourn-card.blind-card .progress-bar-fill { background: #ffffff !important; }
-
-        .card-details-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 2px;
-            width: 100%;
-            min-height: 110px;
-            box-sizing: border-box;
-            margin-top: 2px;
-            padding: 2px 0;
-            overflow: hidden;
-            flex: 1;
-        }
-
-        .mini-track-container {
-            min-height: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .track-preview-name {
-            color: var(--accent-color);
-            font-size: 0.65rem;
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        .album-title { 
-            font-size: 0.8rem; 
-            font-weight: bold; 
-            margin: 1px 0; 
-            line-height: 1.15;
-            width: 100%; 
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            word-break: break-word;
-        }
-
-        .artist-name { 
-            color: #aaa; 
-            font-size: 0.7rem; 
-            margin: 0; 
-            line-height: 1.15;
-            width: 100%; 
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            word-break: break-word;
-        }
-
-        .type-badge { 
-            display: inline-block; 
-            align-self: center; 
-            background: #2a2a32; 
-            color: var(--accent-color); 
-            padding: 1px 5px; 
-            border-radius: 4px; 
-            font-size: 0.58rem; 
-            font-weight: bold; 
-            margin-top: 2px;
-            letter-spacing: 0.5px;
-        }
-
-        .score-badge { color: #eab308; font-weight: bold; font-size: 0.72rem; margin: 1px 0; }
-        
-        .genre-badge { 
-            color: #888; 
-            font-size: 0.62rem; 
-            margin: 0; 
-            font-style: italic; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        .collection-section { 
-            width: 100%; 
-            max-width: 1300px; 
-            margin-top: 20px; 
-            border-top: 1px solid #282832;
-            padding-top: 15px;
-        }
-        
-        .collection-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-        .filter-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-
-        .collection-stats-bar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #1e1e24;
-            padding: 8px 14px;
-            border-radius: 20px;
-            border: 1px solid #333;
-            font-size: 0.75rem;
-            color: #bbb;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-
-        .stat-badge {
-            background: rgba(255,255,255,0.05);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        select, button.view-btn, button.toggle-col-btn { background: #1e1e24; color: #fff; border: 1px solid #333; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
-        button.view-btn.active { background: var(--accent-color); border-color: var(--accent-color); }
-        button.toggle-col-btn { background: #2a2a35; font-weight: bold; border-color: var(--accent-color); }
-
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-
-        .mini-card {
-            background: var(--card-bg); border-radius: 8px; padding: 8px; text-align: center; font-size: 0.75rem; transition: transform 0.2s, box-shadow 0.2s; position: relative; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; border-width: 2px; border-style: solid;
-        }
-
-        .mini-card:hover { transform: translateY(-3px); }
-        .mini-cover-wrapper { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 5px; overflow: hidden; background: #18181c; margin-bottom: 4px; }
-        .mini-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-        .artist-group { background: #18181c; border-radius: 10px; padding: 12px; margin-bottom: 15px; border: 1px solid #2e2e38; }
-        .artist-group-header { font-size: 1rem; font-weight: bold; color: #a855f7; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #2e2e38; padding-bottom: 4px; }
-
-        .list { display: flex; flex-direction: column; gap: 8px; }
-        .list-card { 
-            background: var(--card-bg); 
-            border-radius: 8px; 
-            padding: 8px 12px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            gap: 12px; 
-            border-left-width: 4px; 
-            border-left-style: solid; 
-            transition: background 0.2s; 
-            position: relative; 
-            cursor: pointer; 
-            box-sizing: border-box; 
-            width: 100%;
-            min-height: 60px;
-            height: auto;
-        }
-        .list-card.playing { background: #282832; }
-        .list-cover-wrapper { position: relative; width: 48px; height: 48px; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
-        .list-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-        .list-card .list-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-        .list-card .list-title { font-weight: bold; font-size: 0.85rem; line-height: 1.2; word-break: break-word; color: #fff; }
-        .list-card .list-artist { color: #aaa; font-size: 0.75rem; line-height: 1.2; word-break: break-word; }
-        .list-card .list-right-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .list-card .list-meta { color: #777; font-size: 0.68rem; text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
-
-        .tournament-setup {
-            background: #1e1e24;
-            border-radius: 12px;
-            padding: 16px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            box-sizing: border-box;
-            border: 1px solid #2e2e38;
-        }
-
-        .setup-group { display: flex; flex-direction: column; gap: 4px; text-align: left; }
-        .setup-group label { font-size: 0.78rem; color: #aaa; font-weight: bold; }
-        .setup-group select { padding: 6px; font-size: 0.85rem; background: #121214; border-color: #3e3e4a; }
-
-        .battle-arena {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .tournament-info-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            max-width: 1100px;
-            background: #1e1e24;
-            padding: 4px 10px;
-            border-radius: 6px;
-            box-sizing: border-box;
-            border: 1px solid #333;
-            font-size: 0.75rem;
+            gap: 20px;
         }
 
         .match-cards-container {
             display: flex;
-            gap: 10px;
+            gap: 16px;
             justify-content: center;
             width: 100%;
-            max-width: 1100px;
-            align-items: stretch;
+            flex-wrap: wrap;
         }
 
-        .tourn-card {
-            flex: 1;
-            max-width: 230px;
-            min-width: 0;
-            background: var(--card-bg);
-            border-radius: 8px;
-            padding: 6px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            text-align: center;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s, opacity 1.2s ease, filter 1.2s ease;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-sizing: border-box;
-            position: relative;
-            border-width: 2px;
-            border-style: solid;
-        }
-
-        .tourn-card.winner-glow {
-            border-color: #ffffff !important;
-            box-shadow: 0 0 35px rgba(255, 255, 255, 0.95), 0 0 15px rgba(255, 255, 255, 0.5) !important;
-            transform: scale(1.03) !important;
-            opacity: 1 !important;
-            z-index: 10;
-        }
-
-        .tourn-card.loser-dimmed {
-            opacity: 0.25 !important;
-            filter: grayscale(80%) !important;
-            transform: scale(0.96) !important;
-        }
-
-        .vote-control-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #121214;
-            border: 1px solid #333;
-            border-radius: 5px;
-            padding: 2px 4px;
-            margin-top: 4px;
-        }
-
-        .vote-btn-step {
-            background: #2a2a35;
-            color: #fff;
-            border: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 3px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-            font-size: 0.75rem;
-        }
-
-        .vote-btn-step:hover { background: var(--accent-color); }
-
-        .vote-score-val {
-            font-size: 0.7rem;
-            font-weight: bold;
-            color: #eab308;
-        }
-
-        .probability-bar-container {
+        .probability-bar-wrapper {
             width: 100%;
-            max-width: 800px;
-            height: 8px;
-            background: #121214;
-            border-radius: 4px;
+            height: 12px;
+            background: #334155;
+            border-radius: 6px;
             overflow: hidden;
             display: flex;
-            margin-top: 2px;
-            border: 1px solid #333;
+            margin-top: 10px;
         }
 
         .probability-segment {
             height: 100%;
-            transition: width 0.3s ease;
+            transition: width 0.3s;
         }
 
-        .roll-btn-container { margin-top: 2px; display: flex; gap: 8px; }
-
-        .end-options-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            width: 100%;
-            margin-top: 10px;
+        /* Animations */
+        .winner-glow {
+            animation: pulse-glow 1s infinite alternate;
         }
 
-        .end-option-btn {
-            background: #2a2a35;
-            color: #fff;
-            border: 1px solid #3d3d4e;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s, border-color 0.2s;
-            font-size: 0.85rem;
-        }
-
-        .end-option-btn:hover {
-            background: var(--accent-color);
-            border-color: var(--accent-color);
-        }
-
-        .tourn-progress-overlay {
-            margin-top: 6px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .tourn-progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #121214;
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid #3d3d4e;
-        }
-
-        .tourn-progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #6366f1, #a855f7);
-            transition: width 0.1s ease;
-        }
-
-        .tourn-progress-text {
-            font-size: 0.7rem;
-            color: #aaa;
-            text-align: center;
-        }
-
-        .bottom-pack-control {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-        }
-
-        #championCardContainer {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            margin: 8px auto;
-        }
-
-        .tournament-standings-section {
-            width: 100%;
-            max-width: 800px;
-            margin-top: 20px;
-            border-top: 1px solid #333;
-            padding-top: 15px;
-            text-align: left;
-        }
-
-        .tournament-standings-section h3 {
-            margin: 0 0 10px 0;
-            font-size: 1rem;
-            color: #a855f7;
-            text-align: center;
-        }
-
-        .stage-group-badge {
-            background: #2a2a35;
-            color: #eab308;
-            font-size: 0.75rem;
-            font-weight: bold;
-            padding: 3px 8px;
-            border-radius: 4px;
-            margin: 10px 0 6px 0;
-            display: inline-block;
-            border: 1px solid #444;
-        }
-
-        @media (max-width: 600px) {
-            .pack-container {
-                flex-direction: column;
-                align-items: center;
-                gap: 12px;
-            }
-            .card {
-                width: 100%;
-                max-width: 320px;
-                min-height: 340px;
-                margin: 0 auto;
-            }
-            .match-cards-container {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-                width: 100%;
-            }
-            .tourn-card {
-                max-width: 100%;
-                width: 100%;
-            }
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 10px #eab308; }
+            to { box-shadow: 0 0 25px #eab308; }
         }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h1>🎵 Music Album Gacha & Tournament Pro</h1>
-        <p class="sub">Accurate artwork &bull; 5x Pack Pulls &bull; Underdog Tournament Game</p>
-
-        <div class="mode-tabs">
-            <button class="tab-btn active" id="tabGacha" onclick="switchMode('gacha')">🎰 Gacha Pull</button>
-            <button class="tab-btn" id="tabTournament" onclick="switchMode('tournament')">🏆 Tournament</button>
+    <header>
+        <h1>Album Gacha Sync</h1>
+        <div class="header-actions">
+            <div class="sync-box">
+                <span id="syncStatus" class="sync-status">Offline</span>
+                <button id="btnGoogleSignIn" class="btn-google" onclick="handleGoogleSignIn()">
+                    <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                    Sign in
+                </button>
+                <div id="userProfile" class="hidden" style="display: flex; align-items: center; gap: 6px;">
+                    <img id="userAvatar" class="user-avatar" src="" alt="User">
+                    <span id="userName" style="font-weight: 600; font-size: 0.8rem;"></span>
+                    <button onclick="handleGoogleSignOut()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.75rem;">(Exit)</button>
+                </div>
+            </div>
         </div>
+    </header>
+
+    <div class="tabs">
+        <button id="tabGacha" class="tab-btn active" onclick="switchMode('gacha')">📦 Gacha</button>
+        <button id="tabTournament" class="tab-btn" onclick="switchMode('tournament')">🏆 Tournament</button>
     </div>
 
-    <!-- Вкладка GACHA -->
-    <div class="view-section" id="gachaSection">
-        
-        <div class="pack-area" id="packArea">
-            <div class="initial-start-box" id="initialStartBox">
-                <button class="pull-btn pull-btn-large" id="btnInitialPull" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
+    <main>
+        <!-- GACHA SECTION -->
+        <section id="gachaSection">
+            <div id="initialStartBox" style="text-align: center; padding: 40px 0;">
+                <button id="btnInitialPull" class="btn-primary" style="font-size: 1.2rem; padding: 16px 32px;" onclick="pull5Pack()" disabled>
+                    ✨ Open First 5-Pack!
+                </button>
             </div>
 
-            <div class="controls hidden" id="topControls">
-                <button class="pull-btn" id="pullBtn" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
-                <label class="auto-pull-toggle">
-                    <input type="checkbox" id="autoPullCheck"> ⚡ Auto-Open
+            <div id="topControls" class="controls-bar hidden">
+                <button id="pullBtn" class="btn-primary" onclick="pull5Pack()">🎲 Pull 5 Albums</button>
+                <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="autoPullCheck"> Auto-play next pack
                 </label>
+                <button id="btnToggleCollection" class="btn-secondary" onclick="toggleCollectionArea()">📦 Show Collection</button>
             </div>
 
-            <div class="pack-container hidden" id="packContainer"></div>
-
-            <div class="bottom-pack-control hidden" id="bottomControls">
-                <button class="pull-btn" id="pullBtnBottom" disabled onclick="pull5Pack()">OPEN PACK (5x)</button>
-            </div>
-        </div>
-
-        <div class="collection-section">
-            <div class="collection-header">
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <h2>Collection</h2>
-                    <button class="toggle-col-btn" id="btnToggleCollection" onclick="toggleCollectionArea()">📦 Show Collection</button>
-                    <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑 Clear Save</button>
+            <div id="packArea" class="hidden">
+                <div id="packContainer" class="pack-container"></div>
+                <div id="bottomControls" class="controls-bar hidden" style="justify-content: center;">
+                    <button id="pullBtnBottom" class="btn-primary" onclick="pull5Pack()">🎲 Pull Another Pack</button>
                 </div>
-                <div class="filter-controls hidden" id="collectionControls">
-                    <select id="sortSelect" onchange="renderCollectionUI()">
-                        <option value="default">Newest First</option>
-                        <option value="pulls_desc">By Level (Max → Min)</option>
-                        <option value="copies_desc">By Copies / Duplicates (Max → Min)</option>
-                        <option value="rarity">By Rarity (Legendary → Common)</option>
-                        <option value="score">By Score (★5 → ★1)</option>
-                        <option value="genre">By Genre</option>
-                        <option value="year">By Year (New → Old)</option>
+            </div>
+
+            <!-- COLLECTION AREA -->
+            <div id="collectionStatsBar" class="collection-stats-bar hidden"></div>
+            
+            <div id="collectionControls" class="controls-bar hidden">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <select id="sortSelect" onchange="renderCollectionUI()" style="background: #1e293b; color: white; border: 1px solid #334155; padding: 6px; border-radius: 6px;">
+                        <option value="recent">Recent First</option>
+                        <option value="pulls_desc">Level / Copies</option>
+                        <option value="rarity">Rarity</option>
+                        <option value="score">Score</option>
+                        <option value="genre">Genre</option>
+                        <option value="year">Year</option>
                     </select>
-
-                    <button class="view-btn active" id="btnGridView" onclick="setViewMode('grid')">📷 Grid</button>
-                    <button class="view-btn" id="btnArtistView" onclick="setViewMode('artist')">🎤 By Artist</button>
-                    <button class="view-btn" id="btnListView" onclick="setViewMode('list')">📄 List</button>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                    <button id="btnGridView" class="btn-secondary active" onclick="setViewMode('grid')">Grid</button>
+                    <button id="btnArtistView" class="btn-secondary" onclick="setViewMode('artist')">Artists</button>
+                    <button id="btnListView" class="btn-secondary" onclick="setViewMode('list')">List</button>
                 </div>
             </div>
 
-            <div class="collection-stats-bar hidden" id="collectionStatsBar"></div>
+            <div id="collectionContainer" class="grid hidden"></div>
+        </section>
 
-            <div class="grid hidden" id="collectionContainer"></div>
-        </div>
-    </div>
+        <!-- TOURNAMENT SECTION -->
+        <section id="tournamentSection" class="hidden">
+            <div id="tournamentSetup" style="background: #1e293b; padding: 24px; border-radius: 12px; max-width: 500px; margin: 0 auto;">
+                <h2 style="margin-bottom: 16px; font-size: 1.2rem;">🏆 Tournament Setup</h2>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                    <label style="display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem;">
+                        Source Pool:
+                        <select id="tournSource" style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 6px;">
+                            <option value="all">All Albums</option>
+                            <option value="collection">My Collection Only</option>
+                            <option value="favorites">Favorites Only</option>
+                        </select>
+                    </label>
 
-    <!-- Вкладка TOURNAMENT -->
-    <div class="view-section hidden" id="tournamentSection">
-        <div class="tournament-setup" id="tournamentSetup">
-            <h2 style="margin: 0; font-size: 1.2rem;">🏆 Tournament Setup</h2>
-            
-            <div class="setup-group">
-                <label>Card Source Pool:</label>
-                <select id="tournSource">
-                    <option value="all">All Albums</option>
-                    <option value="collection">My Collection Only</option>
-                    <option value="favorites">Favorites Only</option>
-                </select>
+                    <label style="display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem;">
+                        Participants Count:
+                        <select id="tournSize" style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 6px;">
+                            <option value="8">8 Albums</option>
+                            <option value="16" selected>16 Albums</option>
+                            <option value="32">32 Albums</option>
+                            <option value="64">64 Albums</option>
+                        </select>
+                    </label>
+
+                    <label style="display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem;">
+                        Match Type:
+                        <select id="tournFormat" style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 6px;">
+                            <option value="1v1">1 vs 1 (Duels)</option>
+                            <option value="4way">4-Way Battle</option>
+                        </select>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer;">
+                        <input type="checkbox" id="tournBlindCheck"> 🙈 Blind Mode (Hide Covers & Titles)
+                    </label>
+                </div>
+
+                <button id="btnStartTourn" class="btn-primary" style="width: 100%;" onclick="startTournament()">Start Tournament</button>
+
+                <div id="tournProgressOverlay" class="hidden" style="margin-top: 16px;">
+                    <div id="tournProgressText" style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">Checking tracks...</div>
+                    <div style="width: 100%; height: 6px; background: #0f172a; border-radius: 3px; overflow: hidden;">
+                        <div id="tournProgressFill" style="width: 0%; height: 100%; background: var(--accent-color);"></div>
+                    </div>
+                </div>
             </div>
 
-            <div class="setup-group">
-                <label>Bracket Size (Number of Albums):</label>
-                <select id="tournSize">
-                    <option value="16">16 Albums</option>
-                    <option value="32" selected>32 Albums</option>
-                    <option value="64">64 Albums</option>
-                    <option value="128">128 Albums</option>
-                    <option value="256">256 Albums</option>
-                    <option value="512">512 Albums</option>
-                    <option value="1024">1024 Albums</option>
-                </select>
+            <!-- BATTLE ARENA -->
+            <div id="battleArena" class="arena-container hidden">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <button class="btn-secondary" onclick="abortTournament()">❌ Abort</button>
+                    <h2 id="tournRoundTitle" style="font-size: 1.1rem; color: #818cf8;">Round 1</h2>
+                    <span id="tournRemainingText" style="font-size: 0.85rem; color: #94a3b8;">Remaining: 16</span>
+                </div>
+
+                <div id="matchCardsContainer" class="match-cards-container"></div>
+
+                <div style="width: 100%; max-width: 600px; text-align: center;">
+                    <div class="probability-bar-wrapper" id="probabilityBar"></div>
+                    <button id="btnRollDice" class="btn-primary" style="margin-top: 16px; width: 100%; font-size: 1.1rem;" onclick="rollDiceAndDetermineWinner()">
+                        🎲 Vote & Roll Winner
+                    </button>
+                </div>
             </div>
 
-            <div class="setup-group">
-                <label>Match Format:</label>
-                <select id="tournFormat">
-                    <option value="1v1">1v1 Classic Duel</option>
-                    <option value="4way">Fatal 4-Way (4-Way)</option>
-                </select>
+            <!-- WINNER SCREEN -->
+            <div id="winnerScreen" class="hidden" style="text-align: center;">
+                <h2 style="font-size: 1.8rem; color: #eab308; margin-bottom: 16px;">👑 Tournament Champion!</h2>
+                <div id="championCardContainer" style="display: flex; justify-content: center; margin-bottom: 24px;"></div>
+                <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 32px;">
+                    <button class="btn-primary" onclick="startTournamentWithSameRules()">🔄 Play Again</button>
+                    <button class="btn-secondary" onclick="resetTournamentUI()">⚙️ New Setup</button>
+                </div>
+                <h3>📊 Full Standings</h3>
+                <div id="tournamentStandingsList" class="list" style="margin-top: 16px; text-align: left;"></div>
             </div>
-
-            <div class="setup-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 4px;">
-                <input type="checkbox" id="tournBlindCheck" style="width: 16px; height: 16px; accent-color: var(--accent-color); cursor: pointer;">
-                <label for="tournBlindCheck" style="cursor: pointer; color: #fff;">🙈 Blind Mode (Audio-only duel)</label>
-            </div>
-
-            <button class="action-btn" id="btnStartTourn" onclick="startTournament()">🚀 START TOURNAMENT</button>
-
-            <div class="tourn-progress-overlay hidden" id="tournProgressOverlay">
-                <div class="tourn-progress-bar"><div class="tourn-progress-fill" id="tournProgressFill"></div></div>
-                <div class="tourn-progress-text" id="tournProgressText">Preparing bracket... (0%)</div>
-            </div>
-        </div>
-
-        <div class="battle-arena hidden" id="battleArena">
-            <div class="tournament-info-bar">
-                <span id="tournRoundTitle" style="font-weight: bold; color: #a855f7;">Round 1 | Match 1</span>
-                <span id="tournRemainingText" style="color: #aaa;">Remaining: 32</span>
-                <button class="reset-btn" onclick="abortTournament()">❌ Abort</button>
-            </div>
-
-            <div class="match-cards-container" id="matchCardsContainer"></div>
-
-            <div style="width: 100%; max-width: 800px; text-align: center;">
-                <div style="font-size: 0.7rem; color: #aaa;">🎲 Win Probability (Score + Votes):</div>
-                <div class="probability-bar-container" id="probabilityBar"></div>
-            </div>
-
-            <div class="roll-btn-container">
-                <button class="action-btn" id="btnRollDice" onclick="rollDiceAndDetermineWinner()">🎲 Roll Dice (Run Roulette)</button>
-            </div>
-        </div>
-
-        <div class="tournament-setup hidden" id="winnerScreen" style="text-align: center; max-width: 700px;">
-            <h2 style="color: #eab308; font-size: 1.4rem; margin: 0;">🏆 CHAMPION 🏆</h2>
-            <div id="championCardContainer"></div>
-            
-            <div class="end-options-container">
-                <button class="end-option-btn" onclick="startTournamentWithSameRules()">🔄 Play Again (Same Rules)</button>
-                <button class="end-option-btn" onclick="resetTournamentUI()">⚙️ Change Rules</button>
-                <button class="end-option-btn" onclick="switchMode('gacha')">🎰 Switch to Gacha Mode</button>
-            </div>
-
-            <div class="tournament-standings-section" id="tournamentStandingsSection">
-                <h3>📊 Tournament Final Standings</h3>
-                <div class="list" id="tournamentStandingsList"></div>
-            </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script>
+        // ==========================================
+        // GOOGLE DRIVE SYNC MODULE CONFIGURATION
+        // ==========================================
+        // ⚠️ ВСТАВЬТЕ ВАШ CLIENT ID СЮДА:
+        const GOOGLE_CLIENT_ID = '256537268177-rit3tcmoshjauubt7pl0l23jhfqoa9tf.apps.googleusercontent.com';
+        const DRIVE_SAVE_FILENAME = 'gacha_save.json';
+        
+        let accessToken = null;
+        let tokenClient = null;
+        let googleUser = null;
+        let cloudFileId = null;
+
+        function initGoogleSync() {
+            if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
+
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: GOOGLE_CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/drive.appdata openid profile email',
+                callback: async (response) => {
+                    if (response.error !== undefined) {
+                        console.error('Google OAuth error:', response);
+                        updateSyncUI('error', 'Auth Failed');
+                        return;
+                    }
+                    accessToken = response.access_token;
+                    localStorage.setItem('gacha_google_token', accessToken);
+                    await fetchUserProfile();
+                    await syncDataWithCloud(true);
+                },
+            });
+
+            const savedToken = localStorage.getItem('gacha_google_token');
+            if (savedToken) {
+                accessToken = savedToken;
+                fetchUserProfile().then(() => syncDataWithCloud(false)).catch(() => {
+                    handleGoogleSignOut();
+                });
+            }
+        }
+
+        function handleGoogleSignIn() {
+            if (!tokenClient) {
+                alert('Google SDK is loading or Client ID is missing. Please check GOOGLE_CLIENT_ID in the script!');
+                return;
+            }
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+
+        function handleGoogleSignOut() {
+            accessToken = null;
+            googleUser = null;
+            cloudFileId = null;
+            localStorage.removeItem('gacha_google_token');
+            
+            document.getElementById('btnGoogleSignIn').classList.remove('hidden');
+            document.getElementById('userProfile').classList.add('hidden');
+        }
+
+        async function fetchUserProfile() {
+            try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+                if (!res.ok) throw new Error('Token expired');
+                googleUser = await res.json();
+
+                document.getElementById('btnGoogleSignIn').classList.add('hidden');
+                document.getElementById('userProfile').classList.remove('hidden');
+                document.getElementById('userAvatar').src = googleUser.picture || '';
+                document.getElementById('userName').innerText = googleUser.given_name || googleUser.name || 'User';
+            } catch (e) {
+                console.error('Failed to fetch user profile:', e);
+                handleGoogleSignOut();
+            }
+        }
+
+        function updateSyncUI(state, text = '') {
+            const statusEl = document.getElementById('syncStatus');
+            if (!statusEl) return;
+            statusEl.className = 'sync-status';
+            if (state === 'syncing') {
+                statusEl.classList.add('syncing');
+                statusEl.innerText = '⏳ Syncing...';
+            } else if (state === 'success') {
+                statusEl.classList.add('success');
+                statusEl.innerText = text || '✓ Synced';
+            } else {
+                statusEl.innerText = text || 'Offline';
+            }
+        }
+
+        async function findCloudSaveFile() {
+            if (!accessToken) return null;
+            try {
+                const query = encodeURIComponent(`name = '${DRIVE_SAVE_FILENAME}' and 'appDataFolder' in parents and trashed = false`);
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+                const data = await res.json();
+                if (data.files && data.files.length > 0) {
+                    cloudFileId = data.files[0].id;
+                    return cloudFileId;
+                }
+            } catch (e) {
+                console.error('Error finding cloud save file:', e);
+            }
+            return null;
+        }
+
+        async function loadCloudSaveData() {
+            if (!accessToken) return null;
+            const fileId = cloudFileId || await findCloudSaveFile();
+            if (!fileId) return null;
+
+            try {
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+                if (res.ok) {
+                    return await res.json();
+                }
+            } catch (e) {
+                console.error('Error reading cloud save data:', e);
+            }
+            return null;
+        }
+
+        async function saveCloudData(serializableCollection) {
+            if (!accessToken) return;
+            updateSyncUI('syncing');
+
+            const payload = {
+                updatedAt: Date.now(),
+                version: 1,
+                collection: serializableCollection
+            };
+
+            const fileId = cloudFileId || await findCloudSaveFile();
+            const fileContent = JSON.stringify(payload);
+
+            try {
+                if (fileId) {
+                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                        method: 'PATCH',
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: fileContent
+                    });
+                } else {
+                    const metadata = {
+                        name: DRIVE_SAVE_FILENAME,
+                        parents: ['appDataFolder']
+                    };
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', new Blob([fileContent], { type: 'application/json' }));
+
+                    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${accessToken}` },
+                        body: form
+                    });
+                    const data = await res.json();
+                    cloudFileId = data.id;
+                }
+                updateSyncUI('success');
+            } catch (e) {
+                console.error('Error uploading save data to Drive:', e);
+                updateSyncUI('error', 'Sync error');
+            }
+        }
+
+        function mergeCollections(localMap, remoteArray) {
+            const merged = new Map(localMap);
+            if (!remoteArray || !Array.isArray(remoteArray)) return merged;
+
+            remoteArray.forEach(([id, remoteItem]) => {
+                const localItem = merged.get(id);
+                if (!localItem) {
+                    merged.set(id, remoteItem);
+                } else {
+                    const maxPulls = Math.max(localItem.pulls || 1, remoteItem.pulls || 1);
+                    merged.set(id, {
+                        ...localItem,
+                        ...remoteItem,
+                        pulls: maxPulls,
+                        level: calculateLevel(maxPulls),
+                        isFavorite: localItem.isFavorite || remoteItem.isFavorite,
+                        pulledAt: Math.max(localItem.pulledAt || 0, remoteItem.pulledAt || 0)
+                    });
+                }
+            });
+
+            return merged;
+        }
+
+        async function syncDataWithCloud(forceUIFeedback = false) {
+            if (!accessToken) return;
+            if (forceUIFeedback) updateSyncUI('syncing');
+
+            const cloudData = await loadCloudSaveData();
+            if (cloudData && cloudData.collection) {
+                collection = mergeCollections(collection, cloudData.collection);
+                saveProgress(false);
+                renderCollectionUI();
+                updateTournamentSourceDropdown();
+            }
+
+            const currentSerializable = prepareSerializableCollection();
+            await saveCloudData(currentSerializable);
+        }
+
+        // ==========================================
+        // GACHA & TOURNAMENT APPLICATION LOGIC
+        // ==========================================
         const RARITY_MAP = {
             'Легендарная': 'Legendary',
             'Эпическая': 'Epic',
@@ -1113,16 +857,23 @@
 
         function getLevelColorClass(level) { return `lvl-color-${Math.min(level, 5)}`; }
 
-        function saveProgress() {
+        function prepareSerializableCollection() {
+            return Array.from(collection.entries()).map(([id, item]) => {
+                const cleanItem = { ...item };
+                delete cleanItem.preview;
+                delete cleanItem.trackName;
+                delete cleanItem.isLevelUp;
+                return [id, cleanItem];
+            });
+        }
+
+        function saveProgress(syncToCloud = true) {
             try {
-                const serializableCol = Array.from(collection.entries()).map(([id, item]) => {
-                    const cleanItem = { ...item };
-                    delete cleanItem.preview;
-                    delete cleanItem.trackName;
-                    delete cleanItem.isLevelUp;
-                    return [id, cleanItem];
-                });
+                const serializableCol = prepareSerializableCollection();
                 localStorage.setItem('album_gacha_collection', JSON.stringify(serializableCol));
+                if (syncToCloud && accessToken) {
+                    saveCloudData(serializableCol);
+                }
             } catch (e) { console.error('Failed to save collection:', e); }
         }
 
@@ -1140,6 +891,9 @@
                 collectionTracksCache.clear();
                 renderCollectionUI();
                 updateTournamentSourceDropdown();
+                if (accessToken) {
+                    saveCloudData([]);
+                }
             }
         }
 
@@ -1177,6 +931,7 @@
                 document.getElementById('btnInitialPull').disabled = false;
                 
                 initSwipeListeners();
+                initGoogleSync();
             } catch (err) {
                 alert('Error loading albums.json!');
                 console.error(err);
@@ -1333,7 +1088,7 @@
                             <div class="type-badge">...</div>
                             <div class="score-badge">★ -.-</div>
                             <div class="copies-tag">🃏 ...</div>
-                            <div class="genre-badge">🏷️ ...</div>
+                            <div class="genre-badge">🏷 ...</div>
                         </div>
                     </div>
                 `;
@@ -1444,7 +1199,6 @@
             });
         }
 
-        /* Быстрый тест наличия рабочего превью (для квалификации альбома в турнир) */
         async function verifyAlbumHasPreview(albumData) {
             const cleanArtist = cleanQueryString(albumData.artist);
             const cleanTitle = cleanQueryString(albumData.title);
@@ -2118,7 +1872,6 @@
             return `⚔️ Round of ${Math.pow(2, Math.ceil(Math.log2(remainingCount)))}`;
         }
 
-        /* ИСПРАВЛЕНИЕ 2: Валидация аудиопревью перед запуском турнира */
         async function startTournament() {
             const source = document.getElementById('tournSource').value;
             const targetSize = parseInt(document.getElementById('tournSize').value, 10);
@@ -2278,7 +2031,6 @@
             });
         }
 
-        /* ИСПРАВЛЕНИЕ 1: Год альбома добавлен и в Blind Mode */
         function renderBattleMatchUI() {
             const totalRemaining = tournBracket.length + currentMatchAlbums.length + tournNextRound.length;
             const stageTitle = getPlayoffStageTitle(totalRemaining);
@@ -2729,7 +2481,6 @@
             playChampionTrack();
         }
 
-        /* ИСПРАВЛЕНИЕ 3: Исправлена неоновая подсветка карточки победителя при проигрывании */
         async function playChampionTrack() {
             await fadeAndStopAudio();
             if (!championAlbumObj || !championAlbumObj.preview) return;
