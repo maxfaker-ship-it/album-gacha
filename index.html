@@ -611,20 +611,34 @@
         .artist-group { background: #18181c; border-radius: 10px; padding: 12px; margin-bottom: 15px; border: 1px solid #2e2e38; }
         .artist-group-header { font-size: 1rem; font-weight: bold; color: #a855f7; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #2e2e38; padding-bottom: 4px; }
 
-        .list { display: flex; flex-direction: column; gap: 6px; }
+        /* ИСПРАВЛЕНИЕ 2: Читаемость и адаптируемая высота в режиме List */
+        .list { display: flex; flex-direction: column; gap: 8px; }
         .list-card { 
-            background: var(--card-bg); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; 
-            justify-content: space-between; gap: 10px; border-left-width: 4px; border-left-style: solid; transition: background 0.2s; 
-            position: relative; cursor: pointer; box-sizing: border-box; width: 100%;
+            background: var(--card-bg); 
+            border-radius: 8px; 
+            padding: 8px 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 12px; 
+            border-left-width: 4px; 
+            border-left-style: solid; 
+            transition: background 0.2s; 
+            position: relative; 
+            cursor: pointer; 
+            box-sizing: border-box; 
+            width: 100%;
+            min-height: 60px;
+            height: auto;
         }
         .list-card.playing { background: #282832; }
-        .list-cover-wrapper { position: relative; width: 40px; height: 40px; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
+        .list-cover-wrapper { position: relative; width: 48px; height: 48px; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
         .list-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-        .list-card .list-main { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; gap: 1px; }
-        .list-card .list-title { font-weight: bold; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .list-card .list-artist { color: #aaa; font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-card .list-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .list-card .list-title { font-weight: bold; font-size: 0.85rem; line-height: 1.2; word-break: break-word; color: #fff; }
+        .list-card .list-artist { color: #aaa; font-size: 0.75rem; line-height: 1.2; word-break: break-word; }
         .list-card .list-right-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .list-card .list-meta { color: #777; font-size: 0.65rem; text-align: right; display: flex; flex-direction: column; gap: 1px; align-items: flex-end; white-space: nowrap; }
+        .list-card .list-meta { color: #777; font-size: 0.68rem; text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
 
         .tournament-setup {
             background: #1e1e24;
@@ -859,6 +873,7 @@
             border: 1px solid #444;
         }
 
+        /* ИСПРАВЛЕНИЕ 4: Адаптация на мобильных для Fatal 4-Way */
         @media (max-width: 600px) {
             .pack-container {
                 flex-direction: column;
@@ -872,10 +887,14 @@
                 margin: 0 auto;
             }
             .match-cards-container {
-                flex-wrap: wrap;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                width: 100%;
             }
             .tourn-card {
-                max-width: 48%;
+                max-width: 100%;
+                width: 100%;
             }
         }
     </style>
@@ -919,7 +938,7 @@
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <h2>Collection</h2>
                     <button class="toggle-col-btn" id="btnToggleCollection" onclick="toggleCollectionArea()">📦 Show Collection</button>
-                    <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑️ Clear Save</button>
+                    <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑️️ Clear Save</button>
                 </div>
                 <div class="filter-controls hidden" id="collectionControls">
                     <select id="sortSelect" onchange="renderCollectionUI()">
@@ -1166,11 +1185,13 @@
             }
         }
 
+        /* ИСПРАВЛЕНИЕ 3: Переключение свайпами добавлено и в Коллекцию */
         function initSwipeListeners() {
             const packContainer = document.getElementById('packContainer');
             const matchContainer = document.getElementById('matchCardsContainer');
+            const colContainer = document.getElementById('collectionContainer');
 
-            [packContainer, matchContainer].forEach(container => {
+            [packContainer, matchContainer, colContainer].forEach(container => {
                 if (!container) return;
                 container.addEventListener('touchstart', e => {
                     touchStartX = e.changedTouches[0].clientX;
@@ -1224,6 +1245,17 @@
                     const dir = (diffX < 0) ? 1 : -1;
                     const targetSlot = getNextAvailableSlot(currentMatchAlbums, currentSlot, dir);
                     playTournamentCarouselTrack(targetSlot);
+                } else if (container.id === 'collectionContainer' && collection.size > 0) {
+                    const albumsArray = Array.from(collection.values());
+                    let currentIndex = 0;
+                    if (currentPlayingId && currentPlayingId.startsWith('col_')) {
+                        const playingId = parseInt(currentPlayingId.replace('col_', ''), 10);
+                        currentIndex = albumsArray.findIndex(a => a.id === playingId);
+                        if (currentIndex === -1) currentIndex = 0;
+                    }
+                    const dir = (diffX < 0) ? 1 : -1;
+                    const nextIndex = (currentIndex + dir + albumsArray.length) % albumsArray.length;
+                    playCollectionAlbum(albumsArray[nextIndex].id, false);
                 }
             }
         }
@@ -1773,23 +1805,20 @@
         }
 
         async function fadeAndStopAudio() {
-            // 1. МГНОВЕННО и синхронно перехватываем текущий активный слот и очищаем его
             const slotToReset = currentPlayingSlot;
             
             currentPlayingSlot = null; 
             currentPlayingId = null;
             loadingCollectionId = null;
 
-            // 2. Сбрасываем интерфейс старого трека ДО того, как начнут отрисовываться новые
             if (slotToReset !== null) {
                 resetSlotUI(slotToReset);
                 resetTournamentSlotUI(slotToReset);
             }
 
-            // 3. Плавно глушим звук, при этом для всей остальной логики плеер уже свободен
             if (currentAudio) {
                 const aud = currentAudio;
-                currentAudio = null; // Отвязываем объект
+                currentAudio = null;
                 aud.onended = null;
                 aud.onerror = null;
                 
@@ -1927,6 +1956,7 @@
             container.appendChild(fragment);
         }
 
+        /* ИСПРАВЛЕНИЕ 1 & 2: Добавлен год и улучшена верстка списков */
         function createAlbumCardElement(item, mode) {
             const escTitle = escapeHtml(item.title);
             const escArtist = escapeHtml(item.artist);
@@ -1976,8 +2006,8 @@
                             <div class="type-badge">${escapeHtml(item.type)}</div>
                             <div class="score-badge">★ ${escapeHtml(item.score)}</div>
                             <div class="copies-tag">🃏 ${progressText} copies</div>
-                            <div class="genre-badge" title="${escapeHtml(item.genre)}">
-                                🏷️ ${escapeHtml(item.genre)}
+                            <div class="genre-badge" title="${escapeHtml(item.genre)} | ${escapeHtml(item.year)}">
+                                🏷️ ${escapeHtml(item.genre)} | 📅 ${escapeHtml(item.year)}
                             </div>
                         </div>
                     </div>
@@ -1988,7 +2018,7 @@
                 listItem.className = `list-card rarity-${escapeHtml(item.rarity)} ${isPlaying ? 'playing' : ''}`;
                 listItem.onclick = (e) => playCollectionAlbum(item.id, false, e);
                 listItem.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0; overflow:hidden;">
+                    <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
                         <div class="list-cover-wrapper">${coverImg}</div>
                         <div class="list-main">
                             <div class="list-title">${escTitle} <span class="${lvlClass}" style="font-size:0.7rem;">(LVL ${item.level || 1})</span></div>
@@ -1998,8 +2028,9 @@
                     </div>
                     <div class="list-right-group">
                         <div class="list-meta">
-                            <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)} <span class="copies-tag" style="margin-left:3px;">(🃏 ${progressText})</span></div>
-                            <div>[${escapeHtml(item.type)}] | 🏷️ ${escapeHtml(item.genre)}</div>
+                            <div style="color: #eab308; font-weight: bold;">★ ${escapeHtml(item.score)} <span class="copies-tag" style="margin-left:2px;">(🃏 ${progressText})</span></div>
+                            <div>[${escapeHtml(item.type)}] | 📅 ${escapeHtml(item.year)}</div>
+                            <div style="color:#aaa;">🏷️ ${escapeHtml(item.genre)}</div>
                         </div>
                         <button class="shuffle-btn" onclick="playCollectionAlbum(${item.id}, true, event)" title="Request another track">${SHUFFLE_SVG}</button>
                         <button class="fav-btn ${favStarClass}" onclick="toggleFavorite(${item.id}, event)" title="Toggle Favorite">★</button>
@@ -2047,6 +2078,7 @@
             return `⚔️ Round of ${Math.pow(2, Math.ceil(Math.log2(remainingCount)))}`;
         }
 
+        /* ИСПРАВЛЕНИЕ 5: Турнир мгновенно создает сетку БЕЗ предварительной асинхронной загрузки треков */
         async function startTournament() {
             const source = document.getElementById('tournSource').value;
             const targetSize = parseInt(document.getElementById('tournSize').value, 10);
@@ -2054,10 +2086,6 @@
             isBlindMode = document.getElementById('tournBlindCheck').checked;
 
             const btn = document.getElementById('btnStartTourn');
-            const progressOverlay = document.getElementById('tournProgressOverlay');
-            const progressFill = document.getElementById('tournProgressFill');
-            const progressText = document.getElementById('tournProgressText');
-
             matchSize = (format === '4way') ? 4 : 2;
 
             let pool = [];
@@ -2073,52 +2101,14 @@
             document.getElementById('winnerScreen').classList.add('hidden');
             document.getElementById('tournamentSetup').classList.remove('hidden');
 
-            btn.disabled = true;
-            progressOverlay.classList.remove('hidden');
-            progressFill.style.width = '0%';
-            progressText.innerText = `Preparing audio tracks... (0 / ${targetSize})`;
-
             pool.sort(() => Math.random() - 0.5);
-
-            const validBracket = [];
-            const chunkSize = 4;
-
-            for (let i = 0; i < pool.length; i += chunkSize) {
-                if (validBracket.length >= targetSize) break;
-
-                const chunk = pool.slice(i, i + chunkSize);
-                const results = await Promise.all(chunk.map(album => fetchHitTrackForAlbum(album, false, true)));
-
-                for (const fullObj of results) {
-                    if (fullObj && fullObj.preview && validBracket.length < targetSize) {
-                        validBracket.push(fullObj);
-                    }
-                }
-
-                const currentPercent = Math.min(100, Math.round((validBracket.length / targetSize) * 100));
-                progressFill.style.width = `${currentPercent}%`;
-                progressText.innerText = `Loading participants: ${validBracket.length} of ${targetSize} (${currentPercent}%)`;
-
-                await new Promise(r => requestAnimationFrame(r));
-            }
-
-            progressOverlay.classList.add('hidden');
-
-            if (validBracket.length < matchSize) {
-                alert('Could not load enough valid audio preview tracks.');
-                btn.disabled = false;
-                return;
-            }
-
-            tournBracket = validBracket;
+            tournBracket = pool.slice(0, targetSize);
             tournNextRound = [];
             tournamentEliminationLog = [];
-            totalTournParticipants = validBracket.length;
+            totalTournParticipants = tournBracket.length;
 
             currentRoundNumber = 1;
             currentMatchNumber = 1;
-
-            btn.disabled = false;
 
             document.getElementById('tournamentSetup').classList.add('hidden');
             document.getElementById('winnerScreen').classList.add('hidden');
@@ -2131,8 +2121,9 @@
             startTournament();
         }
 
+        /* ИСПРАВЛЕНИЕ 5: Треки запрашиваются "на лету" строго перед каждой дуэлью */
         async function loadNextMatch() {
-            await fadeAndStopAudio(); // ЖДЕМ полной остановки старого звука перед сборкой нового UI
+            await fadeAndStopAudio();
 
             revealedSlots = []; 
             document.getElementById('btnRollDice').disabled = false;
@@ -2157,17 +2148,20 @@
                 currentMatchNumber = 1;
             }
 
-            currentMatchAlbums = [];
-            currentMatchVotes = [];
-
+            const rawParticipants = [];
             for (let i = 0; i < matchSize; i++) {
                 if (tournBracket.length > 0) {
-                    const participant = tournBracket.shift();
-                    currentMatchAlbums.push(participant);
-                    currentMatchVotes.push(0);
-                    addToCollectionDataOnly(participant);
+                    rawParticipants.push(tournBracket.shift());
                 }
             }
+
+            // Быстрая параллельная подгрузка треков только для текущей дуэли
+            const preparedParticipants = await Promise.all(rawParticipants.map(album => fetchHitTrackForAlbum(album, false, true)));
+
+            currentMatchAlbums = preparedParticipants;
+            currentMatchVotes = currentMatchAlbums.map(() => 0);
+
+            currentMatchAlbums.forEach(p => addToCollectionDataOnly(p));
 
             saveProgress();
             renderCollectionUI();
@@ -2202,6 +2196,7 @@
             });
         }
 
+        /* ИСПРАВЛЕНИЕ 1 & 4: Добавлен год и улучшена дуэльная панель */
         function renderBattleMatchUI() {
             const totalRemaining = tournBracket.length + currentMatchAlbums.length + tournNextRound.length;
             const stageTitle = getPlayoffStageTitle(totalRemaining);
@@ -2241,7 +2236,7 @@
                 const lvlDisplay = isSlotBlind ? 'LVL ?' : `LVL ${album.level || 1}`;
                 const typeDisplay = isSlotBlind ? '?' : escapeHtml(album.type);
                 const scoreDisplay = isSlotBlind ? '★ -.-' : `★ ${escapeHtml(album.score)}`;
-                const genreDisplay = isSlotBlind ? '🏷️ Hidden Genre' : `🏷️ ${escapeHtml(album.genre)}`;
+                const genreDisplay = isSlotBlind ? '🏷️ Hidden Genre' : `🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}`;
                 const copiesDisplay = isSlotBlind ? '🃏 ? copies' : `🃏 ${progressText} copies`;
 
                 card.innerHTML = `
@@ -2571,8 +2566,8 @@
                         <div class="type-badge">${escapeHtml(champion.type)}</div>
                         <div class="score-badge">★ ${escapeHtml(champion.score)}</div>
                         <div class="copies-tag">🃏 ${progressText} copies</div>
-                        <div class="genre-badge" title="${escapeHtml(champion.genre)}">
-                            🏷️ ${escapeHtml(champion.genre)}
+                        <div class="genre-badge" title="${escapeHtml(champion.genre)} | ${escapeHtml(champion.year)}">
+                            🏷️ ${escapeHtml(champion.genre)} | 📅 ${escapeHtml(champion.year)}
                         </div>
                     </div>
                 </div>
