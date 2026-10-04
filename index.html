@@ -611,7 +611,6 @@
         .artist-group { background: #18181c; border-radius: 10px; padding: 12px; margin-bottom: 15px; border: 1px solid #2e2e38; }
         .artist-group-header { font-size: 1rem; font-weight: bold; color: #a855f7; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #2e2e38; padding-bottom: 4px; }
 
-        /* ИСПРАВЛЕНИЕ 2: Читаемость и адаптируемая высота в режиме List */
         .list { display: flex; flex-direction: column; gap: 8px; }
         .list-card { 
             background: var(--card-bg); 
@@ -873,7 +872,6 @@
             border: 1px solid #444;
         }
 
-        /* ИСПРАВЛЕНИЕ 4: Адаптация на мобильных для Fatal 4-Way */
         @media (max-width: 600px) {
             .pack-container {
                 flex-direction: column;
@@ -938,7 +936,7 @@
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <h2>Collection</h2>
                     <button class="toggle-col-btn" id="btnToggleCollection" onclick="toggleCollectionArea()">📦 Show Collection</button>
-                    <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑️️ Clear Save</button>
+                    <button class="reset-btn" onclick="clearSaveData()" title="Clear saved collection and start fresh">🗑 Clear Save</button>
                 </div>
                 <div class="filter-controls hidden" id="collectionControls">
                     <select id="sortSelect" onchange="renderCollectionUI()">
@@ -1185,7 +1183,6 @@
             }
         }
 
-        /* ИСПРАВЛЕНИЕ 3: Переключение свайпами добавлено и в Коллекцию */
         function initSwipeListeners() {
             const packContainer = document.getElementById('packContainer');
             const matchContainer = document.getElementById('matchCardsContainer');
@@ -1445,6 +1442,38 @@
                 audio.onerror = () => { clearTimeout(timer); audio.src = ''; resolve(false); };
                 audio.src = url;
             });
+        }
+
+        /* Быстрый тест наличия рабочего превью (для квалификации альбома в турнир) */
+        async function verifyAlbumHasPreview(albumData) {
+            const cleanArtist = cleanQueryString(albumData.artist);
+            const cleanTitle = cleanQueryString(albumData.title);
+            const targetNormArtist = normalizeStr(cleanArtist);
+
+            const isStrictMatch = (fetchedArtist) => {
+                const fetchedNorm = normalizeStr(fetchedArtist);
+                return fetchedNorm === targetNormArtist || fetchedNorm.includes(targetNormArtist) || targetNormArtist.includes(fetchedNorm);
+            };
+
+            try {
+                const dzData = await jsonpFetch(`https://api.deezer.com/search/album?q=${encodeURIComponent(`${cleanArtist} ${cleanTitle}`)}&limit=5&output=jsonp`);
+                if (dzData && dzData.data && dzData.data.length > 0) {
+                    let match = dzData.data.find(a => isStrictMatch(a.artist.name)) || dzData.data[0];
+                    if (match && match.id) {
+                        const tracksData = await jsonpFetch(`https://api.deezer.com/album/${match.id}/tracks?output=jsonp`);
+                        if (tracksData && tracksData.data && tracksData.data.some(s => Boolean(s.preview))) return true;
+                    }
+                }
+            } catch (e) {}
+
+            try {
+                const itunesData = await jsonpFetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${cleanArtist} ${cleanTitle}`)}&entity=song&limit=15`);
+                if (itunesData && itunesData.results && itunesData.results.some(s => Boolean(s.previewUrl) && isStrictMatch(s.artistName))) {
+                    return true;
+                }
+            } catch (e) {}
+
+            return false;
         }
 
         async function fetchHitTrackForAlbum(albumData, forceRandom = false, preserveLevel = false) {
@@ -1816,6 +1845,8 @@
                 resetTournamentSlotUI(slotToReset);
             }
 
+            resetChampionUI();
+
             if (currentAudio) {
                 const aud = currentAudio;
                 currentAudio = null;
@@ -1854,6 +1885,16 @@
             if (card) card.classList.remove('playing');
             if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             if (progressBar) progressBar.style.width = '0%';
+        }
+
+        function resetChampionUI() {
+            const champCard = document.getElementById('champion-card-el');
+            const champIcon = document.getElementById('champ-play-icon');
+            const champBar = document.getElementById('champ-progress-fill');
+
+            if (champCard) champCard.classList.remove('playing');
+            if (champIcon) champIcon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            if (champBar) champBar.style.width = '0%';
         }
 
         function addToCollectionDataOnly(albumObj) {
@@ -1956,7 +1997,6 @@
             container.appendChild(fragment);
         }
 
-        /* ИСПРАВЛЕНИЕ 1 & 2: Добавлен год и улучшена верстка списков */
         function createAlbumCardElement(item, mode) {
             const escTitle = escapeHtml(item.title);
             const escArtist = escapeHtml(item.artist);
@@ -2078,7 +2118,7 @@
             return `⚔️ Round of ${Math.pow(2, Math.ceil(Math.log2(remainingCount)))}`;
         }
 
-        /* ИСПРАВЛЕНИЕ 5: Турнир мгновенно создает сетку БЕЗ предварительной асинхронной загрузки треков */
+        /* ИСПРАВЛЕНИЕ 2: Валидация аудиопревью перед запуском турнира */
         async function startTournament() {
             const source = document.getElementById('tournSource').value;
             const targetSize = parseInt(document.getElementById('tournSize').value, 10);
@@ -2086,6 +2126,10 @@
             isBlindMode = document.getElementById('tournBlindCheck').checked;
 
             const btn = document.getElementById('btnStartTourn');
+            const progressOverlay = document.getElementById('tournProgressOverlay');
+            const progressFill = document.getElementById('tournProgressFill');
+            const progressText = document.getElementById('tournProgressText');
+
             matchSize = (format === '4way') ? 4 : 2;
 
             let pool = [];
@@ -2101,11 +2145,51 @@
             document.getElementById('winnerScreen').classList.add('hidden');
             document.getElementById('tournamentSetup').classList.remove('hidden');
 
+            btn.disabled = true;
+            progressOverlay.classList.remove('hidden');
+            progressFill.style.width = '0%';
+            progressText.innerText = `Validating audio preview sources... (0 / ${targetSize})`;
+
             pool.sort(() => Math.random() - 0.5);
-            tournBracket = pool.slice(0, targetSize);
+
+            const validBracket = [];
+            const chunkSize = 5;
+
+            for (let i = 0; i < pool.length; i += chunkSize) {
+                if (validBracket.length >= targetSize) break;
+
+                const chunk = pool.slice(i, i + chunkSize);
+                const checks = await Promise.all(chunk.map(album => verifyAlbumHasPreview(album)));
+
+                for (let j = 0; j < chunk.length; j++) {
+                    if (checks[j] && validBracket.length < targetSize) {
+                        validBracket.push(chunk[j]);
+                    }
+                }
+
+                const currentPercent = Math.min(100, Math.round((validBracket.length / targetSize) * 100));
+                progressFill.style.width = `${currentPercent}%`;
+                progressText.innerText = `Validating participants: ${validBracket.length} of ${targetSize} (${currentPercent}%)`;
+
+                await new Promise(r => requestAnimationFrame(r));
+            }
+
+            progressOverlay.classList.add('hidden');
+            btn.disabled = false;
+
+            if (validBracket.length < targetSize) {
+                alert(`Could only find ${validBracket.length} albums with working audio previews out of ${targetSize} requested. Starting with ${validBracket.length} participants.`);
+            }
+
+            if (validBracket.length < matchSize) {
+                alert('Not enough valid albums found with playable previews.');
+                return;
+            }
+
+            tournBracket = validBracket;
             tournNextRound = [];
             tournamentEliminationLog = [];
-            totalTournParticipants = tournBracket.length;
+            totalTournParticipants = validBracket.length;
 
             currentRoundNumber = 1;
             currentMatchNumber = 1;
@@ -2121,7 +2205,6 @@
             startTournament();
         }
 
-        /* ИСПРАВЛЕНИЕ 5: Треки запрашиваются "на лету" строго перед каждой дуэлью */
         async function loadNextMatch() {
             await fadeAndStopAudio();
 
@@ -2155,7 +2238,6 @@
                 }
             }
 
-            // Быстрая параллельная подгрузка треков только для текущей дуэли
             const preparedParticipants = await Promise.all(rawParticipants.map(album => fetchHitTrackForAlbum(album, false, true)));
 
             currentMatchAlbums = preparedParticipants;
@@ -2196,7 +2278,7 @@
             });
         }
 
-        /* ИСПРАВЛЕНИЕ 1 & 4: Добавлен год и улучшена дуэльная панель */
+        /* ИСПРАВЛЕНИЕ 1: Год альбома добавлен и в Blind Mode */
         function renderBattleMatchUI() {
             const totalRemaining = tournBracket.length + currentMatchAlbums.length + tournNextRound.length;
             const stageTitle = getPlayoffStageTitle(totalRemaining);
@@ -2236,7 +2318,7 @@
                 const lvlDisplay = isSlotBlind ? 'LVL ?' : `LVL ${album.level || 1}`;
                 const typeDisplay = isSlotBlind ? '?' : escapeHtml(album.type);
                 const scoreDisplay = isSlotBlind ? '★ -.-' : `★ ${escapeHtml(album.score)}`;
-                const genreDisplay = isSlotBlind ? '🏷️ Hidden Genre' : `🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}`;
+                const genreDisplay = isSlotBlind ? '🏷️ Hidden Genre | 📅 ????' : `🏷️ ${escapeHtml(album.genre)} | 📅 ${escapeHtml(album.year)}`;
                 const copiesDisplay = isSlotBlind ? '🃏 ? copies' : `🃏 ${progressText} copies`;
 
                 card.innerHTML = `
@@ -2628,10 +2710,6 @@
         function togglePlayChampionTrack() {
             if (currentAudio && !currentAudio.paused) {
                 pauseCurrentAudio();
-                const card = document.getElementById('champion-card-el');
-                const icon = document.getElementById('champ-play-icon');
-                if (card) card.classList.remove('playing');
-                if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             } else {
                 playChampionTrack();
             }
@@ -2651,6 +2729,7 @@
             playChampionTrack();
         }
 
+        /* ИСПРАВЛЕНИЕ 3: Исправлена неоновая подсветка карточки победителя при проигрывании */
         async function playChampionTrack() {
             await fadeAndStopAudio();
             if (!championAlbumObj || !championAlbumObj.preview) return;
@@ -2694,8 +2773,7 @@
                 if (currentAudio !== newAudio) return;
                 await sleep(600);
                 if (currentAudio !== newAudio) return;
-                if (card) card.classList.remove('playing');
-                if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                resetChampionUI();
                 playChampionNextTrack(true);
             };
 
@@ -2703,8 +2781,7 @@
                 if (currentAudio === newAudio) fadeInAudio(newAudio, 1.0, 500);
             }).catch(e => {
                 if (currentAudio === newAudio) {
-                    if (card) card.classList.remove('playing');
-                    if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                    resetChampionUI();
                 }
             });
         }
